@@ -2,7 +2,7 @@ environment  = "dev"
 project_name = "platform"
 
 libvirt_uri       = "qemu+sshcmd://libvirt-dev-host/system" # configure ~/.ssh/config and use ssh-add
-bridge_name       = "br0"
+bridge_name       = "virbr0"
 storage_pool_path = "/var/lib/libvirt/images/k8s-dev"
 
 network_cidr = "192.168.122.0/24"
