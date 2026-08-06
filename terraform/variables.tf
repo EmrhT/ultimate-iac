@@ -143,3 +143,13 @@ variable "worker_memory_mb" {
 variable "worker_disk_gib" {
   type = number
 }
+
+variable "worker_longhorn_disk_gib" {
+  description = "Capacity of the dedicated Longhorn data disk attached to each worker."
+  type        = number
+
+  validation {
+    condition     = var.worker_longhorn_disk_gib > 0
+    error_message = "worker_longhorn_disk_gib must be greater than zero."
+  }
+}

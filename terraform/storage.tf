@@ -33,3 +33,17 @@ resource "libvirt_volume" "base_image" {
     }
   }
 }
+
+resource "libvirt_volume" "longhorn_data" {
+  for_each = local.worker_nodes
+
+  name     = "${each.key}-longhorn.qcow2"
+  pool     = libvirt_pool.kubernetes.name
+  capacity = var.worker_longhorn_disk_gib * 1024 * 1024 * 1024
+
+  target = {
+    format = {
+      type = "qcow2"
+    }
+  }
+}

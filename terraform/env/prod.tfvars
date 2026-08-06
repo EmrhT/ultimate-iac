@@ -30,3 +30,5 @@ control_plane_disk_gib  = 60
 worker_vcpu      = 4
 worker_memory_mb = 8192
 worker_disk_gib  = 80
+
+worker_longhorn_disk_gib = 10

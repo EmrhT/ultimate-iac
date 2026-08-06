@@ -29,40 +29,61 @@ resource "libvirt_domain" "node" {
   }
 
   devices = {
-    disks = [
-      {
-        source = {
-          volume = {
-            pool   = libvirt_volume.os_disk[each.key].pool
-            volume = libvirt_volume.os_disk[each.key].name
+    disks = concat(
+      [
+        {
+          source = {
+            volume = {
+              pool   = libvirt_volume.os_disk[each.key].pool
+              volume = libvirt_volume.os_disk[each.key].name
+            }
+          }
+
+          target = {
+            dev = "vda"
+            bus = "virtio"
+          }
+
+          driver = {
+            type = "qcow2"
+          }
+        },
+        {
+          device = "cdrom"
+
+          source = {
+            volume = {
+              pool   = libvirt_volume.cloudinit[each.key].pool
+              volume = libvirt_volume.cloudinit[each.key].name
+            }
+          }
+
+          target = {
+            dev = "sda"
+            bus = "sata"
           }
         }
+      ],
+      each.value.role == "worker" ? [
+        {
+          source = {
+            volume = {
+              pool   = libvirt_volume.longhorn_data[each.key].pool
+              volume = libvirt_volume.longhorn_data[each.key].name
+            }
+          }
 
-        target = {
-          dev = "vda"
-          bus = "virtio"
-        }
+          target = {
+            dev = "vdb"
+            bus = "virtio"
+          }
 
-        driver = {
-          type = "qcow2"
-        }
-      },
-      {
-        device = "cdrom"
-
-        source = {
-          volume = {
-            pool   = libvirt_volume.cloudinit[each.key].pool
-            volume = libvirt_volume.cloudinit[each.key].name
+          driver = {
+            type = "qcow2"
           }
         }
-
-        target = {
-          dev = "sda"
-          bus = "sata"
-        }
-      }
-    ]
+      ] : []
+    )
 
     interfaces = [
       {
