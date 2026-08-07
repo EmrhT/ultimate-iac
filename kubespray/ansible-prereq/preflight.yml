@@ -1,0 +1,235 @@
+---
+- name: Validate Kubernetes hosts before provisioning
+  hosts: k8s_cluster
+  become: false
+  gather_facts: false
+  any_errors_fatal: true
+  vars:
+    minimum_kernel_version: "5.10"
+    minimum_control_plane_memory_mb: 1800
+    minimum_worker_memory_mb: 900
+    minimum_root_free_bytes: 5368709120
+    minimum_longhorn_disk_bytes: 10737418240
+    required_interface: eth0
+    required_registries:
+      - https://registry.k8s.io/v2/
+      - https://quay.io/v2/
+      - https://ghcr.io/v2/
+
+  tasks:
+    - name: Wait for SSH connectivity
+      ansible.builtin.wait_for_connection:
+        timeout: 30
+
+    - name: Gather host facts
+      ansible.builtin.setup:
+
+    - name: Verify passwordless sudo
+      ansible.builtin.command:
+        argv:
+          - sudo
+          - -n
+          - "true"
+      changed_when: false
+
+    - name: Validate inventory topology
+      ansible.builtin.assert:
+        that:
+          - groups['kube_control_plane'] | length >= 1
+          - groups['kube_node'] | length >= 1
+          - groups['etcd'] | length >= 1
+          - groups['etcd'] | length % 2 == 1
+          - groups['etcd'] | difference(groups['kube_control_plane']) | length == 0
+        fail_msg: >-
+          Inventory must contain control-plane and worker nodes, and an odd
+          number of etcd members that are also control-plane nodes.
+      run_once: true
+
+    - name: Validate unique inventory addresses
+      ansible.builtin.assert:
+        that:
+          - >-
+            groups['k8s_cluster']
+            | map('extract', hostvars, 'ansible_host')
+            | list
+            | length
+            ==
+            groups['k8s_cluster']
+            | map('extract', hostvars, 'ansible_host')
+            | unique
+            | list
+            | length
+        fail_msg: "Every Kubernetes host must have a unique ansible_host address."
+      run_once: true
+
+    - name: Validate unique operating-system hostnames
+      ansible.builtin.assert:
+        that:
+          - >-
+            groups['k8s_cluster']
+            | map('extract', hostvars, 'ansible_hostname')
+            | list
+            | length
+            ==
+            groups['k8s_cluster']
+            | map('extract', hostvars, 'ansible_hostname')
+            | unique
+            | list
+            | length
+        fail_msg: "Every Kubernetes node must have a unique operating-system hostname."
+      run_once: true
+
+    - name: Validate node identity and primary network interface
+      ansible.builtin.assert:
+        that:
+          - ansible_hostname == inventory_hostname
+          - ansible_host in ansible_all_ipv4_addresses
+          - required_interface in ansible_interfaces
+          - ansible_default_ipv4.interface == required_interface
+          - ansible_default_ipv4.address == ansible_host
+        fail_msg: >-
+          {{ inventory_hostname }} must use its inventory name as the hostname
+          and {{ required_interface }} with static address {{ ansible_host }}.
+
+    - name: Validate compute and kernel requirements
+      ansible.builtin.assert:
+        that:
+          - ansible_architecture in ['x86_64', 'aarch64']
+          - ansible_kernel is version(minimum_kernel_version, '>=')
+          - ansible_processor_vcpus | int >= 2
+          - >-
+            ansible_memtotal_mb | int >=
+            (minimum_control_plane_memory_mb
+             if inventory_hostname in groups['kube_control_plane']
+             else minimum_worker_memory_mb)
+        fail_msg: >-
+          {{ inventory_hostname }} does not meet the architecture, Linux
+          kernel, CPU, or memory requirements.
+
+    - name: Require a root filesystem fact
+      ansible.builtin.assert:
+        that:
+          - ansible_mounts | selectattr('mount', 'equalto', '/') | list | length == 1
+        fail_msg: "Could not identify the root filesystem on {{ inventory_hostname }}."
+
+    - name: Record root filesystem information
+      ansible.builtin.set_fact:
+        preflight_root_mount: >-
+          {{ ansible_mounts | selectattr('mount', 'equalto', '/') | first }}
+
+    - name: Validate root filesystem free space
+      ansible.builtin.assert:
+        that:
+          - preflight_root_mount.size_available | int >= minimum_root_free_bytes
+        fail_msg: >-
+          {{ inventory_hostname }} needs at least 5 GiB free on its root
+          filesystem before Kubernetes installation.
+
+    - name: Test inter-node IPv4 connectivity
+      ansible.builtin.command:
+        argv:
+          - ping
+          - -c
+          - "1"
+          - -W
+          - "2"
+          - "{{ hostvars[item].ansible_host }}"
+      loop: "{{ groups['k8s_cluster'] | difference([inventory_hostname]) }}"
+      changed_when: false
+
+    - name: Resolve the Kubernetes image registry
+      ansible.builtin.command:
+        argv:
+          - getent
+          - ahostsv4
+          - registry.k8s.io
+      changed_when: false
+
+    - name: Test outbound HTTPS access to required registries
+      ansible.builtin.uri:
+        url: "{{ item }}"
+        method: GET
+        follow_redirects: all
+        status_code:
+          - 200
+          - 401
+        timeout: 15
+      loop: "{{ required_registries }}"
+
+    - name: Gather installed package facts
+      ansible.builtin.package_facts:
+        manager: auto
+
+    - name: Check UFW policy state when installed
+      ansible.builtin.command:
+        argv:
+          - sudo
+          - -n
+          - /usr/sbin/ufw
+          - status
+      register: preflight_ufw
+      changed_when: false
+      when: "'ufw' in ansible_facts.packages"
+
+    - name: Require UFW to be inactive for this dev cluster
+      ansible.builtin.assert:
+        that:
+          - "'Status: inactive' in preflight_ufw.stdout"
+        fail_msg: >-
+          UFW is active on {{ inventory_hostname }}. Kubespray does not manage
+          firewall rules; disable UFW or explicitly configure all Kubernetes,
+          etcd, Cilium, kube-vip, and MetalLB traffic before continuing.
+      when: "'ufw' in ansible_facts.packages"
+
+    - name: Check multipath daemon state
+      ansible.builtin.command:
+        argv:
+          - systemctl
+          - is-active
+          - multipathd.service
+      register: preflight_multipathd
+      changed_when: false
+      failed_when: false
+
+    - name: Report multipathd remediation handled by Longhorn preparation
+      ansible.builtin.debug:
+        msg: >-
+          multipathd is active on {{ inventory_hostname }}. The Longhorn host
+          preparation playbook will stop, disable, and mask it before storage
+          is configured.
+      when: preflight_multipathd.stdout | trim == 'active'
+
+    - name: Inspect the dedicated Longhorn disk on workers
+      ansible.builtin.stat:
+        path: /dev/vdb
+      register: preflight_longhorn_device
+      when: inventory_hostname in groups['kube_node']
+
+    - name: Require the dedicated Longhorn block device on workers
+      ansible.builtin.assert:
+        that:
+          - preflight_longhorn_device.stat.exists
+          - preflight_longhorn_device.stat.isblk
+        fail_msg: "/dev/vdb must exist as a block device on {{ inventory_hostname }}."
+      when: inventory_hostname in groups['kube_node']
+
+    - name: Read the dedicated Longhorn disk size
+      ansible.builtin.command:
+        argv:
+          - lsblk
+          - --bytes
+          - --nodeps
+          - --noheadings
+          - --output
+          - SIZE
+          - /dev/vdb
+      register: preflight_longhorn_disk_size
+      changed_when: false
+      when: inventory_hostname in groups['kube_node']
+
+    - name: Validate the dedicated Longhorn disk size
+      ansible.builtin.assert:
+        that:
+          - preflight_longhorn_disk_size.stdout | trim | int >= minimum_longhorn_disk_bytes
+        fail_msg: "/dev/vdb on {{ inventory_hostname }} must be at least 10 GiB."
+      when: inventory_hostname in groups['kube_node']

@@ -1,0 +1,152 @@
+---
+- name: Install Longhorn host prerequisites
+  hosts: k8s_cluster
+  become: true
+  gather_facts: true
+  vars:
+    # These libvirt nodes do not use multipath storage. Longhorn recommends
+    # disabling multipathd when multipath is not required.
+    longhorn_disable_multipathd: true
+  tasks:
+    - name: Gather installed package facts
+      ansible.builtin.package_facts:
+        manager: auto
+
+    - name: Stop multipath units when multipath is not used
+      ansible.builtin.systemd_service:
+        name: "{{ item }}"
+        state: stopped
+      loop:
+        - multipathd.socket
+        - multipathd.service
+      when:
+        - longhorn_disable_multipathd
+        - "'multipath-tools' in ansible_facts.packages"
+
+    - name: Disable and mask multipath units
+      ansible.builtin.systemd_service:
+        name: "{{ item }}"
+        enabled: false
+        masked: true
+      loop:
+        - multipathd.socket
+        - multipathd.service
+      when:
+        - longhorn_disable_multipathd
+        - "'multipath-tools' in ansible_facts.packages"
+
+    - name: Verify multipath units are inactive
+      ansible.builtin.command:
+        argv:
+          - systemctl
+          - is-active
+          - "{{ item }}"
+      loop:
+        - multipathd.socket
+        - multipathd.service
+      register: longhorn_multipath_unit_state
+      changed_when: false
+      failed_when: longhorn_multipath_unit_state.stdout | trim == 'active'
+      when: longhorn_disable_multipathd
+
+    - name: Install iSCSI and NFS client packages
+      ansible.builtin.apt:
+        name:
+          - open-iscsi
+          - nfs-common
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Enable and start iscsid
+      ansible.builtin.systemd_service:
+        name: iscsid
+        enabled: true
+        state: started
+
+- name: Prepare dedicated Longhorn disks
+  hosts: kube_node
+  become: true
+  gather_facts: false
+  vars:
+    longhorn_device: /dev/vdb
+    longhorn_partition: /dev/vdb1
+    longhorn_mount_path: /var/lib/longhorn
+  tasks:
+    - name: Inspect the Longhorn block device
+      ansible.builtin.stat:
+        path: "{{ longhorn_device }}"
+      register: longhorn_device_stat
+
+    - name: Require the dedicated block device
+      ansible.builtin.assert:
+        that:
+          - longhorn_device_stat.stat.exists
+          - longhorn_device_stat.stat.isblk
+        fail_msg: "{{ longhorn_device }} must exist and be a block device before Longhorn preparation."
+
+    - name: Check for a filesystem directly on the whole disk
+      ansible.builtin.command:
+        argv:
+          - lsblk
+          - -dn
+          - -o
+          - FSTYPE
+          - "{{ longhorn_device }}"
+      register: longhorn_whole_disk_filesystem
+      changed_when: false
+
+    - name: Refuse to repartition a whole disk that already contains a filesystem
+      ansible.builtin.assert:
+        that:
+          - longhorn_whole_disk_filesystem.stdout | trim == ""
+        fail_msg: "{{ longhorn_device }} already contains a filesystem; refusing to repartition it."
+
+    - name: Create a single GPT partition for Longhorn
+      community.general.parted:
+        device: "{{ longhorn_device }}"
+        label: gpt
+        number: 1
+        name: longhorn
+        state: present
+        part_start: 1MiB
+        part_end: 100%
+
+    - name: Wait for the partition device
+      ansible.builtin.command: udevadm settle
+      changed_when: false
+
+    - name: Create the Longhorn ext4 filesystem if absent
+      community.general.filesystem:
+        dev: "{{ longhorn_partition }}"
+        fstype: ext4
+        opts: -L longhorn-data
+        force: false
+
+    - name: Read the Longhorn filesystem UUID
+      ansible.builtin.command:
+        argv:
+          - blkid
+          - -s
+          - UUID
+          - -o
+          - value
+          - "{{ longhorn_partition }}"
+      register: longhorn_filesystem_uuid
+      changed_when: false
+
+    - name: Create the Longhorn data directory
+      ansible.builtin.file:
+        path: "{{ longhorn_mount_path }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Persistently mount the Longhorn filesystem
+      ansible.posix.mount:
+        path: "{{ longhorn_mount_path }}"
+        src: "UUID={{ longhorn_filesystem_uuid.stdout | trim }}"
+        fstype: ext4
+        opts: defaults,noatime,nofail
+        state: mounted

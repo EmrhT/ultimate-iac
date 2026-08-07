@@ -1,0 +1,7 @@
+---
+ansible_user: ubuntu
+ansible_python_interpreter: /usr/bin/python3
+
+# Kubespray downloads kubectl and the admin kubeconfig to inventory/dev/artifacts.
+kubeconfig_localhost: true
+kubectl_localhost: true

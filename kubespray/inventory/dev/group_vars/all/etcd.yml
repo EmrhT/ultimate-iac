@@ -1,0 +1,4 @@
+---
+# Run etcd directly on members of the etcd inventory group.
+etcd_deployment_type: host
+

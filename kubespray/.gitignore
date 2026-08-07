@@ -1,0 +1,6 @@
+.venv/
+upstream/
+inventory/*/artifacts/
+inventory/*/credentials/
+*.retry
+
