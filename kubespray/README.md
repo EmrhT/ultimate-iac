@@ -20,7 +20,7 @@ installation or a custom wrapper script.
 | CNI | Cilium, with kube-proxy retained in IPVS mode |
 | Cluster DNS | CoreDNS with NodeLocal DNSCache |
 | API virtual IP | kube-vip at `192.168.122.30:6443` |
-| LoadBalancer addresses | MetalLB pool `192.168.122.120-192.168.122.129` |
+| Planned LoadBalancer addresses | GitOps-managed MetalLB pool `192.168.122.120-192.168.122.129` |
 | Package manager | Helm |
 | GitOps controller | Argo CD |
 | Persistent storage | Dedicated `/dev/vdb` worker disks prepared for Longhorn |
@@ -98,8 +98,10 @@ local `inventory/dev/artifacts/` directory.
 
 - kube-vip owns only the Kubernetes API VIP. Service VIP management is
   disabled in kube-vip.
-- MetalLB owns the separate Layer 2 service address pool.
-- Helm, Argo CD, and the CSI snapshot controller are enabled.
+- Helm and Argo CD are enabled.
+- MetalLB and the CSI snapshot controller are disabled in Kubespray. Their
+  installation and configuration are deferred to the future top-level GitOps
+  configuration.
 - Kubespray's bundled cert-manager is disabled because that version does not
   support Kubernetes 1.35. cert-manager deployment is deferred to the future
   top-level GitOps configuration.
@@ -258,8 +260,6 @@ Kubespray v2.31.0 pins its local Python dependencies in
 inventory/dev/artifacts/kubectl.sh get nodes -o wide
 inventory/dev/artifacts/kubectl.sh get pods -A
 inventory/dev/artifacts/kubectl.sh get applications -n argocd
-inventory/dev/artifacts/kubectl.sh get ipaddresspools,l2advertisements \
-  -n metallb-system
 ```
 
 Expected node state:

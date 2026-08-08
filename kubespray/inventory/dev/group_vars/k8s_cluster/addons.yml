@@ -1,9 +1,9 @@
 ---
 helm_enabled: true
 
-# Longhorn is installed later by Argo CD, but its CSI snapshot integration
-# needs the cluster-level snapshot controller supplied by Kubespray.
-csi_snapshot_controller_enabled: true
+# Longhorn and the cluster-level CSI snapshot controller will be managed by
+# the separate top-level GitOps configuration.
+csi_snapshot_controller_enabled: false
 
 # Kubespray v2.31.0 bundles cert-manager 1.15.3, which does not support
 # Kubernetes 1.35. A compatible release will be managed by the separate
@@ -13,19 +13,11 @@ cert_manager_enabled: false
 argocd_enabled: true
 argocd_namespace: argocd
 
-metallb_enabled: true
-metallb_speaker_enabled: true
-metallb_namespace: metallb-system
-metallb_config:
-  address_pools:
-    primary:
-      ip_range:
-        - 192.168.122.120-192.168.122.129
-      auto_assign: true
-  layer2:
-    - primary
+# MetalLB and its 192.168.122.120-192.168.122.129 address pool will be
+# managed by the separate top-level GitOps configuration.
+metallb_enabled: false
 
-# kube-vip owns only the Kubernetes API VIP. MetalLB owns service VIPs.
+# kube-vip owns only the Kubernetes API VIP. It does not allocate service VIPs.
 kube_vip_enabled: true
 kube_vip_arp_enabled: true
 kube_vip_controlplane_enabled: true

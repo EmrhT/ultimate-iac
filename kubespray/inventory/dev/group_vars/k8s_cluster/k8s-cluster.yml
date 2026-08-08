@@ -7,8 +7,8 @@ etcd_deployment_type: host
 kube_network_plugin: cilium
 kube_owner: root
 
-# Keep kube-proxy for a conservative Cilium deployment. MetalLB owns service
-# LoadBalancer addresses, so Cilium L2 announcements remain disabled.
+# Keep kube-proxy for a conservative Cilium deployment. Service LoadBalancer
+# addresses will be managed by GitOps, so Cilium L2 announcements stay disabled.
 kube_proxy_mode: ipvs
 kube_proxy_strict_arp: true
 cilium_kube_proxy_replacement: false
@@ -23,4 +23,3 @@ enable_nodelocaldns: true
 
 kube_api_anonymous_auth: true
 auto_renew_certificates: true
-
