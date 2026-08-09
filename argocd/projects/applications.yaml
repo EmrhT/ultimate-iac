@@ -12,10 +12,9 @@ spec:
       namespace: lab-a-*
     - server: https://kubernetes.default.svc
       namespace: lab-b-*
-  clusterResourceBlacklist:
-    - group: '*'
-      kind: '*'
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
   namespaceResourceWhitelist:
     - group: '*'
       kind: '*'
-
