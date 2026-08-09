@@ -23,3 +23,8 @@ enable_nodelocaldns: true
 
 kube_api_anonymous_auth: true
 auto_renew_certificates: true
+
+# Metrics Server validates kubelet serving certificates. Have kubelets request
+# cluster-signed serving certificates instead of weakening Metrics Server with
+# --kubelet-insecure-tls.
+kubelet_rotate_server_certificates: true

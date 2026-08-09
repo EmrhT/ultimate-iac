@@ -70,6 +70,7 @@ All versions are explicit; Argo CD never follows `latest`:
 | cert-manager | `1.21.0` | Certificate lifecycle and Gateway integration |
 | MetalLB chart | `0.16.1` | Bare-metal `LoadBalancer` implementation |
 | Longhorn | `1.11.2` | Replicated persistent storage on `/var/lib/longhorn` |
+| Metrics Server chart | `3.13.1` | Resource Metrics API for `kubectl top` and autoscaling |
 | kube-prometheus-stack | `86.3.2` | Prometheus, Alertmanager, Grafana, and exporters |
 | Traefik chart | `41.0.1` | Gateway API controller at `192.168.122.120` |
 | HashiCorp Vault chart | `0.32.0` | Secret service and injector |
@@ -87,6 +88,14 @@ capacity with three replicas. The development values request approximately
 8 GiB before filesystem, snapshot, and free-space overhead. Increase the
 worker Longhorn disks before treating this as a durable observability/SIEM
 environment.
+
+Metrics Server is assigned wave `-15`: cert-manager and the core storage and
+network services have lower waves, while the observability stack has wave
+`-10`. Its aggregated API certificate is issued by cert-manager. Kubelet
+serving-certificate rotation is enabled in the Kubespray inventory so Metrics
+Server can validate kubelets without `--kubelet-insecure-tls`. Apply that host
+configuration by rerunning Kubespray `cluster.yml` before expecting node and
+pod metrics to become available.
 
 ## Bootstrap
 

@@ -28,6 +28,12 @@ spec:
             chart: longhorn
             chartVersion: 1.11.2
             wave: "-20"
+          - name: metrics-server
+            namespace: metrics-server
+            chartRepo: https://kubernetes-sigs.github.io/metrics-server
+            chart: metrics-server
+            chartVersion: 3.13.1
+            wave: "-15"
           - name: kube-prometheus-stack
             namespace: monitoring
             chartRepo: https://prometheus-community.github.io/helm-charts

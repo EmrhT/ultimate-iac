@@ -1,0 +1,21 @@
+replicas: 1
+
+apiService:
+  create: true
+  insecureSkipTLSVerify: false
+
+tls:
+  type: cert-manager
+  clusterDomain: cluster.local
+  certManager:
+    addInjectorAnnotations: true
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 200Mi
+  limits:
+    memory: 256Mi
+
+podDisruptionBudget:
+  enabled: false
