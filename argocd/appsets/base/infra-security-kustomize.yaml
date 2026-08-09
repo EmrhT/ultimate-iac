@@ -1,0 +1,63 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: infra-security-kustomize
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions:
+    - missingkey=error
+  generators:
+    - list:
+        elements:
+          - name: gateway-api-crds
+            namespace: kube-system
+            sourceRepo: https://github.com/kubernetes-sigs/gateway-api.git
+            revision: v1.5.1
+            path: config/crd/standard
+            wave: "-40"
+          - name: metallb-config
+            namespace: metallb-system
+            sourceRepo: https://github.com/EmrhT/ultimate-iac.git
+            revision: main
+            path: argocd/infra-security/metallb-config/overlays/dev
+            wave: "-24"
+          - name: elastic-stack
+            namespace: elastic-stack
+            sourceRepo: https://github.com/EmrhT/ultimate-iac.git
+            revision: main
+            path: argocd/infra-security/elastic-stack/overlays/dev
+            wave: "10"
+  template:
+    metadata:
+      name: "infra-{{ .name }}"
+      namespace: argocd
+      annotations:
+        argocd.argoproj.io/sync-wave: "{{ .wave }}"
+      labels:
+        platform.example/group: infra-security
+        platform.example/component: "{{ .name }}"
+    spec:
+      project: infra-security
+      source:
+        repoURL: "{{ .sourceRepo }}"
+        targetRevision: "{{ .revision }}"
+        path: "{{ .path }}"
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: "{{ .namespace }}"
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        retry:
+          limit: 20
+          backoff:
+            duration: 15s
+            factor: 2
+            maxDuration: 5m
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true
+          - SkipDryRunOnMissingResource=true
+

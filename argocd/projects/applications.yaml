@@ -1,0 +1,21 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: applications
+  namespace: argocd
+spec:
+  description: Custom workloads deployed to logical cluster/environment namespaces
+  sourceRepos:
+    - https://github.com/EmrhT/ultimate-iac.git
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: lab-a-*
+    - server: https://kubernetes.default.svc
+      namespace: lab-b-*
+  clusterResourceBlacklist:
+    - group: '*'
+      kind: '*'
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
+

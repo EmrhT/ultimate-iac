@@ -1,0 +1,100 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: infra-security-helm
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions:
+    - missingkey=error
+  generators:
+    - list:
+        elements:
+          - name: cert-manager
+            namespace: cert-manager
+            chartRepo: https://charts.jetstack.io
+            chart: cert-manager
+            chartVersion: v1.21.0
+            wave: "-30"
+          - name: metallb
+            namespace: metallb-system
+            chartRepo: https://metallb.github.io/metallb
+            chart: metallb
+            chartVersion: 0.16.1
+            wave: "-25"
+          - name: longhorn
+            namespace: longhorn-system
+            chartRepo: https://charts.longhorn.io
+            chart: longhorn
+            chartVersion: 1.11.2
+            wave: "-20"
+          - name: kube-prometheus-stack
+            namespace: monitoring
+            chartRepo: https://prometheus-community.github.io/helm-charts
+            chart: kube-prometheus-stack
+            chartVersion: 86.3.2
+            wave: "-10"
+          - name: traefik
+            namespace: traefik
+            chartRepo: https://traefik.github.io/charts
+            chart: traefik
+            chartVersion: 41.0.1
+            wave: "0"
+          - name: vault
+            namespace: vault
+            chartRepo: https://helm.releases.hashicorp.com
+            chart: vault
+            chartVersion: 0.32.0
+            wave: "0"
+          - name: falco
+            namespace: falco
+            chartRepo: https://falcosecurity.github.io/charts
+            chart: falco
+            chartVersion: 9.1.0
+            wave: "0"
+          - name: eck-operator
+            namespace: elastic-system
+            chartRepo: https://helm.elastic.co
+            chart: eck-operator
+            chartVersion: 3.4.0
+            wave: "0"
+  template:
+    metadata:
+      name: "infra-{{ .name }}"
+      namespace: argocd
+      annotations:
+        argocd.argoproj.io/sync-wave: "{{ .wave }}"
+      labels:
+        platform.example/group: infra-security
+        platform.example/component: "{{ .name }}"
+    spec:
+      project: infra-security
+      sources:
+        - repoURL: "{{ .chartRepo }}"
+          chart: "{{ .chart }}"
+          targetRevision: "{{ .chartVersion }}"
+          helm:
+            releaseName: "{{ .name }}"
+            valueFiles:
+              - "$values/argocd/infra-security/{{ .name }}/base/values.yaml"
+              - "$values/argocd/infra-security/{{ .name }}/overlays/dev/values.yaml"
+        - repoURL: https://github.com/EmrhT/ultimate-iac.git
+          targetRevision: main
+          ref: values
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: "{{ .namespace }}"
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        retry:
+          limit: 20
+          backoff:
+            duration: 15s
+            factor: 2
+            maxDuration: 5m
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true
+          - SkipDryRunOnMissingResource=true

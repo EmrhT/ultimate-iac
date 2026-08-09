@@ -1,0 +1,13 @@
+driver:
+  kind: modern_ebpf
+falco:
+  json_output: true
+  json_include_output_property: true
+  http_output:
+    enabled: false
+tty: false
+serviceMonitor:
+  create: true
+falcosidekick:
+  enabled: false
+

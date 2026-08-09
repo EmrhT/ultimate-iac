@@ -1,0 +1,18 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../../environments/dev
+labels:
+  - pairs:
+      platform.example/cluster: lab-a
+    includeTemplates: true
+patches:
+  - target:
+      group: gateway.networking.k8s.io
+      version: v1
+      kind: HTTPRoute
+      name: podinfo
+    patch: |-
+      - op: replace
+        path: /spec/hostnames/0
+        value: podinfo.dev.lab-a.local

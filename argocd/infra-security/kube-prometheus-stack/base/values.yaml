@@ -1,0 +1,26 @@
+grafana:
+  enabled: true
+  defaultDashboardsEnabled: true
+  persistence:
+    enabled: true
+    storageClassName: longhorn
+    size: 1Gi
+prometheus:
+  prometheusSpec:
+    retention: 3d
+    retentionSize: 1800MB
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: longhorn
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 2Gi
+alertmanager:
+  alertmanagerSpec:
+    retention: 24h
+

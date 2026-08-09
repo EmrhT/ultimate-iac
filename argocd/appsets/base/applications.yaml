@@ -1,0 +1,60 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: custom-applications
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions:
+    - missingkey=error
+  generators:
+    - matrix:
+        generators:
+          - list:
+              elements:
+                - cluster: lab-a
+                  server: https://kubernetes.default.svc
+                - cluster: lab-b
+                  server: https://kubernetes.default.svc
+          - list:
+              elements:
+                - environment: dev
+                - environment: staging
+  template:
+    metadata:
+      name: "podinfo-{{ .cluster }}-{{ .environment }}"
+      namespace: argocd
+      labels:
+        platform.example/group: applications
+        platform.example/cluster: "{{ .cluster }}"
+        platform.example/environment: "{{ .environment }}"
+    spec:
+      project: applications
+      source:
+        repoURL: https://github.com/EmrhT/ultimate-iac.git
+        targetRevision: main
+        path: "argocd/applications/podinfo/clusters/{{ .cluster }}/{{ .environment }}"
+      destination:
+        server: "{{ .server }}"
+        namespace: "{{ .cluster }}-{{ .environment }}"
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        retry:
+          limit: 10
+          backoff:
+            duration: 10s
+            factor: 2
+            maxDuration: 3m
+        managedNamespaceMetadata:
+          labels:
+            platform.example/cluster: "{{ .cluster }}"
+            platform.example/environment: "{{ .environment }}"
+            pod-security.kubernetes.io/enforce: restricted
+            pod-security.kubernetes.io/audit: restricted
+            pod-security.kubernetes.io/warn: restricted
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true
+

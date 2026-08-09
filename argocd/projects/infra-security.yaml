@@ -1,0 +1,28 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: infra-security
+  namespace: argocd
+spec:
+  description: Cluster infrastructure, observability, and security services
+  sourceRepos:
+    - https://github.com/EmrhT/ultimate-iac.git
+    - https://github.com/kubernetes-sigs/gateway-api.git
+    - https://charts.jetstack.io
+    - https://metallb.github.io/metallb
+    - https://charts.longhorn.io
+    - https://traefik.github.io/charts
+    - https://helm.releases.hashicorp.com
+    - https://prometheus-community.github.io/helm-charts
+    - https://falcosecurity.github.io/charts
+    - https://helm.elastic.co
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: '*'
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
+

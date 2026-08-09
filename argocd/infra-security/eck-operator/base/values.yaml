@@ -1,0 +1,6 @@
+installCRDs: true
+config:
+  validateStorageClass: true
+telemetry:
+  disabled: true
+

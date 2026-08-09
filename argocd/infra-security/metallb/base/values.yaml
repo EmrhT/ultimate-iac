@@ -1,0 +1,8 @@
+prometheus:
+  serviceMonitor:
+    enabled: false
+controller:
+  logLevel: info
+speaker:
+  logLevel: info
+

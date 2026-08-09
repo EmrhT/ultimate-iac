@@ -1,0 +1,10 @@
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: platform-services
+spec:
+  addresses:
+    - 192.0.2.120-192.0.2.129
+  autoAssign: true
+  avoidBuggyIPs: true
+

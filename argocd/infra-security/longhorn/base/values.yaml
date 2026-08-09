@@ -1,0 +1,11 @@
+persistence:
+  defaultClass: true
+  defaultClassReplicaCount: 3
+defaultSettings:
+  defaultDataPath: /var/lib/longhorn
+  defaultReplicaCount: 3
+  replicaSoftAntiAffinity: false
+  storageMinimalAvailablePercentage: 15
+longhornUI:
+  replicas: 1
+
