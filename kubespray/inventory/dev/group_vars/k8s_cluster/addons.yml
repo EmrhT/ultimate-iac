@@ -10,7 +10,7 @@ csi_snapshot_controller_enabled: false
 # top-level GitOps configuration.
 cert_manager_enabled: false
 
-argocd_enabled: true
+argocd_enabled: false
 argocd_namespace: argocd
 
 # MetalLB and its 192.168.122.120-192.168.122.129 address pool will be
