@@ -2,4 +2,5 @@ preUpgradeChecker:
   jobEnabled: false
 longhornManager:
   priorityClass: system-node-critical
-
+defaultSettings:
+  storageOverProvisioningPercentage: 200

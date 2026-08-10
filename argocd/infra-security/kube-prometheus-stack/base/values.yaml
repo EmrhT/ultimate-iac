@@ -1,6 +1,8 @@
 grafana:
   enabled: true
   defaultDashboardsEnabled: true
+  deploymentStrategy:
+    type: Recreate
   persistence:
     enabled: true
     storageClassName: longhorn
@@ -23,4 +25,3 @@ prometheus:
 alertmanager:
   alertmanagerSpec:
     retention: 24h
-
