@@ -1,0 +1,214 @@
+---
+- name: Install Argo CD after Kubespray
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    post_install_inventory_dir: "{{ playbook_dir }}/../inventory/dev"
+    post_install_kubeconfig: "{{ post_install_inventory_dir }}/artifacts/admin.conf"
+    post_install_kubectl: "{{ post_install_inventory_dir }}/artifacts/kubectl"
+
+    post_install_argocd_enabled: true
+    post_install_argocd_namespace: argocd
+    post_install_argocd_version: v3.4.2
+    post_install_argocd_manifest_url: >-
+      https://raw.githubusercontent.com/argoproj/argo-cd/{{ post_install_argocd_version }}/manifests/install.yaml
+    post_install_argocd_manifest_sha256: >-
+      69114b8c9eb48a1d08598e6f654a0869b10ae902456ea4b70796cb563760f5ec
+    post_install_argocd_field_manager: argocd-installation
+
+  tasks:
+    - name: Validate post-installation inputs
+      tags:
+        - always
+      block:
+        - name: Inspect the generated administrator kubeconfig
+          ansible.builtin.stat:
+            path: "{{ post_install_kubeconfig }}"
+          register: post_install_kubeconfig_stat
+
+        - name: Inspect the generated kubectl binary
+          ansible.builtin.stat:
+            path: "{{ post_install_kubectl }}"
+          register: post_install_kubectl_stat
+
+        - name: Require generated Kubernetes client artifacts
+          ansible.builtin.assert:
+            that:
+              - post_install_kubeconfig_stat.stat.isreg | default(false)
+              - post_install_kubectl_stat.stat.isreg | default(false)
+              - post_install_kubectl_stat.stat.executable | default(false)
+            fail_msg: >-
+              Kubespray client artifacts are missing. Expected kubeconfig at
+              {{ post_install_kubeconfig }} and an executable kubectl at
+              {{ post_install_kubectl }}.
+
+        - name: Verify Kubernetes API access
+          ansible.builtin.command:
+            argv:
+              - "{{ post_install_kubectl }}"
+              - --kubeconfig
+              - "{{ post_install_kubeconfig }}"
+              - version
+              - --output=json
+              - --request-timeout=15s
+          changed_when: false
+
+    - name: Install Argo CD
+      when: post_install_argocd_enabled | bool
+      tags:
+        - argocd
+      block:
+        - name: Validate the Argo CD release pin
+          ansible.builtin.assert:
+            that:
+              - post_install_argocd_version is match('^v[0-9]+\.[0-9]+\.[0-9]+$')
+              - post_install_argocd_manifest_sha256 is match('^[a-f0-9]{64}$')
+            fail_msg: Argo CD requires an explicit semantic version and SHA-256 checksum.
+
+        - name: Download the pinned Argo CD installation manifest
+          ansible.builtin.uri:
+            url: "{{ post_install_argocd_manifest_url }}"
+            method: GET
+            return_content: true
+            status_code: 200
+            timeout: 120
+          register: post_install_argocd_manifest
+          changed_when: false
+
+        - name: Verify the Argo CD installation manifest checksum
+          ansible.builtin.assert:
+            that:
+              - (post_install_argocd_manifest.content | hash('sha256')) == post_install_argocd_manifest_sha256
+            fail_msg: >-
+              The downloaded Argo CD manifest does not match the pinned
+              SHA-256 checksum. Refusing to apply it.
+
+        - name: Create the Argo CD namespace declaratively
+          ansible.builtin.command:
+            argv:
+              - "{{ post_install_kubectl }}"
+              - --kubeconfig
+              - "{{ post_install_kubeconfig }}"
+              - apply
+              - --server-side=true
+              - --field-manager
+              - "{{ post_install_argocd_field_manager }}"
+              - --filename=-
+            stdin: |
+              apiVersion: v1
+              kind: Namespace
+              metadata:
+                name: {{ post_install_argocd_namespace }}
+                labels:
+                  app: argocd
+          register: post_install_argocd_namespace_apply
+          changed_when: >-
+            'created' in post_install_argocd_namespace_apply.stdout or
+            'configured' in post_install_argocd_namespace_apply.stdout
+
+        - name: Check whether the Argo CD manifest differs from the cluster
+          ansible.builtin.command:
+            argv:
+              - "{{ post_install_kubectl }}"
+              - --kubeconfig
+              - "{{ post_install_kubeconfig }}"
+              - diff
+              - --server-side=true
+              - --force-conflicts
+              - --field-manager
+              - "{{ post_install_argocd_field_manager }}"
+              - --namespace
+              - "{{ post_install_argocd_namespace }}"
+              - --filename=-
+            stdin: "{{ post_install_argocd_manifest.content }}"
+          register: post_install_argocd_diff
+          changed_when: false
+          failed_when: post_install_argocd_diff.rc not in [0, 1]
+          no_log: true
+
+        - name: Apply the pinned Argo CD manifest
+          ansible.builtin.command:
+            argv:
+              - "{{ post_install_kubectl }}"
+              - --kubeconfig
+              - "{{ post_install_kubeconfig }}"
+              - apply
+              - --server-side=true
+              - --force-conflicts
+              - --field-manager
+              - "{{ post_install_argocd_field_manager }}"
+              - --namespace
+              - "{{ post_install_argocd_namespace }}"
+              - --filename=-
+            stdin: "{{ post_install_argocd_manifest.content }}"
+          when: post_install_argocd_diff.rc == 1
+          changed_when: true
+          no_log: true
+
+        - name: Wait for Argo CD custom resource definitions
+          ansible.builtin.command:
+            argv:
+              - "{{ post_install_kubectl }}"
+              - --kubeconfig
+              - "{{ post_install_kubeconfig }}"
+              - wait
+              - --for=condition=Established
+              - --timeout=120s
+              - "crd/{{ item }}"
+          loop:
+            - applications.argoproj.io
+            - applicationsets.argoproj.io
+            - appprojects.argoproj.io
+          changed_when: false
+
+        - name: Wait for Argo CD deployments
+          ansible.builtin.command:
+            argv:
+              - "{{ post_install_kubectl }}"
+              - --kubeconfig
+              - "{{ post_install_kubeconfig }}"
+              - --namespace
+              - "{{ post_install_argocd_namespace }}"
+              - rollout
+              - status
+              - --timeout=300s
+              - "deployment/{{ item }}"
+          loop:
+            - argocd-applicationset-controller
+            - argocd-dex-server
+            - argocd-notifications-controller
+            - argocd-redis
+            - argocd-repo-server
+            - argocd-server
+          changed_when: false
+
+        - name: Wait for the Argo CD application controller
+          ansible.builtin.command:
+            argv:
+              - "{{ post_install_kubectl }}"
+              - --kubeconfig
+              - "{{ post_install_kubeconfig }}"
+              - --namespace
+              - "{{ post_install_argocd_namespace }}"
+              - rollout
+              - status
+              - --timeout=300s
+              - statefulset/argocd-application-controller
+          changed_when: false
+
+        - name: Report the installed Argo CD images
+          ansible.builtin.command:
+            argv:
+              - "{{ post_install_kubectl }}"
+              - --kubeconfig
+              - "{{ post_install_kubeconfig }}"
+              - --namespace
+              - "{{ post_install_argocd_namespace }}"
+              - get
+              - pods
+              - --output=wide
+          changed_when: false
+
+    # Add future components as separate playbooks beside this file.

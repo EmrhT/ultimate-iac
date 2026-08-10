@@ -22,7 +22,7 @@ installation or a custom wrapper script.
 | API virtual IP | kube-vip at `192.168.122.30:6443` |
 | Planned LoadBalancer addresses | GitOps-managed MetalLB pool `192.168.122.120-192.168.122.129` |
 | Package manager | Helm |
-| GitOps controller | Argo CD |
+| GitOps controller | Argo CD `v3.4.2`, installed after Kubespray |
 | Persistent storage | Dedicated `/dev/vdb` worker disks prepared for Longhorn |
 
 The API server on `platform-dev-cp-01` advertises its real node address,
@@ -39,9 +39,11 @@ control-plane/etcd members can be added later.
 ```text
 kubespray/
 ├── README.md
-├── ansible-prereq/
+├── pre-installation/
 │   ├── preflight.yml
 │   └── prepare-longhorn-hosts.yml
+├── post-installation/
+│   └── argocd-installation.yml
 ├── inventory/
 │   └── dev/
 │       ├── hosts.yml
@@ -98,7 +100,8 @@ local `inventory/dev/artifacts/` directory.
 
 - kube-vip owns only the Kubernetes API VIP. Service VIP management is
   disabled in kube-vip.
-- Helm and Argo CD are enabled.
+- Helm is enabled. Kubespray's bundled Argo CD is disabled; the pinned current
+  release is managed by `post-installation/argocd-installation.yml` instead.
 - MetalLB and the CSI snapshot controller are disabled in Kubespray. Their
   installation and configuration are deferred to the future top-level GitOps
   configuration.
@@ -112,7 +115,7 @@ will subsequently be managed by the separate top-level GitOps configuration.
 
 ### Preflight validation
 
-`ansible-prereq/preflight.yml` is read-only. It fails before provisioning if
+`pre-installation/preflight.yml` is read-only. It fails before provisioning if
 the environment does not satisfy the expected topology and host requirements.
 It validates:
 
@@ -128,7 +131,7 @@ It validates:
 
 ### Longhorn host preparation
 
-`ansible-prereq/prepare-longhorn-hosts.yml` performs idempotent host changes:
+`pre-installation/prepare-longhorn-hosts.yml` performs idempotent host changes:
 
 - Stops, disables, and masks multipathd because these libvirt guests do not
   use multipath storage.
@@ -158,15 +161,16 @@ The final command must print `v2.31.0`.
 ## Recommended execution with the Kubespray container
 
 The Kubespray image contains its tested Ansible and Python dependencies. Start
-one interactive container from this directory and mount the inventory,
-prerequisite playbooks, and SSH key:
+one interactive container from this directory and mount the inventory, local
+pre-installation and post-installation playbooks, and SSH key:
 
 ```bash
 cd ~/projects/ultimate-iac/kubespray
 
 docker run --rm -it --network host \
   --mount type=bind,source="$PWD/inventory/dev",target=/inventory \
-  --mount type=bind,source="$PWD/ansible-prereq",target=/ansible-prereq,readonly \
+  --mount type=bind,source="$PWD/pre-installation",target=/pre-installation,readonly \
+  --mount type=bind,source="$PWD/post-installation",target=/post-installation,readonly \
   --mount type=bind,source="$HOME/.ssh/id_4work",target=/root/.ssh/id_4work,readonly \
   quay.io/kubespray/kubespray:v2.31.0 bash
 ```
@@ -179,7 +183,7 @@ the following commands inside that container in this order.
 ```bash
 ansible-playbook \
   -i /inventory/hosts.yml \
-  /ansible-prereq/preflight.yml \
+  /pre-installation/preflight.yml \
   --private-key /root/.ssh/id_4work
 ```
 
@@ -191,7 +195,7 @@ continuing.
 ```bash
 ansible-playbook \
   -i /inventory/hosts.yml \
-  /ansible-prereq/prepare-longhorn-hosts.yml \
+  /pre-installation/prepare-longhorn-hosts.yml \
   --become \
   --private-key /root/.ssh/id_4work
 ```
@@ -205,6 +209,24 @@ ansible-playbook \
   --become \
   --private-key /root/.ssh/id_4work
 ```
+
+### 4. Install post-Kubespray components
+
+The post-installation playbook currently installs only Argo CD. It runs on the
+Ansible controller and uses the `kubectl` and administrator kubeconfig that
+Kubespray downloaded into the inventory artifacts directory:
+
+```bash
+ansible-playbook \
+  -i localhost, \
+  /post-installation/argocd-installation.yml \
+  -e post_install_inventory_dir=/inventory
+```
+
+Argo CD is installed from the official `v3.4.2` manifest with its SHA-256
+checksum pinned in the playbook. Future post-install components should be
+added as separate tagged blocks rather than coupled to the upstream Kubespray
+roles.
 
 For a fresh installation, run the complete `cluster.yml` once. Do not split
 the normal installation into separate control-plane and CNI runs. Kubespray
@@ -233,11 +255,11 @@ playbooks directly from this directory:
 
 ```bash
 ansible-playbook -i inventory/dev/hosts.yml \
-  ansible-prereq/preflight.yml \
+  pre-installation/preflight.yml \
   --private-key ~/.ssh/id_4work
 
 ansible-playbook -i inventory/dev/hosts.yml \
-  ansible-prereq/prepare-longhorn-hosts.yml \
+  pre-installation/prepare-longhorn-hosts.yml \
   --become \
   --private-key ~/.ssh/id_4work
 
@@ -249,6 +271,9 @@ ansible-playbook -i ../inventory/dev/hosts.yml \
   --private-key ~/.ssh/id_4work
 
 cd ..
+
+ansible-playbook -i localhost, \
+  post-installation/argocd-installation.yml
 ```
 
 Kubespray v2.31.0 pins its local Python dependencies in
@@ -273,9 +298,10 @@ platform-dev-worker-03   Ready   <none>
 
 ## Rerunning and resetting
 
-All three installation playbooks are designed to be rerun. After a completed
+All four workflow playbooks are designed to be rerun. After a completed
 installation, rerunning the full `cluster.yml` reconciles the declared
-Kubespray configuration.
+Kubespray configuration, and rerunning `argocd-installation.yml` reconciles
+the pinned Argo CD release.
 
 To remove Kubernetes state from all inventory nodes, run the official reset
 playbook from the Kubespray checkout:
@@ -300,6 +326,7 @@ After reset, use the complete normal order again:
 preflight.yml
     -> prepare-longhorn-hosts.yml
     -> cluster.yml
+    -> argocd-installation.yml
 ```
 
 ## Expanding the control plane
