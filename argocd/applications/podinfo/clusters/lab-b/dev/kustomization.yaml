@@ -15,4 +15,4 @@ patches:
     patch: |-
       - op: replace
         path: /spec/hostnames/0
-        value: podinfo.dev.lab-b.local
+        value: pod-info-lab-b-dev.emrah.online

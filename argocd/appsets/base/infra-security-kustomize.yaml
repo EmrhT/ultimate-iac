@@ -28,6 +28,12 @@ spec:
             revision: main
             path: argocd/infra-security/elastic-stack/overlays/dev
             wave: "10"
+          - name: ui-routes
+            namespace: argocd
+            sourceRepo: https://github.com/EmrhT/ultimate-iac.git
+            revision: main
+            path: argocd/infra-security/ui-routes/overlays/dev
+            wave: "20"
   template:
     metadata:
       name: "infra-{{ .name }}"
@@ -60,4 +66,3 @@ spec:
           - CreateNamespace=true
           - ServerSideApply=true
           - SkipDryRunOnMissingResource=true
-

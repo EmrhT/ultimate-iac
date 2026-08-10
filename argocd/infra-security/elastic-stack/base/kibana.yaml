@@ -7,6 +7,10 @@ spec:
   count: 1
   elasticsearchRef:
     name: platform
+  http:
+    tls:
+      selfSignedCertificate:
+        disabled: true
   podTemplate:
     spec:
       containers:
@@ -17,4 +21,3 @@ spec:
               memory: 512Mi
             limits:
               memory: 1Gi
-
