@@ -4,7 +4,9 @@ metadata:
   name: podinfo
 spec:
   parentRefs:
-    - name: traefik
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: traefik
       namespace: traefik
   hostnames:
     - podinfo.invalid
@@ -14,6 +16,8 @@ spec:
             type: PathPrefix
             value: /
       backendRefs:
-        - name: podinfo
+        - group: ""
+          kind: Service
+          name: podinfo
           port: 9898
-
+          weight: 1
