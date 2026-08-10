@@ -6,11 +6,11 @@ grafana:
   persistence:
     enabled: true
     storageClassName: longhorn
-    size: 1Gi
+    size: 300Mi
 prometheus:
   prometheusSpec:
     retention: 3d
-    retentionSize: 1800MB
+    retentionSize: 300MB
     serviceMonitorSelectorNilUsesHelmValues: false
     podMonitorSelectorNilUsesHelmValues: false
     storageSpec:
@@ -21,7 +21,7 @@ prometheus:
             - ReadWriteOnce
           resources:
             requests:
-              storage: 2Gi
+              storage: 400Mi
 alertmanager:
   alertmanagerSpec:
     retention: 24h

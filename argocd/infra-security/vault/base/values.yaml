@@ -25,10 +25,9 @@ server:
   dataStorage:
     enabled: true
     storageClass: longhorn
-    size: 1Gi
+    size: 150Mi
   auditStorage:
     enabled: false
 ui:
   enabled: true
   serviceType: ClusterIP
-
