@@ -12,6 +12,11 @@ gateway:
   enabled: true
   name: traefik
   listeners:
+    web:
+      port: 8000
+      protocol: HTTP
+      namespacePolicy:
+        from: All
     websecure:
       port: 8443
       protocol: HTTPS
@@ -33,7 +38,13 @@ ingressRoute:
 ports:
   web:
     expose:
-      default: false
+      default: true
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+          permanent: true
 service:
   spec:
     type: LoadBalancer
