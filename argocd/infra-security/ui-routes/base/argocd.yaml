@@ -17,7 +17,7 @@ spec:
       kind: Gateway
       name: traefik
       namespace: traefik
-      sectionName: web
+      sectionName: websecure
   hostnames:
     - argocd.no-name.win
   rules:
@@ -43,7 +43,7 @@ spec:
       kind: Gateway
       name: traefik
       namespace: traefik
-      sectionName: web
+      sectionName: websecure
   hostnames:
     - argocd-webhook.no-name.win
   rules:

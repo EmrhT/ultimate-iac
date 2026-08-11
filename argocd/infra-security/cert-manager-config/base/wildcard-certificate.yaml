@@ -1,0 +1,13 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: no-name-win-wildcard
+  namespace: traefik
+spec:
+  secretName: no-name-win-wildcard-tls
+  issuerRef:
+    name: letsencrypt-staging
+    kind: ClusterIssuer
+  dnsNames:
+    - no-name.win
+    - "*.no-name.win"

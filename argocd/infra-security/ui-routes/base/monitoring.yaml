@@ -9,7 +9,7 @@ spec:
       kind: Gateway
       name: traefik
       namespace: traefik
-      sectionName: web
+      sectionName: websecure
   hostnames:
     - grafana.no-name.win
   rules:
@@ -35,7 +35,7 @@ spec:
       kind: Gateway
       name: traefik
       namespace: traefik
-      sectionName: web
+      sectionName: websecure
   hostnames:
     - prometheus.no-name.win
   rules:
@@ -61,7 +61,7 @@ spec:
       kind: Gateway
       name: traefik
       namespace: traefik
-      sectionName: web
+      sectionName: websecure
   hostnames:
     - alertmanager.no-name.win
   rules:

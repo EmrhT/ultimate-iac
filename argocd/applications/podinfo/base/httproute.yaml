@@ -8,6 +8,7 @@ spec:
       kind: Gateway
       name: traefik
       namespace: traefik
+      sectionName: websecure
   hostnames:
     - podinfo.invalid
   rules:

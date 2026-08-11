@@ -9,7 +9,7 @@ spec:
       kind: Gateway
       name: traefik
       namespace: traefik
-      sectionName: web
+      sectionName: websecure
   hostnames:
     - kibana.no-name.win
   rules:

@@ -12,17 +12,28 @@ gateway:
   enabled: true
   name: traefik
   listeners:
-    web:
-      port: 8000
-      protocol: HTTP
+    websecure:
+      port: 8443
+      protocol: HTTPS
       namespacePolicy:
         from: All
+      certificateRefs:
+        - group: ""
+          kind: Secret
+          name: no-name-win-wildcard-tls
+      mode: Terminate
 ingressRoute:
   dashboard:
     enabled: true
     matchRule: Host(`traefik.no-name.win`)
     entryPoints:
-      - web
+      - websecure
+    tls:
+      secretName: no-name-win-wildcard-tls
+ports:
+  web:
+    expose:
+      default: false
 service:
   spec:
     type: LoadBalancer

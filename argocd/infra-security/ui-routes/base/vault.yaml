@@ -9,7 +9,7 @@ spec:
       kind: Gateway
       name: traefik
       namespace: traefik
-      sectionName: web
+      sectionName: websecure
   hostnames:
     - vault.no-name.win
   rules:

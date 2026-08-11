@@ -9,7 +9,7 @@ spec:
       kind: Gateway
       name: traefik
       namespace: traefik
-      sectionName: web
+      sectionName: websecure
   hostnames:
     - longhorn.no-name.win
   rules:
