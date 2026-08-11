@@ -11,7 +11,7 @@ spec:
       namespace: traefik
       sectionName: web
   hostnames:
-    - longhorn.emrah.online
+    - longhorn.no-name.win
   rules:
     - matches:
         - path:

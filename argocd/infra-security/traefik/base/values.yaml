@@ -20,7 +20,7 @@ gateway:
 ingressRoute:
   dashboard:
     enabled: true
-    matchRule: Host(`traefik.emrah.online`)
+    matchRule: Host(`traefik.no-name.win`)
     entryPoints:
       - web
 service:

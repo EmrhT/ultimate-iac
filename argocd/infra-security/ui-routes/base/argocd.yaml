@@ -19,7 +19,7 @@ spec:
       namespace: traefik
       sectionName: web
   hostnames:
-    - argocd.emrah.online
+    - argocd.no-name.win
   rules:
     - matches:
         - path:
@@ -45,7 +45,7 @@ spec:
       namespace: traefik
       sectionName: web
   hostnames:
-    - argocd-webhook.emrah.online
+    - argocd-webhook.no-name.win
   rules:
     - matches:
         - path:

@@ -11,7 +11,7 @@ spec:
       namespace: traefik
       sectionName: web
   hostnames:
-    - vault.emrah.online
+    - vault.no-name.win
   rules:
     - matches:
         - path:

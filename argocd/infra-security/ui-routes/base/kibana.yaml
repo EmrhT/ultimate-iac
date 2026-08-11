@@ -11,7 +11,7 @@ spec:
       namespace: traefik
       sectionName: web
   hostnames:
-    - kibana.emrah.online
+    - kibana.no-name.win
   rules:
     - matches:
         - path:

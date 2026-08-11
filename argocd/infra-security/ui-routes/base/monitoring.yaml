@@ -11,7 +11,7 @@ spec:
       namespace: traefik
       sectionName: web
   hostnames:
-    - grafana.emrah.online
+    - grafana.no-name.win
   rules:
     - matches:
         - path:
@@ -37,7 +37,7 @@ spec:
       namespace: traefik
       sectionName: web
   hostnames:
-    - prometheus.emrah.online
+    - prometheus.no-name.win
   rules:
     - matches:
         - path:
@@ -63,7 +63,7 @@ spec:
       namespace: traefik
       sectionName: web
   hostnames:
-    - alertmanager.emrah.online
+    - alertmanager.no-name.win
   rules:
     - matches:
         - path:
