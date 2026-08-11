@@ -28,6 +28,12 @@ spec:
             revision: main
             path: argocd/infra-security/metallb-config/overlays/dev
             wave: "-24"
+          - name: longhorn-config
+            namespace: longhorn-system
+            sourceRepo: https://github.com/EmrhT/ultimate-iac.git
+            revision: main
+            path: argocd/infra-security/longhorn-config/overlays/dev
+            wave: "-19"
           - name: elastic-stack
             namespace: elastic-stack
             sourceRepo: https://github.com/EmrhT/ultimate-iac.git

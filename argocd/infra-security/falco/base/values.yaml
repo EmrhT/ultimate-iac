@@ -8,6 +8,6 @@ falco:
 tty: false
 serviceMonitor:
   create: true
+  interval: 60s
 falcosidekick:
   enabled: false
-

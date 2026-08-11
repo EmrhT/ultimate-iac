@@ -1,6 +1,12 @@
 grafana:
   enabled: true
   defaultDashboardsEnabled: true
+  serviceMonitor:
+    metricRelabelings:
+      - action: drop
+        sourceLabels:
+          - __name__
+        regex: grafana_feature_toggles_info
   deploymentStrategy:
     type: Recreate
   persistence:
@@ -10,8 +16,9 @@ grafana:
 prometheus:
   prometheusSpec:
     retention: 1d
-    retentionSize: 300MB
-    scrapeInterval: 45s
+    retentionSize: 500MB
+    scrapeInterval: 60s
+    evaluationInterval: 60s
     serviceMonitorSelectorNilUsesHelmValues: false
     podMonitorSelectorNilUsesHelmValues: false
     storageSpec:
@@ -26,3 +33,26 @@ prometheus:
 alertmanager:
   alertmanagerSpec:
     retention: 24h
+
+kubeApiServer:
+  serviceMonitor:
+    metricRelabelings:
+      # Preserve the chart's default bucket reduction rule.
+      - action: drop
+        regex: (etcd_request|apiserver_request_slo|apiserver_request_sli|apiserver_request)_duration_seconds_bucket;(0\.15|0\.2|0\.3|0\.35|0\.4|0\.45|0\.6|0\.7|0\.8|0\.9|1\.25|1\.5|1\.75|2|3|3\.5|4|4\.5|6|7|8|9|15|20|40|45|50)(\.0)?
+        sourceLabels:
+          - __name__
+          - le
+      - action: drop
+        sourceLabels:
+          - __name__
+        regex: apiserver_request_body_size_bytes_bucket|apiserver_response_sizes_bucket|apiserver_watch_list_duration_seconds_bucket|apiserver_watch_cache_read_wait_seconds_bucket|etcd_request_duration_seconds_bucket
+
+kubelet:
+  serviceMonitor:
+    interval: 60s
+    probesMetricRelabelings:
+      - action: drop
+        sourceLabels:
+          - __name__
+        regex: prober_probe_duration_seconds_bucket
