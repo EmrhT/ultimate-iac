@@ -9,8 +9,9 @@ grafana:
     size: 300Mi
 prometheus:
   prometheusSpec:
-    retention: 3d
+    retention: 1d
     retentionSize: 300MB
+    scrapeInterval: 45s
     serviceMonitorSelectorNilUsesHelmValues: false
     podMonitorSelectorNilUsesHelmValues: false
     storageSpec:
