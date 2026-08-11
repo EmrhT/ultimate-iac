@@ -6,7 +6,7 @@ metadata:
 spec:
   secretName: no-name-win-wildcard-tls
   issuerRef:
-    name: letsencrypt-staging
+    name: letsencrypt-production
     kind: ClusterIssuer
   dnsNames:
     - no-name.win
