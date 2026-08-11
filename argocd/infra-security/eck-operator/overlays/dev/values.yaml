@@ -1,8 +1,9 @@
 replicaCount: 1
+podAnnotations:
+  platform.example/webhook-test: "2026-08-11"
 resources:
   requests:
     cpu: 100m
     memory: 150Mi
   limits:
     memory: 512Mi
-
