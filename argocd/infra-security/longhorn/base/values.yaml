@@ -1,9 +1,9 @@
 persistence:
   defaultClass: true
-  defaultClassReplicaCount: 1
+  defaultClassReplicaCount: 2
 defaultSettings:
   defaultDataPath: /var/lib/longhorn
-  defaultReplicaCount: 1
+  defaultReplicaCount: 2
   replicaSoftAntiAffinity: false
   storageMinimalAvailablePercentage: 15
   removeSnapshotsDuringFilesystemTrim: true

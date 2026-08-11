@@ -29,7 +29,7 @@ prometheus:
             - ReadWriteOnce
           resources:
             requests:
-              storage: 750Mi
+              storage: 1Gi
 alertmanager:
   alertmanagerSpec:
     retention: 24h
