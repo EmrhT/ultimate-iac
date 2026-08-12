@@ -1,0 +1,11 @@
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: prometheus-daily-snapshot-delete
+  namespace: longhorn-system
+spec:
+  # Purge excess/system snapshots before trimming the volume.
+  cron: "0 1 * * *"
+  task: snapshot-delete
+  retain: 1
+  concurrency: 1

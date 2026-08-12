@@ -1,0 +1,13 @@
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: prometheus-daily-trim
+  namespace: longhorn-system
+spec:
+  # Trim after old-snapshot cleanup and before creating the new recovery point.
+  # removeSnapshotsDuringFilesystemTrim is enabled, so the previous daily
+  # snapshot is removed here and replaced by the 02:00 snapshot.
+  cron: "30 1 * * *"
+  task: filesystem-trim
+  retain: 0
+  concurrency: 1

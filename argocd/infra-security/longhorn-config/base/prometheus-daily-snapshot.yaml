@@ -1,0 +1,11 @@
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: prometheus-daily-snapshot
+  namespace: longhorn-system
+spec:
+  # Longhorn schedules recurring jobs using the cluster/controller timezone.
+  cron: "0 2 * * *"
+  task: snapshot
+  retain: 1
+  concurrency: 1

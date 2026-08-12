@@ -27,6 +27,13 @@ prometheus:
     podMonitorSelectorNilUsesHelmValues: false
     storageSpec:
       volumeClaimTemplate:
+        metadata:
+          labels:
+            # PVC labels are the source of the Prometheus-only Longhorn jobs.
+            recurring-job.longhorn.io/source: enabled
+            recurring-job.longhorn.io/prometheus-daily-snapshot: enabled
+            recurring-job.longhorn.io/prometheus-daily-snapshot-delete: enabled
+            recurring-job.longhorn.io/prometheus-daily-trim: enabled
         spec:
           storageClassName: longhorn
           accessModes:
