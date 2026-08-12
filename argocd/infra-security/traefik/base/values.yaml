@@ -1,10 +1,12 @@
 providers:
   kubernetesCRD:
-    enabled: true
+    enabled: false
   kubernetesIngress:
     enabled: false
   kubernetesGateway:
     enabled: true
+ingressClass:
+  enabled: false
 gatewayClass:
   enabled: true
   name: traefik
@@ -29,12 +31,10 @@ gateway:
       mode: Terminate
 ingressRoute:
   dashboard:
-    enabled: true
-    matchRule: Host(`traefik.no-name.win`)
-    entryPoints:
-      - websecure
-    tls:
-      secretName: no-name-win-wildcard-tls
+    enabled: false
+api:
+  dashboard: true
+  insecure: false
 ports:
   web:
     expose:

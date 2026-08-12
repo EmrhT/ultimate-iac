@@ -4,5 +4,6 @@ resources:
   - argocd.yaml
   - longhorn.yaml
   - monitoring.yaml
+  - traefik.yaml
   - vault.yaml
   - kibana.yaml
