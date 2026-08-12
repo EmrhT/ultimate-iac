@@ -17,7 +17,6 @@ grafana:
     size: 300Mi
 prometheus:
   prometheusSpec:
-    paused: true
     retention: 12h
     # This limits persisted blocks only. WAL, head chunks, and temporary
     # compaction files are additional, so keep substantial PVC headroom.
