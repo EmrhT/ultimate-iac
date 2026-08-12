@@ -6,7 +6,9 @@ grafana:
       - action: drop
         sourceLabels:
           - __name__
-        regex: grafana_feature_toggles_info
+        # These high-cardinality API-server histograms dominate Grafana's
+        # scrape footprint and are not used by the bundled dashboards.
+        regex: grafana_feature_toggles_info|grafana_apiserver_request_(duration|slo_duration|sli_duration)_seconds_bucket
   deploymentStrategy:
     type: Recreate
   persistence:
@@ -16,7 +18,9 @@ grafana:
 prometheus:
   prometheusSpec:
     retention: 12h
-    retentionSize: 500MB
+    # This limits persisted blocks only. WAL, head chunks, and temporary
+    # compaction files are additional, so keep substantial PVC headroom.
+    retentionSize: 1GB
     scrapeInterval: 60s
     evaluationInterval: 60s
     serviceMonitorSelectorNilUsesHelmValues: false
@@ -29,7 +33,7 @@ prometheus:
             - ReadWriteOnce
           resources:
             requests:
-              storage: 1Gi
+              storage: 3Gi
 alertmanager:
   alertmanagerSpec:
     retention: 12h
