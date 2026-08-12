@@ -16,3 +16,6 @@ patches:
       - op: replace
         path: /spec/hostnames/0
         value: podinfo-lab-a-dev.no-name.win
+      - op: add
+        path: /spec/hostnames/-
+        value: ci-podinfo-lab-a-dev.no-name.win
