@@ -17,10 +17,11 @@ grafana:
     size: 300Mi
 prometheus:
   prometheusSpec:
+    paused: true
     retention: 12h
     # This limits persisted blocks only. WAL, head chunks, and temporary
     # compaction files are additional, so keep substantial PVC headroom.
-    retentionSize: 1GB
+    retentionSize: 300MB
     scrapeInterval: 60s
     evaluationInterval: 60s
     serviceMonitorSelectorNilUsesHelmValues: false
@@ -40,7 +41,7 @@ prometheus:
             - ReadWriteOnce
           resources:
             requests:
-              storage: 3Gi
+              storage: 1536Mi
 alertmanager:
   alertmanagerSpec:
     retention: 12h
