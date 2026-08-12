@@ -45,6 +45,10 @@ alertmanager:
   alertmanagerSpec:
     retention: 12h
 
+prometheus-node-exporter:
+  daemonsetAnnotations:
+    argocd.argoproj.io/ignore-healthcheck: "true"
+
 kubeApiServer:
   serviceMonitor:
     metricRelabelings:
