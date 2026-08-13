@@ -1,0 +1,76 @@
+community:
+  enabled: true
+
+fullnameOverride: security-sonarqube
+
+replicaCount: 1
+revisionHistoryLimit: 2
+
+service:
+  type: ClusterIP
+  externalPort: 9000
+  internalPort: 9000
+
+resources:
+  requests:
+    cpu: 400m
+    memory: 2Gi
+    ephemeral-storage: 256Mi
+  limits:
+    cpu: "2"
+    memory: 3Gi
+    ephemeral-storage: 512Mi
+
+env:
+  - name: SONAR_WEB_JAVAOPTS
+    value: -Xms128m -Xmx512m
+  - name: SONAR_CE_JAVAOPTS
+    value: -Xms128m -Xmx512m
+  - name: SONAR_SEARCH_JAVAOPTS
+    value: -Xms512m -Xmx512m -XX:MaxDirectMemorySize=256m
+
+persistence:
+  enabled: true
+  storageClass: longhorn
+  accessMode: ReadWriteOnce
+  size: 1Gi
+
+emptyDir:
+  sizeLimit: 256Mi
+
+# Search indexes are rebuildable. Tight rotation keeps the four Sonar log
+# families comfortably below the 50 MiB budget inside the shared 1 Gi claim.
+sonarProperties:
+  sonar.log.level: INFO
+  sonar.log.rollingPolicy: "size:1MB"
+  sonar.log.maxFiles: 2
+  sonar.web.accessLogs.enable: false
+
+jdbcOverwrite:
+  enabled: true
+  jdbcUrl: jdbc:postgresql://security-sonarqube-postgresql:5432/sonarqube
+  jdbcUsername: sonarqube
+  jdbcSecretName: security-sonarqube-credentials
+  jdbcSecretPasswordKey: postgres-password
+
+monitoringPasscodeSecretName: security-sonarqube-credentials
+monitoringPasscodeSecretKey: monitoring-passcode
+
+prometheusMonitoring:
+  podMonitor:
+    enabled: false
+
+networkPolicy:
+  enabled: false
+
+initSysctl:
+  enabled: true
+
+initFs:
+  enabled: true
+
+tests:
+  enabled: false
+
+mcp:
+  enabled: false

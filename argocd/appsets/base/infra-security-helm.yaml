@@ -64,9 +64,21 @@ spec:
             chart: eck-operator
             chartVersion: 3.4.0
             wave: "0"
+          - name: security-sonarqube
+            namespace: security-sonarqube
+            chartRepo: https://SonarSource.github.io/helm-chart-sonarqube
+            chart: sonarqube
+            chartVersion: 2026.4.1
+            wave: "15"
+          - name: security-trivy
+            namespace: security-trivy
+            chartRepo: https://aquasecurity.github.io/helm-charts
+            chart: trivy
+            chartVersion: 0.25.0
+            wave: "15"
   template:
     metadata:
-      name: "infra-{{ .name }}"
+      name: '{{ if hasPrefix "security-" .name }}{{ .name }}{{ else }}infra-{{ .name }}{{ end }}'
       namespace: argocd
       annotations:
         argocd.argoproj.io/sync-wave: "{{ .wave }}"
@@ -82,8 +94,8 @@ spec:
           helm:
             releaseName: "{{ .name }}"
             valueFiles:
-              - "$values/argocd/infra-security/{{ .name }}/base/values.yaml"
-              - "$values/argocd/infra-security/{{ .name }}/overlays/dev/values.yaml"
+              - '$values/argocd/{{ if hasPrefix "security-" .name }}security-tools/{{ trimPrefix "security-" .name }}{{ else }}infra-security/{{ .name }}{{ end }}/base/values.yaml'
+              - '$values/argocd/{{ if hasPrefix "security-" .name }}security-tools/{{ trimPrefix "security-" .name }}{{ else }}infra-security/{{ .name }}{{ end }}/overlays/dev/values.yaml'
         - repoURL: https://github.com/EmrhT/ultimate-iac.git
           targetRevision: main
           ref: values

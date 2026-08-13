@@ -1,0 +1,72 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: security-nuclei-scan
+spec:
+  schedule: "0 0 1 1 *"
+  timeZone: Europe/Istanbul
+  suspend: true
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      ttlSecondsAfterFinished: 86400
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: security-nuclei-scan
+        spec:
+          automountServiceAccountToken: false
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: scanner
+              image: projectdiscovery/nuclei:v3.11.1
+              imagePullPolicy: IfNotPresent
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop: ["ALL"]
+              args:
+                - -u
+                - http://podinfo.lab-a-dev.svc.cluster.local:9898
+                - -severity
+                - medium,high,critical
+                - -jsonl
+                - -silent
+                - -no-color
+                - -update-template-dir
+                - /home/nuclei/nuclei-templates
+              env:
+                - name: HOME
+                  value: /home/nuclei
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+                  ephemeral-storage: 32Mi
+                limits:
+                  cpu: "1"
+                  memory: 1Gi
+                  ephemeral-storage: 256Mi
+              volumeMounts:
+                - name: home
+                  mountPath: /home/nuclei
+                - name: tmp
+                  mountPath: /tmp
+          volumes:
+            - name: home
+              emptyDir:
+                sizeLimit: 256Mi
+            - name: tmp
+              emptyDir:
+                sizeLimit: 64Mi

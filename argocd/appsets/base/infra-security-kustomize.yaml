@@ -52,9 +52,27 @@ spec:
             revision: main
             path: argocd/infra-security/ui-routes/overlays/dev
             wave: "20"
+          - name: security-sonarqube-config
+            namespace: security-sonarqube
+            sourceRepo: https://github.com/EmrhT/ultimate-iac.git
+            revision: main
+            path: argocd/security-tools/sonarqube/overlays/dev
+            wave: "14"
+          - name: security-trivy-config
+            namespace: security-trivy
+            sourceRepo: https://github.com/EmrhT/ultimate-iac.git
+            revision: main
+            path: argocd/security-tools/trivy/overlays/dev
+            wave: "14"
+          - name: security-nuclei
+            namespace: security-nuclei
+            sourceRepo: https://github.com/EmrhT/ultimate-iac.git
+            revision: main
+            path: argocd/security-tools/nuclei/overlays/dev
+            wave: "15"
   template:
     metadata:
-      name: "infra-{{ .name }}"
+      name: '{{ if hasPrefix "security-" .name }}{{ .name }}{{ else }}infra-{{ .name }}{{ end }}'
       namespace: argocd
       annotations:
         argocd.argoproj.io/sync-wave: "{{ .wave }}"

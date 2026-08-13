@@ -1,0 +1,21 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: security-sonarqube
+  labels:
+    release: kube-prometheus-stack
+spec:
+  namespaceSelector:
+    matchNames:
+      - security-sonarqube
+  selector:
+    matchLabels:
+      app: sonarqube
+  podMetricsEndpoints:
+    - port: http
+      path: /api/monitoring/metrics
+      scheme: http
+      interval: 60s
+      bearerTokenSecret:
+        name: security-sonarqube-credentials
+        key: monitoring-passcode

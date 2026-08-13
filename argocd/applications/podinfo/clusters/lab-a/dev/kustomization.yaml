@@ -8,6 +8,22 @@ labels:
     includeTemplates: true
 patches:
   - target:
+      group: networking.k8s.io
+      version: v1
+      kind: NetworkPolicy
+      name: podinfo
+    patch: |-
+      - op: add
+        path: /spec/ingress/-
+        value:
+          from:
+            - namespaceSelector:
+                matchLabels:
+                  kubernetes.io/metadata.name: security-nuclei
+          ports:
+            - protocol: TCP
+              port: 9898
+  - target:
       group: gateway.networking.k8s.io
       version: v1
       kind: HTTPRoute

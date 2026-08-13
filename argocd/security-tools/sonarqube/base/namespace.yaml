@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: security-sonarqube
+  labels:
+    app.kubernetes.io/part-of: security-tools
+    platform.example/managed-by: argocd
+    # The official chart's sysctl init container requires privileged PSS.
+    pod-security.kubernetes.io/enforce: privileged
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted

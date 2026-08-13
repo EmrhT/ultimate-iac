@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: security-nuclei
+spec:
+  hard:
+    requests.cpu: "1"
+    requests.memory: 2Gi
+    limits.cpu: "3"
+    limits.memory: 3Gi
+    requests.ephemeral-storage: 1Gi
+    limits.ephemeral-storage: 2Gi
+    count/jobs.batch: "5"
+    count/cronjobs.batch: "2"

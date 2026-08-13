@@ -1,0 +1,20 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: security-sonarqube-storage
+  labels:
+    release: kube-prometheus-stack
+spec:
+  groups:
+    - name: security-sonarqube.storage
+      rules:
+        - alert: SecuritySonarqubeVolumeNearlyFull
+          expr: |
+            kubelet_volume_stats_available_bytes{namespace="security-sonarqube"}
+              / kubelet_volume_stats_capacity_bytes{namespace="security-sonarqube"} < 0.15
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: SonarQube storage has less than 15% free space
+            description: Delete disposable SonarQube data or recreate the affected claim; no backup is expected in this home-lab profile.

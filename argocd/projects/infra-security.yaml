@@ -17,6 +17,8 @@ spec:
     - https://prometheus-community.github.io/helm-charts
     - https://falcosecurity.github.io/charts
     - https://helm.elastic.co
+    - https://SonarSource.github.io/helm-chart-sonarqube
+    - https://aquasecurity.github.io/helm-charts
   destinations:
     - server: https://kubernetes.default.svc
       namespace: '*'

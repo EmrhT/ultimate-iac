@@ -1,0 +1,9 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: security-trivy
+resources:
+  - namespace.yaml
+  - scanner-cronjob.yaml
+  - networkpolicy.yaml
+  - resourcequota.yaml
+  - prometheusrule.yaml
