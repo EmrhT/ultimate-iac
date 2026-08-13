@@ -44,14 +44,12 @@ and before syncing the SonarQube applications:
 ```bash
 kubectl -n security-sonarqube create secret generic security-sonarqube-credentials \
   --from-literal=postgres-password='<strong-random-password>' \
-  --from-literal=password='<new-sonarqube-admin-password>' \
   --from-literal=monitoring-passcode='<strong-random-passcode>'
 ```
 
-The `password` value becomes the SonarQube `admin` password. The
-`security-sonarqube-admin-password` Job changes the installation default once,
-then succeeds idempotently on later syncs. Argo CD does not track or prune the
-manually created Secret.
+Argo CD does not track or prune the manually created Secret. Change the default
+SonarQube `admin` password interactively in the UI; the administrator password
+is not stored in Kubernetes or managed by GitOps.
 
 After SonarQube is healthy, create the `podinfo-emrah` project and generate a
 project analysis token in **User > My Account > Security**. Store its exact

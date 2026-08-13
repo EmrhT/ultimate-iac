@@ -4,7 +4,6 @@ namespace: security-sonarqube
 resources:
   - namespace.yaml
   - postgresql.yaml
-  - admin-password-job.yaml
   - scanner-cronjob.yaml
   - httproute.yaml
   - resourcequota.yaml
