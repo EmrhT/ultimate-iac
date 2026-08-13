@@ -17,14 +17,14 @@ platform-bootstrap ApplicationSet
     ├── infra-security-kustomize ApplicationSet
     └── custom-applications ApplicationSet
         ├── podinfo-lab-a-dev
-        ├── podinfo-lab-a-staging
+        ├── podinfo-lab-a-prod
         ├── podinfo-lab-b-dev
-        └── podinfo-lab-b-staging
+        └── podinfo-lab-b-prod
 ```
 
 `lab-a` and `lab-b` are logical clusters simulated on the same Kubernetes API.
-Their workloads are isolated into `lab-a-dev`, `lab-a-staging`, `lab-b-dev`,
-and `lab-b-staging` namespaces. Cluster-scoped operators are installed once on
+Their workloads are isolated into `lab-a-dev`, `lab-a-prod`, `lab-b-dev`, and
+`lab-b-prod` namespaces. Cluster-scoped operators are installed once on
 the physical cluster; installing MetalLB, Longhorn, Falco, ECK, or their CRDs
 twice under different namespaces would still cause cluster-wide collisions.
 
@@ -51,8 +51,8 @@ argocd/
 └── applications/
     └── podinfo/
         ├── base/
-        ├── environments/{dev,staging}/
-        └── clusters/{lab-a,lab-b}/{dev,staging}/
+        ├── environments/{dev,prod}/
+        └── clusters/{lab-a,lab-b}/{dev,prod}/
 ```
 
 Helm values use a base file followed by an environment override. Kubernetes
@@ -127,10 +127,10 @@ ApplicationSet.
 Test the four Podinfo routes through Traefik's MetalLB address:
 
 ```bash
-curl -H 'Host: podinfo.dev.lab-a.local' http://192.168.122.120
-curl -H 'Host: podinfo.staging.lab-a.local' http://192.168.122.120
-curl -H 'Host: podinfo.dev.lab-b.local' http://192.168.122.120
-curl -H 'Host: podinfo.staging.lab-b.local' http://192.168.122.120
+curl -H 'Host: podinfo-lab-a-dev.no-name.win' http://192.168.122.120
+curl -H 'Host: podinfo-lab-a-prod.no-name.win' http://192.168.122.120
+curl -H 'Host: podinfo-lab-b-dev.no-name.win' http://192.168.122.120
+curl -H 'Host: podinfo-lab-b-prod.no-name.win' http://192.168.122.120
 ```
 
 ## Operational boundaries still requiring design

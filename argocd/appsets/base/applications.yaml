@@ -19,7 +19,7 @@ spec:
           - list:
               elements:
                 - environment: dev
-                - environment: staging
+                - environment: prod
   template:
     metadata:
       name: "podinfo-{{ .cluster }}-{{ .environment }}"
@@ -57,4 +57,3 @@ spec:
         syncOptions:
           - CreateNamespace=true
           - ServerSideApply=true
-

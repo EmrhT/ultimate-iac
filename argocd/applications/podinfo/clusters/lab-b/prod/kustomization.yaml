@@ -1,7 +1,7 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  - ../../../environments/staging
+  - ../../../environments/prod
 labels:
   - pairs:
       platform.example/cluster: lab-b
@@ -15,4 +15,4 @@ patches:
     patch: |-
       - op: replace
         path: /spec/hostnames/0
-        value: podinfo-lab-b-staging.no-name.win
+        value: podinfo-lab-b-prod.no-name.win
