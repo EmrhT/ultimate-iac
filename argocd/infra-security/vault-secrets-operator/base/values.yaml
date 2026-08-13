@@ -1,0 +1,29 @@
+controller:
+  replicas: 1
+  manager:
+    globalVaultAuthOptions:
+      allowDefaultGlobals: false
+    clientCache:
+      persistenceModel: none
+    resources:
+      requests:
+        cpu: 25m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
+  kubeRbacProxy:
+    resources:
+      requests:
+        cpu: 5m
+        memory: 32Mi
+      limits:
+        cpu: 100m
+        memory: 64Mi
+
+defaultVaultConnection:
+  enabled: true
+  address: http://vault.vault.svc.cluster.local:8200
+
+csi:
+  enabled: false

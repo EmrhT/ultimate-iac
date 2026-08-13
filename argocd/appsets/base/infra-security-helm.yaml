@@ -52,6 +52,12 @@ spec:
             chart: vault
             chartVersion: 0.32.0
             wave: "0"
+          - name: vault-secrets-operator
+            namespace: vault-secrets-operator
+            chartRepo: https://helm.releases.hashicorp.com
+            chart: vault-secrets-operator
+            chartVersion: 1.5.0
+            wave: "1"
           - name: falco
             namespace: falco
             chartRepo: https://falcosecurity.github.io/charts
