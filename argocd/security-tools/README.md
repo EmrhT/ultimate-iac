@@ -37,26 +37,36 @@ the claim without also changing the namespace quota.
 
 ## Credentials
 
-The `security-sonarqube-bootstrap` Job generates the database password,
-monitoring passcode, and initial admin password inside the cluster. No plaintext
-credential is committed. Read the generated admin password with:
+SonarQube credentials are deliberately not managed by Argo CD. Create the
+runtime-only Secret manually after the `security-sonarqube` namespace exists
+and before syncing the SonarQube applications:
 
 ```bash
-kubectl -n security-sonarqube get secret security-sonarqube-credentials \
-  -o jsonpath='{.data.password}' | base64 -d
+kubectl -n security-sonarqube create secret generic security-sonarqube-credentials \
+  --from-literal=postgres-password='<strong-random-password>' \
+  --from-literal=password='<new-sonarqube-admin-password>' \
+  --from-literal=monitoring-passcode='<strong-random-passcode>'
 ```
 
-Create a SonarQube user token in the UI, then add it as the runtime-only scanner
-Secret:
+The `password` value becomes the SonarQube `admin` password. The
+`security-sonarqube-admin-password` Job changes the installation default once,
+then succeeds idempotently on later syncs. Argo CD does not track or prune the
+manually created Secret.
+
+After SonarQube is healthy, create the `podinfo-emrah` project and generate a
+project analysis token in **User > My Account > Security**. Store its exact
+value in a second runtime-only Secret:
 
 ```bash
 kubectl -n security-sonarqube create secret generic security-sonarqube-scanner-token \
   --from-literal=token='<token>'
 ```
 
-If all SonarQube data and credentials are deliberately discarded, delete the
-two PVCs and the generated Secrets, then force-sync `security-sonarqube`. The
-bootstrap Jobs are idempotent and will create a new installation.
+If the credential Secret is lost while PostgreSQL's PVC remains, a newly chosen
+password will not match the password stored in PostgreSQL. Because this profile
+treats the data as disposable, delete both SonarQube PVCs, recreate the
+credential Secret, and sync `security-sonarqube-config` and
+`security-sonarqube` again.
 
 ## Manual scans
 
