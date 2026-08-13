@@ -8,7 +8,7 @@ spec:
     requests.memory: 2Gi
     limits.cpu: "3"
     limits.memory: 3Gi
-    requests.storage: 1Gi
+    requests.storage: 2Gi
     persistentvolumeclaims: "1"
     count/jobs.batch: "5"
     count/cronjobs.batch: "2"
