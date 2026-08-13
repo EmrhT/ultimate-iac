@@ -88,6 +88,14 @@ spec:
       destination:
         server: https://kubernetes.default.svc
         namespace: "{{ .namespace }}"
+      ignoreDifferences:
+        - group: apps
+          kind: StatefulSet
+          name: security-sonarqube-postgresql
+          namespace: security-sonarqube
+          jsonPointers:
+            # Kubernetes retains this generated field in the immutable PVC template.
+            - /spec/volumeClaimTemplates/0/status
       syncPolicy:
         automated:
           prune: true
