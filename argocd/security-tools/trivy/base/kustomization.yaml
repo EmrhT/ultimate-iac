@@ -4,6 +4,5 @@ namespace: security-trivy
 resources:
   - namespace.yaml
   - scanner-cronjob.yaml
-  - networkpolicy.yaml
   - resourcequota.yaml
   - prometheusrule.yaml

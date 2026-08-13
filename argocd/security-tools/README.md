@@ -78,6 +78,5 @@ kubectl -n security-sonarqube create job --from=cronjob/security-sonarqube-scan 
 kubectl -n security-nuclei create job --from=cronjob/security-nuclei-scan security-nuclei-scan-manual
 ```
 
-Use a unique Job name for subsequent runs. The Nuclei policy grants access only
-from `security-nuclei` to the Podinfo application in `lab-a-dev`; lab-b and
-production are unchanged.
+Use a unique Job name for subsequent runs. Namespace traffic is intentionally
+unrestricted at this troubleshooting stage.

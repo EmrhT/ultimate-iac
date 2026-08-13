@@ -7,7 +7,6 @@ resources:
   - admin-password-job.yaml
   - scanner-cronjob.yaml
   - httproute.yaml
-  - networkpolicy.yaml
   - resourcequota.yaml
   - podmonitor.yaml
   - prometheusrule.yaml

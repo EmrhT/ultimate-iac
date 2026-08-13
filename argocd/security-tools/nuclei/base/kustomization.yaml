@@ -4,5 +4,4 @@ namespace: security-nuclei
 resources:
   - namespace.yaml
   - scanner-cronjob.yaml
-  - networkpolicy.yaml
   - resourcequota.yaml

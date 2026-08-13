@@ -60,9 +60,6 @@ prometheusMonitoring:
   podMonitor:
     enabled: false
 
-networkPolicy:
-  enabled: false
-
 initSysctl:
   enabled: true
 
