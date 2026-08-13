@@ -60,6 +60,15 @@ prometheusMonitoring:
   podMonitor:
     enabled: false
 
+initContainers:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 16Mi
+    limits:
+      cpu: 100m
+      memory: 64Mi
+
 initSysctl:
   enabled: true
 
