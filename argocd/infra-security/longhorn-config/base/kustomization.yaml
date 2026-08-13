@@ -5,3 +5,4 @@ resources:
   - prometheus-daily-snapshot.yaml
   - prometheus-daily-snapshot-delete.yaml
   - prometheus-daily-trim.yaml
+  - vault-daily-snapshot.yaml

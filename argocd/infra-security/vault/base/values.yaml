@@ -26,6 +26,9 @@ server:
     enabled: true
     storageClass: longhorn
     size: 150Mi
+    labels:
+      recurring-job.longhorn.io/source: enabled
+      recurring-job.longhorn.io/vault-daily-snapshot: enabled
   auditStorage:
     enabled: false
 ui:
