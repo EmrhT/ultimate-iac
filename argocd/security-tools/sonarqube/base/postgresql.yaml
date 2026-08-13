@@ -114,10 +114,13 @@ spec:
           emptyDir:
             sizeLimit: 16Mi
   volumeClaimTemplates:
-    - metadata:
+    - apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
         name: data
       spec:
         accessModes: ["ReadWriteOnce"]
+        volumeMode: Filesystem
         storageClassName: longhorn
         resources:
           requests:
