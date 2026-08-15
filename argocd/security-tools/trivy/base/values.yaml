@@ -4,7 +4,7 @@ replicaCount: 1
 
 persistence:
   enabled: true
-  storageClass: longhorn
+  storageClass: longhorn-trivy
   accessMode: ReadWriteOnce
   size: 2Gi
 

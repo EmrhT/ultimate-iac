@@ -15,11 +15,11 @@ resources:
   requests:
     cpu: 400m
     memory: 2Gi
-    ephemeral-storage: 256Mi
+    ephemeral-storage: 512Mi
   limits:
     cpu: "2"
     memory: 3Gi
-    ephemeral-storage: 512Mi
+    ephemeral-storage: 2Gi
 
 env:
   - name: SONAR_WEB_JAVAOPTS
@@ -30,16 +30,13 @@ env:
     value: -Xms512m -Xmx512m -XX:MaxDirectMemorySize=256m
 
 persistence:
-  enabled: true
-  storageClass: longhorn
-  accessMode: ReadWriteOnce
-  size: 1Gi
+  enabled: false
 
 emptyDir:
-  sizeLimit: 256Mi
+  sizeLimit: 2Gi
 
-# Search indexes are rebuildable. Tight rotation keeps the four Sonar log
-# families comfortably below the 50 MiB budget inside the shared 1 Gi claim.
+# Search indexes and local logs are rebuildable. Tight rotation limits
+# ephemeral-storage churn while PostgreSQL remains the authoritative store.
 sonarProperties:
   sonar.log.level: INFO
   sonar.log.rollingPolicy: "size:1MB"

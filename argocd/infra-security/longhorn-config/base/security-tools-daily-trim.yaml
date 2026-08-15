@@ -1,0 +1,11 @@
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: security-tools-daily-trim
+  namespace: longhorn-system
+spec:
+  # 10:00 Europe/Istanbul (the cluster schedules these jobs in UTC).
+  cron: "0 7 * * *"
+  task: filesystem-trim
+  retain: 0
+  concurrency: 1

@@ -4,8 +4,8 @@ metadata:
   name: prometheus-daily-snapshot
   namespace: longhorn-system
 spec:
-  # Longhorn schedules recurring jobs using the cluster/controller timezone.
-  cron: "0 2 * * *"
+  # 09:00 Europe/Istanbul (the cluster schedules these jobs in UTC).
+  cron: "0 6 * * *"
   task: snapshot
   retain: 1
   concurrency: 1

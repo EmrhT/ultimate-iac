@@ -4,8 +4,9 @@ metadata:
   name: prometheus-daily-snapshot-delete
   namespace: longhorn-system
 spec:
+  # 08:00 Europe/Istanbul (the cluster schedules these jobs in UTC).
   # Purge excess/system snapshots before trimming the volume.
-  cron: "0 1 * * *"
+  cron: "0 5 * * *"
   task: snapshot-delete
   retain: 1
   concurrency: 1

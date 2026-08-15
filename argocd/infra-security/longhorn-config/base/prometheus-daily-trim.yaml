@@ -4,10 +4,11 @@ metadata:
   name: prometheus-daily-trim
   namespace: longhorn-system
 spec:
+  # 08:30 Europe/Istanbul (the cluster schedules these jobs in UTC).
   # Trim after old-snapshot cleanup and before creating the new recovery point.
   # removeSnapshotsDuringFilesystemTrim is enabled, so the previous daily
-  # snapshot is removed here and replaced by the 02:00 snapshot.
-  cron: "30 1 * * *"
+  # snapshot is removed here and replaced by the 09:00 snapshot.
+  cron: "30 5 * * *"
   task: filesystem-trim
   retain: 0
   concurrency: 1

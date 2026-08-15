@@ -2,7 +2,9 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - filesystem-trim.yaml
+  - longhorn-trivy-storageclass.yaml
   - prometheus-daily-snapshot.yaml
   - prometheus-daily-snapshot-delete.yaml
   - prometheus-daily-trim.yaml
+  - security-tools-daily-trim.yaml
   - vault-daily-snapshot.yaml
