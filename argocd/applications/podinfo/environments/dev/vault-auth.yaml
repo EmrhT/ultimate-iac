@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: vault-auth
+---
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultAuth
+metadata:
+  name: podinfo
+spec:
+  vaultConnectionRef: vault-secrets-operator/default
+  method: kubernetes
+  mount: kubernetes
+  kubernetes:
+    role: vso-dev
+    serviceAccount: vault-auth
+    audiences:
+      - vault
