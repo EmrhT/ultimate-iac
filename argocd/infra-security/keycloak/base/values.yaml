@@ -1,0 +1,110 @@
+fullnameOverride: keycloak
+
+replicas: 1
+
+image:
+  repository: quay.io/keycloak/keycloak
+  tag: "26.6.4"
+  pullPolicy: IfNotPresent
+
+serviceAccount:
+  create: true
+  automountServiceAccountToken: false
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+  fsGroupChangePolicy: OnRootMismatch
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: ["ALL"]
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+    ephemeral-storage: 128Mi
+  limits:
+    cpu: "1"
+    memory: 1Gi
+    ephemeral-storage: 512Mi
+
+dbchecker:
+  enabled: true
+
+database:
+  vendor: postgres
+  hostname: keycloak-postgresql
+  port: 5432
+  database: keycloak
+  username: keycloak
+  existingSecret: keycloak-credentials
+  existingSecretKey: postgres-password
+
+proxy:
+  enabled: true
+  mode: forwarded
+  http:
+    enabled: true
+
+http:
+  relativePath: /
+
+extraEnv: |
+  - name: KC_HOSTNAME
+    value: https://keycloak.no-name.win
+  - name: KC_HOSTNAME_STRICT
+    value: "true"
+  - name: KC_BOOTSTRAP_ADMIN_USERNAME
+    value: admin
+  - name: KC_BOOTSTRAP_ADMIN_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: keycloak-credentials
+        key: admin-password
+  - name: JAVA_OPTS_KC_HEAP
+    value: -XX:InitialRAMPercentage=25 -XX:MaxRAMPercentage=55
+
+metrics:
+  enabled: true
+
+health:
+  enabled: true
+
+serviceMonitor:
+  enabled: true
+  namespace: monitoring
+  namespaceSelector:
+    matchNames:
+      - keycloak
+
+httpRoute:
+  enabled: true
+  servicePort: 80
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: traefik
+      namespace: traefik
+      sectionName: websecure
+  hostnames:
+    - keycloak.no-name.win
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+
+ingress:
+  enabled: false
+
+test:
+  enabled: false

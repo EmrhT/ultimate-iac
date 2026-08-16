@@ -52,6 +52,12 @@ spec:
             revision: main
             path: argocd/infra-security/elastic-stack/overlays/dev
             wave: "10"
+          - name: keycloak-config
+            namespace: keycloak
+            sourceRepo: https://github.com/EmrhT/ultimate-iac.git
+            revision: main
+            path: argocd/infra-security/keycloak-config/overlays/dev
+            wave: "14"
           - name: ui-routes
             namespace: argocd
             sourceRepo: https://github.com/EmrhT/ultimate-iac.git
@@ -101,6 +107,12 @@ spec:
           namespace: security-sonarqube
           jsonPointers:
             # Kubernetes retains this generated field in the immutable PVC template.
+            - /spec/volumeClaimTemplates/0/status
+        - group: apps
+          kind: StatefulSet
+          name: keycloak-postgresql
+          namespace: keycloak
+          jsonPointers:
             - /spec/volumeClaimTemplates/0/status
       syncPolicy:
         automated:

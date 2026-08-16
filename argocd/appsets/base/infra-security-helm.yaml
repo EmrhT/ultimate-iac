@@ -58,6 +58,12 @@ spec:
             chart: vault-secrets-operator
             chartVersion: 1.5.0
             wave: "1"
+          - name: keycloak
+            namespace: keycloak
+            chartRepo: https://codecentric.github.io/helm-charts
+            chart: keycloakx
+            chartVersion: 7.2.2
+            wave: "15"
           - name: falco
             namespace: falco
             chartRepo: https://falcosecurity.github.io/charts
