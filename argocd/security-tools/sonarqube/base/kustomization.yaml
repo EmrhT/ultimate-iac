@@ -9,3 +9,4 @@ resources:
   - resourcequota.yaml
   - podmonitor.yaml
   - prometheusrule.yaml
+  - vault-secrets.yaml
