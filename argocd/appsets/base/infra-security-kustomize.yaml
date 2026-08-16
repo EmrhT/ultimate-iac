@@ -34,6 +34,12 @@ spec:
             revision: main
             path: argocd/infra-security/longhorn-config/overlays/dev
             wave: "-19"
+          - name: kube-prometheus-stack-config
+            namespace: monitoring
+            sourceRepo: https://github.com/EmrhT/ultimate-iac.git
+            revision: main
+            path: argocd/infra-security/kube-prometheus-stack-config/overlays/dev
+            wave: "2"
           - name: cloudflared
             namespace: cloudflare
             sourceRepo: https://github.com/EmrhT/ultimate-iac.git
