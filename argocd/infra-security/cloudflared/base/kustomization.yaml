@@ -4,6 +4,7 @@ namespace: cloudflare
 resources:
   - deployment.yaml
   - poddisruptionbudget.yaml
+  - vault-secrets.yaml
 labels:
   - pairs:
       app.kubernetes.io/part-of: infra-security
