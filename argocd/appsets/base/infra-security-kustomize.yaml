@@ -34,6 +34,12 @@ spec:
             revision: main
             path: argocd/infra-security/longhorn-config/overlays/dev
             wave: "-19"
+          - name: vault-config
+            namespace: vault
+            sourceRepo: https://github.com/EmrhT/ultimate-iac.git
+            revision: main
+            path: argocd/infra-security/vault-config/overlays/dev
+            wave: "1"
           - name: kube-prometheus-stack-config
             namespace: monitoring
             sourceRepo: https://github.com/EmrhT/ultimate-iac.git
