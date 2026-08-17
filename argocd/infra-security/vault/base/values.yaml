@@ -11,21 +11,26 @@ server:
       ui = true
       disable_mlock = true
 
+      api_addr = "http://POD_IP:8200"
+      cluster_addr = "http://HOSTNAME.vault-internal:8201"
+
       listener "tcp" {
         address = "[::]:8200"
         cluster_address = "[::]:8201"
         tls_disable = 1
       }
 
-      storage "file" {
-        path = "/vault/data"
+      storage "raft" {
+        path = "/vault/data/raft"
+        node_id = "HOSTNAME"
       }
   ha:
     enabled: false
+    clusterAddr: http://vault-0.vault-internal:8201
   dataStorage:
     enabled: true
     storageClass: longhorn
-    size: 150Mi
+    size: 500Mi
     labels:
       recurring-job.longhorn.io/source: enabled
       recurring-job.longhorn.io/vault-daily-snapshot: enabled
