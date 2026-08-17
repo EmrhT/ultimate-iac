@@ -1,0 +1,27 @@
+[Unit]
+Description=Back up Vault and Keycloak to iac-controller
+Wants=network-online.target
+After=network-online.target
+StartLimitIntervalSec=2h
+StartLimitBurst=4
+
+[Service]
+Type=oneshot
+User=iacuser
+Group=iacuser
+Environment=KUBECONFIG=/home/iacuser/.kube/config
+Environment=BACKUP_ROOT=/home/iacuser/homelab-backups
+Environment=RETENTION_DAYS=14
+ExecStart=/home/iacuser/projects/ultimate-iac/operations/backups/homelab-backup.sh
+UMask=0077
+TimeoutStartSec=30min
+Restart=on-failure
+RestartSec=15min
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/iacuser/homelab-backups
+
+[Install]
+WantedBy=multi-user.target

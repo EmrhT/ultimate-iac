@@ -1,0 +1,11 @@
+[Unit]
+Description=Run Vault and Keycloak backups daily
+
+[Timer]
+OnCalendar=*-*-* 11:00:00
+Persistent=true
+RandomizedDelaySec=5m
+Unit=homelab-backup.service
+
+[Install]
+WantedBy=timers.target
