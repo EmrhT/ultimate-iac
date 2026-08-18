@@ -64,6 +64,12 @@ spec:
             revision: main
             path: argocd/infra-security/keycloak-config/overlays/dev
             wave: "14"
+          - name: keycloak-rbac
+            namespace: argocd
+            sourceRepo: https://github.com/EmrhT/ultimate-iac.git
+            revision: main
+            path: argocd/infra-security/keycloak-rbac/overlays/dev
+            wave: "16"
           - name: ui-routes
             namespace: argocd
             sourceRepo: https://github.com/EmrhT/ultimate-iac.git
