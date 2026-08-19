@@ -91,3 +91,10 @@ protected by a Cloudflare Access service-token policy before use.
 Before syncing `security-zap`, create a random API key in Vault at
 `kv/security/zap/credentials` with the field name `api-key`. VSO materializes it
 as `security-zap-api-key`; the key is never stored in Git.
+
+The GitOps-managed Automation Framework plan is mounted at
+`/zap/automation/podinfo-lab-a-dev.yaml`. It limits the traditional spider to
+one thread and three minutes, limits the active scanner to one thread, two
+minutes per rule and fifteen minutes in total, and writes a bounded JSON report
+under `/zap/wrk/reports`. ZAP uses disposable `emptyDir` storage only; restarting
+the pod intentionally discards sessions, scan history, and reports.

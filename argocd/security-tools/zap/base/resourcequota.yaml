@@ -4,10 +4,10 @@ metadata:
   name: security-zap
 spec:
   hard:
-    requests.cpu: "1"
-    requests.memory: 2Gi
-    limits.cpu: "2"
-    limits.memory: 3Gi
-    requests.ephemeral-storage: 2Gi
-    limits.ephemeral-storage: 4Gi
+    requests.cpu: 250m
+    requests.memory: 768Mi
+    limits.cpu: "1"
+    limits.memory: 1536Mi
+    requests.ephemeral-storage: 512Mi
+    limits.ephemeral-storage: 2Gi
     count/pods: "2"

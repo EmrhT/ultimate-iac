@@ -4,6 +4,7 @@ namespace: security-zap
 resources:
   - namespace.yaml
   - vault-secrets.yaml
+  - automation-plan.yaml
   - deployment.yaml
   - service.yaml
   - httproute.yaml
