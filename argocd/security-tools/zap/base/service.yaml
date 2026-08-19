@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: security-zap
+  labels:
+    app.kubernetes.io/name: security-zap
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: security-zap
+  ports:
+    - name: api
+      port: 8080
+      targetPort: api
+      protocol: TCP
+      appProtocol: http

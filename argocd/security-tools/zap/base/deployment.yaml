@@ -1,0 +1,101 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: security-zap
+  labels:
+    app.kubernetes.io/name: security-zap
+    app.kubernetes.io/part-of: security-tools
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: security-zap
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: security-zap
+        app.kubernetes.io/part-of: security-tools
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: zap
+          image: ghcr.io/zaproxy/zaproxy:stable
+          # The official stable image is refreshed monthly with current add-ons.
+          imagePullPolicy: Always
+          command:
+            - /bin/sh
+            - -ec
+          args:
+            - >-
+              exec zap.sh -daemon -host 0.0.0.0 -port 8080
+              -config api.addrs.addr.name=.*
+              -config api.addrs.addr.regex=true
+              -config "api.key=${ZAP_API_KEY}"
+              -config connection.timeoutInSecs=60
+          env:
+            - name: ZAP_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: security-zap-api-key
+                  key: api-key
+            - name: JAVA_TOOL_OPTIONS
+              value: -Xms256m -Xmx1536m
+          ports:
+            - name: api
+              containerPort: 8080
+              protocol: TCP
+          startupProbe:
+            tcpSocket:
+              port: api
+            periodSeconds: 5
+            failureThreshold: 60
+          readinessProbe:
+            tcpSocket:
+              port: api
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            tcpSocket:
+              port: api
+            periodSeconds: 20
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 250m
+              memory: 1Gi
+              ephemeral-storage: 512Mi
+            limits:
+              cpu: "2"
+              memory: 2Gi
+              ephemeral-storage: 3Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: zap-home
+              mountPath: /home/zap
+            - name: work
+              mountPath: /zap/wrk
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: zap-home
+          emptyDir:
+            sizeLimit: 1Gi
+        - name: work
+          emptyDir:
+            sizeLimit: 1Gi
+        - name: tmp
+          emptyDir:
+            sizeLimit: 256Mi
