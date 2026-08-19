@@ -5,3 +5,11 @@ ansible_python_interpreter: /usr/bin/python3
 # Kubespray downloads kubectl and the admin kubeconfig to inventory/dev/artifacts.
 kubeconfig_localhost: true
 kubectl_localhost: true
+
+# Resolve Kubernetes node names inside CoreDNS and NodeLocal DNS. Kubelet serving
+# certificate approval validates these DNS names before approving each CSR.
+dns_etchosts: |
+  192.168.122.31 platform-dev-cp-01
+  192.168.122.41 platform-dev-worker-01
+  192.168.122.42 platform-dev-worker-02
+  192.168.122.43 platform-dev-worker-03
