@@ -1,0 +1,24 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: security-sonarqube-ci
+spec:
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: traefik
+      namespace: traefik
+      sectionName: websecure
+  hostnames:
+    - ci-sonarqube.no-name.win
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - group: ""
+          kind: Service
+          name: security-sonarqube
+          port: 9000
+          weight: 1

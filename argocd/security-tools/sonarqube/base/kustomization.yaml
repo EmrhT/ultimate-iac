@@ -6,6 +6,7 @@ resources:
   - postgresql.yaml
   - scanner-cronjob.yaml
   - httproute.yaml
+  - httproute-ci.yaml
   - resourcequota.yaml
   - podmonitor.yaml
   - prometheusrule.yaml
