@@ -2,6 +2,10 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - ../../../environments/prod
+images:
+  - name: ghcr.io/emrht/podinfo-emrah
+    newName: ghcr.io/emrht/podinfo-emrah
+    digest: sha256:f9537f729129d339aaef049b76ab2cd4ff06a424f99e5f6a5923c10621018fb1
 labels:
   - pairs:
       platform.example/cluster: lab-a
