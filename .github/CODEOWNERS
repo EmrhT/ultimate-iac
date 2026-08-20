@@ -1,0 +1,11 @@
+# Changes to this approval policy require the repository owner's review.
+/.github/CODEOWNERS @EmrhT
+
+# Shared Podinfo resources affect production even when they are not an explicit
+# promotion, so they require the same manual approval as production overlays.
+/argocd/applications/podinfo/base/ @EmrhT
+/argocd/applications/podinfo/environments/prod/ @EmrhT
+
+# Cluster-specific production promotions must always be approved manually.
+/argocd/applications/podinfo/clusters/lab-a/prod/ @EmrhT
+/argocd/applications/podinfo/clusters/lab-b/prod/ @EmrhT
