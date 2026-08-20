@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cm
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-cm
+    app.kubernetes.io/part-of: argocd
+data:
+  accounts.github-actions-podinfo-dev: apiKey
+  application.sync.requireOverridePrivilegeForRevisionSync: "true"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-rbac-cm
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-rbac-cm
+    app.kubernetes.io/part-of: argocd
+data:
+  # Do not implicitly grant every authenticated account Argo CD's built-in
+  # read-only role. Machine accounts receive only their explicit policies.
+  policy.default: role:authenticated
+  policy.github-actions-podinfo-dev.csv: |
+    p, github-actions-podinfo-dev, applications, get, applications/podinfo-lab-a-dev, allow
+    p, github-actions-podinfo-dev, applications, sync, applications/podinfo-lab-a-dev, allow
+    p, github-actions-podinfo-dev, applications, get, applications/podinfo-lab-a-prod, allow
+    p, github-actions-podinfo-dev, applications, sync, applications/podinfo-lab-a-prod, allow
