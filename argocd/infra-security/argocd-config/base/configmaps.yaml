@@ -23,6 +23,7 @@ data:
   # read-only role. Machine accounts receive only their explicit policies.
   policy.default: role:authenticated
   policy.github-actions-podinfo-dev.csv: |
+    p, github-actions-podinfo-dev, projects, get, applications, allow
     p, github-actions-podinfo-dev, applications, get, applications/podinfo-lab-a-dev, allow
     p, github-actions-podinfo-dev, applications, sync, applications/podinfo-lab-a-dev, allow
     p, github-actions-podinfo-dev, applications, get, applications/podinfo-lab-a-prod, allow
