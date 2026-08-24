@@ -62,12 +62,3 @@ data:
       - type: passiveScan-wait
         parameters:
           maxDuration: 3
-
-      - type: report
-        parameters:
-          template: traditional-json-plus
-          reportDir: /zap/wrk/reports
-          reportFile: podinfo-lab-a-dev.json
-          reportTitle: Podinfo lab-a dev DAST
-          reportDescription: Conservatively bounded CI-triggered ZAP scan.
-          displayReport: false

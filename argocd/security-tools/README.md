@@ -94,7 +94,8 @@ as `security-zap-api-key`; the key is never stored in Git.
 
 The GitOps-managed Automation Framework plan is mounted at
 `/zap/automation/podinfo-lab-a-dev.yaml`. It limits the traditional spider to
-one thread and three minutes, limits the active scanner to one thread, two
-minutes per rule and fifteen minutes in total, and writes a bounded JSON report
-under `/zap/wrk/reports`. ZAP uses disposable `emptyDir` storage only; restarting
-the pod intentionally discards sessions, scan history, and reports.
+one thread and three minutes and limits the active scanner to one thread, two
+minutes per rule and fifteen minutes in total. CI retrieves the plan progress
+and alerts through the ZAP API and stores them as GitHub Actions artifacts. ZAP
+uses disposable `emptyDir` storage only; restarting the pod intentionally
+discards sessions and scan history.
