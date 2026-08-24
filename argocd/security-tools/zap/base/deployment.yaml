@@ -40,6 +40,10 @@ spec:
               -config api.addrs.addr.name=.*
               -config api.addrs.addr.regex=true
               -config "api.key=${ZAP_API_KEY}"
+              -config autoupdate.checkonstart=false
+              -config autoupdate.downloadnewrelease=false
+              -config autoupdate.installaddonupdates=false
+              -config autoupdate.installscannerrules=false
               -config scanner.threadPerHost=1
               -config connection.timeoutInSecs=60
           env:
@@ -102,7 +106,9 @@ spec:
             sizeLimit: 512Mi
         - name: tmp
           emptyDir:
-            sizeLimit: 128Mi
+            # Active scans use /tmp for transient payloads and can exceed the
+            # JVM's idle footprint. This remains bounded and disposable.
+            sizeLimit: 512Mi
         - name: automation
           configMap:
             name: security-zap-automation
