@@ -55,9 +55,7 @@ data:
         parameters:
           context: podinfo-lab-a-dev
           url: http://podinfo.lab-a-dev.svc.cluster.local:9898
-          policyDefinition:
-            defaultStrength: Low
-            defaultThreshold: Medium
+          policy: Developer CICD Policy
 
       - type: passiveScan-wait
         parameters:

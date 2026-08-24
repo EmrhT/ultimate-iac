@@ -94,6 +94,12 @@ spec:
             revision: main
             path: argocd/security-tools/trivy/overlays/dev
             wave: "14"
+          - name: security-defectdojo-config
+            namespace: security-defectdojo
+            sourceRepo: https://github.com/EmrhT/ultimate-iac.git
+            revision: main
+            path: argocd/security-tools/defectdojo/overlays/dev
+            wave: "14"
           - name: security-nuclei
             namespace: security-nuclei
             sourceRepo: https://github.com/EmrhT/ultimate-iac.git

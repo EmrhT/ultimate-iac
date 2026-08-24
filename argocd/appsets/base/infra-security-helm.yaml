@@ -88,6 +88,12 @@ spec:
             chart: trivy
             chartVersion: 0.25.0
             wave: "15"
+          - name: security-defectdojo
+            namespace: security-defectdojo
+            chartRepo: https://raw.githubusercontent.com/DefectDojo/django-DefectDojo/helm-charts
+            chart: defectdojo
+            chartVersion: 1.9.47
+            wave: "15"
   template:
     metadata:
       name: '{{ if hasPrefix "security-" .name }}{{ .name }}{{ else }}infra-{{ .name }}{{ end }}'
@@ -105,6 +111,9 @@ spec:
           targetRevision: "{{ .chartVersion }}"
           helm:
             releaseName: "{{ .name }}"
+            # Helm test pods are imperative test hooks rather than desired
+            # infrastructure state. Argo CD should not render them.
+            skipTests: true
             valueFiles:
               - '$values/argocd/{{ if hasPrefix "security-" .name }}security-tools/{{ trimPrefix "security-" .name }}{{ else }}infra-security/{{ .name }}{{ end }}/base/values.yaml'
               - '$values/argocd/{{ if hasPrefix "security-" .name }}security-tools/{{ trimPrefix "security-" .name }}{{ else }}infra-security/{{ .name }}{{ end }}/overlays/dev/values.yaml'

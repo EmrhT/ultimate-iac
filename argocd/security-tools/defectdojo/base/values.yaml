@@ -1,0 +1,211 @@
+fullnameOverride: security-defectdojo
+
+host: defectdojo.no-name.win
+siteUrl: https://defectdojo.no-name.win
+alternativeHosts:
+  - ci-defectdojo.no-name.win
+
+imagePullPolicy: IfNotPresent
+revisionHistoryLimit: 2
+trackConfig: enabled
+disableHooks: true
+
+# Credentials are supplied by Vault Secrets Operator. The chart must never
+# generate random Secrets, which would create both drift and broken upgrades.
+createSecret: false
+createPostgresqlSecret: false
+createValkeySecret: false
+
+networkPolicy:
+  enabled: false
+
+securityContext:
+  enabled: true
+  podSecurityContext:
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+  containerSecurityContext:
+    runAsNonRoot: true
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+    seccompProfile:
+      type: RuntimeDefault
+
+serviceAccount:
+  create: true
+
+monitoring:
+  enabled: false
+  prometheus:
+    enabled: false
+
+dbMigrationChecker:
+  enabled: true
+  resources:
+    requests:
+      cpu: 50m
+      memory: 96Mi
+      ephemeral-storage: 32Mi
+    limits:
+      cpu: 200m
+      memory: 192Mi
+      ephemeral-storage: 128Mi
+
+django:
+  replicas: 1
+  autoscaling:
+    enabled: false
+  ingress:
+    enabled: false
+  podDisruptionBudget:
+    enabled: false
+  mediaPersistentVolume:
+    enabled: true
+    name: media
+    type: emptyDir
+  nginx:
+    resources:
+      requests:
+        cpu: 25m
+        memory: 64Mi
+        ephemeral-storage: 32Mi
+      limits:
+        cpu: 200m
+        memory: 128Mi
+        ephemeral-storage: 256Mi
+  uwsgi:
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+        ephemeral-storage: 128Mi
+      limits:
+        cpu: "1"
+        memory: 1Gi
+        ephemeral-storage: 768Mi
+    appSettings:
+      processes: 2
+      threads: 2
+
+celery:
+  beat:
+    replicas: 1
+    resources:
+      requests:
+        cpu: 25m
+        memory: 96Mi
+        ephemeral-storage: 32Mi
+      limits:
+        cpu: 200m
+        memory: 192Mi
+        ephemeral-storage: 256Mi
+  worker:
+    replicas: 1
+    autoscaling:
+      enabled: false
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+        ephemeral-storage: 128Mi
+      limits:
+        cpu: "1"
+        memory: 1Gi
+        ephemeral-storage: 768Mi
+    appSettings:
+      poolType: solo
+
+initializer:
+  run: true
+  staticName: true
+  keepSeconds: 0
+  jobAnnotations:
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+      ephemeral-storage: 128Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+      ephemeral-storage: 512Mi
+
+postgresql:
+  enabled: true
+  architecture: standalone
+  auth:
+    username: defectdojo
+    database: defectdojo
+    existingSecret: security-defectdojo-postgresql-specific
+    secretKeys:
+      adminPasswordKey: postgresql-postgres-password
+      userPasswordKey: postgresql-password
+      replicationPasswordKey: postgresql-replication-password
+  primary:
+    networkPolicy:
+      enabled: false
+    pdb:
+      create: false
+    resourcesPreset: none
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+        ephemeral-storage: 64Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+        ephemeral-storage: 256Mi
+    persistence:
+      enabled: true
+      storageClass: longhorn
+      size: 2Gi
+    extendedConfiguration: |-
+      shared_buffers = 128MB
+      max_connections = 40
+      min_wal_size = 32MB
+      max_wal_size = 128MB
+      wal_keep_size = 0
+      logging_collector = off
+  readReplicas:
+    networkPolicy:
+      enabled: false
+
+valkey:
+  enabled: true
+  architecture: standalone
+  replicaCount: 1
+  podSecurityContext:
+    seccompProfile:
+      type: RuntimeDefault
+  containerSecurityContext:
+    seccompProfile:
+      type: RuntimeDefault
+  auth:
+    enabled: true
+    existingSecret: security-defectdojo-valkey-specific
+    existingSecretPasswordKey: valkey-password
+  sentinel:
+    enabled: false
+  persistence:
+    enabled: false
+  config:
+    maxMemory: 128mb
+    maxMemoryPolicy: allkeys-lru
+    save: ""
+  resources:
+    requests:
+      cpu: 25m
+      memory: 128Mi
+      ephemeral-storage: 32Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+      ephemeral-storage: 256Mi
+  metrics:
+    enabled: false

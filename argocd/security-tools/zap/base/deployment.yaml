@@ -28,9 +28,10 @@ spec:
           type: RuntimeDefault
       containers:
         - name: zap
-          image: ghcr.io/zaproxy/zaproxy:stable
-          # The official stable image is refreshed monthly with current add-ons.
-          imagePullPolicy: Always
+          image: ghcr.io/zaproxy/zaproxy:2.17.0@sha256:781a2bdaea47324e7bab583e2263f21d257b0aee61ed51521a5be45f5f5081ef
+          # Pin the multi-architecture image index so a monthly stable refresh
+          # cannot change scanner behavior in the middle of a pipeline run.
+          imagePullPolicy: IfNotPresent
           command:
             - /bin/sh
             - -ec
@@ -53,7 +54,12 @@ spec:
                   name: security-zap-api-key
                   key: api-key
             - name: JAVA_TOOL_OPTIONS
-              value: -Xms128m -Xmx1024m -XX:+UseG1GC -XX:+ExitOnOutOfMemoryError
+              value: >-
+                -Xms256m -Xmx2g
+                -XX:+UseG1GC
+                -XX:+UseStringDeduplication
+                -XX:+ExplicitGCInvokesConcurrent
+                -XX:+ExitOnOutOfMemoryError
           ports:
             - name: api
               containerPort: 8080
@@ -75,13 +81,13 @@ spec:
             failureThreshold: 3
           resources:
             requests:
-              cpu: 100m
-              memory: 512Mi
+              cpu: 500m
+              memory: 2Gi
               ephemeral-storage: 256Mi
             limits:
-              cpu: "1"
-              memory: 1536Mi
-              ephemeral-storage: 1536Mi
+              cpu: "2"
+              memory: 4Gi
+              ephemeral-storage: 2Gi
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
