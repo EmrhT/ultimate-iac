@@ -1,9 +1,9 @@
 fullnameOverride: security-defectdojo
 
-host: defectdojo.no-name.win
-siteUrl: https://defectdojo.no-name.win
+host: dojo.no-name.win
+siteUrl: https://dojo.no-name.win
 alternativeHosts:
-  - ci-defectdojo.no-name.win
+  - ci-dojo.no-name.win
 
 imagePullPolicy: IfNotPresent
 revisionHistoryLimit: 2

@@ -10,7 +10,7 @@ spec:
       namespace: traefik
       sectionName: websecure
   hostnames:
-    - ci-defectdojo.no-name.win
+    - ci-dojo.no-name.win
   rules:
     - matches:
         - path:
