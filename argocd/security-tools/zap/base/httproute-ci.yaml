@@ -16,6 +16,14 @@ spec:
         - path:
             type: PathPrefix
             value: /
+      # ZAP's listener is both its management API and a forward proxy. Rewrite
+      # the backend authority to ZAP's reserved API hostname so requests for
+      # the public CI hostname are handled by the API instead of proxied back
+      # through Cloudflare.
+      filters:
+        - type: URLRewrite
+          urlRewrite:
+            hostname: zap
       backendRefs:
         - group: ""
           kind: Service
