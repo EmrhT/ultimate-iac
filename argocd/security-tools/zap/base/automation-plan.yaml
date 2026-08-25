@@ -24,14 +24,6 @@ data:
           maxBodySizeInBytesToScan: 1048576
           enableTags: false
 
-      - type: activeScan-config
-        parameters:
-          maxRuleDurationInMins: 2
-          maxScanDurationInMins: 15
-          maxAlertsPerRule: 10
-          handleAntiCSRFTokens: true
-          threadPerHost: 1
-
       - type: spider
         parameters:
           context: podinfo-lab-a-dev
@@ -55,7 +47,17 @@ data:
         parameters:
           context: podinfo-lab-a-dev
           url: http://podinfo.lab-a-dev.svc.cluster.local:9898
-          policy: Developer CICD Policy
+          maxRuleDurationInMins: 2
+          maxScanDurationInMins: 15
+          maxAlertsPerRule: 10
+          handleAntiCSRFTokens: true
+          threadPerHost: 1
+        # Define the scan policy in the plan so a clean CI session never
+        # depends on policy state created manually in the ZAP UI.
+        policyDefinition:
+          defaultStrength: Medium
+          defaultThreshold: Medium
+          rules: []
 
       - type: passiveScan-wait
         parameters:
