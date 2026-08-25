@@ -84,9 +84,11 @@ unrestricted at this troubleshooting stage.
 
 ZAP runs continuously as a single stateless daemon. CI controls scans through
 the internal endpoint `http://security-zap.security-zap.svc.cluster.local:8080`.
-The Gateway API exposes `zap.no-name.win` for interactive access and
-`ci-zap.no-name.win` as the CI-specific API endpoint. The CI hostname should be
-protected by a Cloudflare Access service-token policy before use.
+The Gateway API exposes only `ci-zap.no-name.win` as the CI API endpoint. It
+rewrites the backend authority to ZAP's reserved `zap` hostname so the shared
+API/proxy listener handles requests locally. Protect this hostname with a
+Cloudflare Access service-token policy before use. Security findings and scan
+history belong in DefectDojo rather than a public ZAP route.
 
 Before syncing `security-zap`, create a random API key in Vault at
 `kv/security/zap/credentials` with the field name `api-key`. VSO materializes it

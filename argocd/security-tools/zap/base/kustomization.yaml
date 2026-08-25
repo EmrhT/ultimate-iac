@@ -7,6 +7,5 @@ resources:
   - automation-plan.yaml
   - deployment.yaml
   - service.yaml
-  - httproute.yaml
   - httproute-ci.yaml
   - resourcequota.yaml
