@@ -1,4 +1,10 @@
 # Keep the policy engine observable but non-disruptive during the initial rollout.
+# The kyverno-api subchart otherwise renders `metadata.labels: {}` on its
+# CRDs. Kubernetes removes that empty map, causing permanent Argo CD drift.
+kyverno-api:
+  labels:
+    app.kubernetes.io/managed-by: Helm
+
 features:
   forceFailurePolicyIgnore:
     enabled: true
