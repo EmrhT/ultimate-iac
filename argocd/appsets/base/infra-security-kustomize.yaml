@@ -70,6 +70,12 @@ spec:
             revision: main
             path: argocd/infra-security/keycloak-rbac/overlays/dev
             wave: "16"
+          - name: kyverno-policies
+            namespace: kyverno
+            sourceRepo: https://github.com/EmrhT/ultimate-iac.git
+            revision: main
+            path: argocd/infra-security/kyverno-policies/overlays/dev
+            wave: "16"
           - name: argocd-config
             namespace: argocd
             sourceRepo: https://github.com/EmrhT/ultimate-iac.git

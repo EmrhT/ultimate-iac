@@ -1,0 +1,65 @@
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: audit-pod-security-context
+  annotations:
+    policies.kyverno.io/title: Audit Pod Security Context
+    policies.kyverno.io/category: Pod Security Standards (Restricted)
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/description: >-
+      Reports privileged execution and missing container hardening settings.
+spec:
+  failurePolicy: Ignore
+  validationActions: [Audit]
+  evaluation:
+    admission:
+      enabled: true
+    background:
+      enabled: true
+  autogen:
+    podControllers:
+      controllers: [deployments, statefulsets, daemonsets, jobs, cronjobs]
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: [v1]
+        operations: [CREATE, UPDATE]
+        resources: [pods]
+  variables:
+    - name: containers
+      expression: >-
+        object.spec.containers +
+        object.spec.?initContainers.orValue([]) +
+        object.spec.?ephemeralContainers.orValue([])
+  validations:
+    - expression: >-
+        variables.containers.all(c,
+          !c.?securityContext.?privileged.orValue(false))
+      message: Containers must not run as privileged.
+    - expression: >-
+        (object.spec.?securityContext.?runAsNonRoot.orValue(false) &&
+        variables.containers.all(c, c.?securityContext.?runAsNonRoot.orValue(true))) ||
+        variables.containers.all(c, c.?securityContext.?runAsNonRoot.orValue(false))
+      message: Pods or every container should explicitly set runAsNonRoot to true.
+    - expression: >-
+        variables.containers.all(c,
+          c.?securityContext.?allowPrivilegeEscalation.orValue(true) == false)
+      message: Every container should set allowPrivilegeEscalation to false.
+    - expression: >-
+        variables.containers.all(c,
+          'ALL' in c.?securityContext.?capabilities.?drop.orValue([]))
+      message: Every container should drop ALL Linux capabilities.
+    - expression: >-
+        variables.containers.all(c,
+          c.?securityContext.?readOnlyRootFilesystem.orValue(false))
+      message: Every container should use a read-only root filesystem.
+    - expression: >-
+        !object.spec.?securityContext.?seccompProfile.?type.hasValue() ||
+        object.spec.securityContext.seccompProfile.type in ['RuntimeDefault', 'Localhost']
+      message: A configured Pod seccomp profile must be RuntimeDefault or Localhost.
+    - expression: >-
+        variables.containers.all(c,
+          c.?securityContext.?seccompProfile.?type.orValue('') in ['RuntimeDefault', 'Localhost'] ||
+          (!c.?securityContext.?seccompProfile.?type.hasValue() &&
+          object.spec.?securityContext.?seccompProfile.?type.orValue('') in ['RuntimeDefault', 'Localhost']))
+      message: Every container should use or inherit RuntimeDefault or Localhost seccomp.

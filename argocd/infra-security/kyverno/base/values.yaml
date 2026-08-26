@@ -1,0 +1,69 @@
+# Keep the policy engine observable but non-disruptive during the initial rollout.
+features:
+  forceFailurePolicyIgnore:
+    enabled: true
+  backgroundScan:
+    enabled: true
+    backgroundScanInterval: 1h
+  reporting:
+    validate: true
+    imageVerify: true
+    mutate: false
+    mutateExisting: false
+    generate: false
+  generateValidatingAdmissionPolicy:
+    enabled: false
+
+config:
+  # Do not rewrite unqualified image references during this audit-only phase.
+  enableDefaultRegistryMutation: false
+
+admissionController:
+  replicas: 1
+  container:
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 384Mi
+  serviceMonitor:
+    enabled: true
+    namespace: monitoring
+    interval: 60s
+
+backgroundController:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 25m
+      memory: 64Mi
+    limits:
+      cpu: 250m
+      memory: 192Mi
+  serviceMonitor:
+    enabled: true
+    namespace: monitoring
+    interval: 60s
+
+# No cleanup policies are installed, so this controller is unnecessary.
+cleanupController:
+  enabled: false
+
+reportsController:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 25m
+      memory: 64Mi
+    limits:
+      cpu: 250m
+      memory: 192Mi
+  serviceMonitor:
+    enabled: true
+    namespace: monitoring
+    interval: 60s
+
+grafana:
+  enabled: false

@@ -1,0 +1,10 @@
+# Manual audit fixture. This file is intentionally not included by Kustomize.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kyverno-audit-fixture
+  namespace: default
+spec:
+  containers:
+    - name: app
+      image: nginx:latest

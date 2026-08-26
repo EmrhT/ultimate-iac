@@ -1,0 +1,150 @@
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: require-workload-metadata
+  annotations:
+    policies.kyverno.io/title: Require Workload Metadata
+    policies.kyverno.io/category: Operational Best Practices
+    policies.kyverno.io/severity: low
+    policies.kyverno.io/description: Reports workloads missing ownership and environment labels.
+spec:
+  failurePolicy: Ignore
+  validationActions: [Audit]
+  evaluation:
+    admission:
+      enabled: true
+    background:
+      enabled: true
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [apps]
+        apiVersions: [v1]
+        operations: [CREATE, UPDATE]
+        resources: [deployments, statefulsets, daemonsets]
+      - apiGroups: [batch]
+        apiVersions: [v1]
+        operations: [CREATE, UPDATE]
+        resources: [jobs, cronjobs]
+  validations:
+    - expression: >-
+        'app.kubernetes.io/name' in object.metadata.?labels.orValue([]) &&
+        'app.kubernetes.io/part-of' in object.metadata.?labels.orValue([]) &&
+        'app.kubernetes.io/managed-by' in object.metadata.?labels.orValue([]) &&
+        'environment' in object.metadata.?labels.orValue([]) &&
+        'owner' in object.metadata.?labels.orValue([])
+      message: >-
+        Workload should define app.kubernetes.io/name, app.kubernetes.io/part-of,
+        app.kubernetes.io/managed-by, environment, and owner labels.
+---
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: require-container-resources
+  annotations:
+    policies.kyverno.io/title: Require Container Resources
+    policies.kyverno.io/category: Operational Best Practices
+    policies.kyverno.io/severity: medium
+spec:
+  failurePolicy: Ignore
+  validationActions: [Audit]
+  evaluation:
+    admission:
+      enabled: true
+    background:
+      enabled: true
+  autogen:
+    podControllers:
+      controllers: [deployments, statefulsets, daemonsets, jobs, cronjobs]
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: [v1]
+        operations: [CREATE, UPDATE]
+        resources: [pods]
+  variables:
+    - name: containers
+      expression: >-
+        object.spec.containers + object.spec.?initContainers.orValue([])
+  validations:
+    - expression: >-
+        variables.containers.all(c,
+          has(c.resources) && has(c.resources.requests) && has(c.resources.limits) &&
+          'cpu' in c.resources.requests && 'memory' in c.resources.requests &&
+          'cpu' in c.resources.limits && 'memory' in c.resources.limits)
+      message: Every regular and init container should set CPU/memory requests and limits.
+---
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: require-container-probes
+  annotations:
+    policies.kyverno.io/title: Require Container Health Probes
+    policies.kyverno.io/category: Operational Best Practices
+    policies.kyverno.io/severity: low
+spec:
+  failurePolicy: Ignore
+  validationActions: [Audit]
+  evaluation:
+    admission:
+      enabled: true
+    background:
+      enabled: true
+  autogen:
+    podControllers:
+      controllers: [deployments, statefulsets, daemonsets]
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: [v1]
+        operations: [CREATE, UPDATE]
+        resources: [pods]
+  validations:
+    - expression: >-
+        object.spec.containers.all(c, has(c.readinessProbe) && has(c.livenessProbe))
+      message: Every application container should define readiness and liveness probes.
+---
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: require-safe-image-references
+  annotations:
+    policies.kyverno.io/title: Require Safe Image References
+    policies.kyverno.io/category: Software Supply Chain
+    policies.kyverno.io/severity: high
+spec:
+  failurePolicy: Ignore
+  validationActions: [Audit]
+  evaluation:
+    admission:
+      enabled: true
+    background:
+      enabled: true
+  autogen:
+    podControllers:
+      controllers: [deployments, statefulsets, daemonsets, jobs, cronjobs]
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: [v1]
+        operations: [CREATE, UPDATE]
+        resources: [pods]
+  variables:
+    - name: containers
+      expression: >-
+        object.spec.containers + object.spec.?initContainers.orValue([])
+  validations:
+    - expression: variables.containers.all(c, !c.image.endsWith(':latest'))
+      message: Images should not use the mutable latest tag.
+    - expression: variables.containers.all(c, c.image.contains('@sha256:'))
+      message: Images should be pinned by an immutable sha256 digest.
+    - expression: >-
+        variables.containers.all(c,
+          c.image.startsWith('ghcr.io/') ||
+          c.image.startsWith('docker.io/') ||
+          c.image.startsWith('quay.io/') ||
+          c.image.startsWith('registry.k8s.io/') ||
+          c.image.startsWith('reg.kyverno.io/') ||
+          c.image.startsWith('docker.elastic.co/'))
+      message: >-
+        Images should use an explicitly approved registry: GHCR, Docker Hub,
+        Quay, registry.k8s.io, Kyverno, or Elastic.

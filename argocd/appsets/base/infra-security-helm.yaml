@@ -64,6 +64,12 @@ spec:
             chart: keycloakx
             chartVersion: 7.2.2
             wave: "15"
+          - name: kyverno
+            namespace: kyverno
+            chartRepo: https://kyverno.github.io/kyverno/
+            chart: kyverno
+            chartVersion: 3.9.0
+            wave: "15"
           - name: falco
             namespace: falco
             chartRepo: https://falcosecurity.github.io/charts

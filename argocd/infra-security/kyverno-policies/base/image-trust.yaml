@@ -1,0 +1,48 @@
+apiVersion: policies.kyverno.io/v1
+kind: ImageValidatingPolicy
+metadata:
+  name: verify-podinfo-supply-chain
+  annotations:
+    policies.kyverno.io/title: Verify Podinfo Supply Chain
+    policies.kyverno.io/category: Software Supply Chain
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/description: >-
+      Reports Podinfo images which lack the expected GitHub Actions keyless
+      signature or signed SLSA provenance. Registry verification is background-only.
+spec:
+  failurePolicy: Ignore
+  validationActions: [Audit]
+  evaluation:
+    admission:
+      enabled: false
+    background:
+      enabled: true
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: [v1]
+        operations: [CREATE, UPDATE]
+        resources: [pods]
+  matchImageReferences:
+    - glob: ghcr.io/emrht/podinfo-emrah*
+  attestors:
+    - name: githubActions
+      cosign:
+        keyless:
+          identities:
+            - subjectRegExp: '^https://github\.com/EmrhT/podinfo-emrah/\.github/workflows/.+@refs/(heads|tags)/.+$'
+              issuer: https://token.actions.githubusercontent.com
+  attestations:
+    - name: slsaProvenance
+      intoto:
+        type: https://slsa.dev/provenance/v1
+  validations:
+    - expression: >-
+        images.containers.map(image,
+          verifyImageSignatures(image, [attestors.githubActions])).all(result, result > 0)
+      message: Podinfo image should carry a valid keyless signature from its GitHub Actions workflow.
+    - expression: >-
+        images.containers.map(image,
+          verifyAttestationSignatures(image, attestations.slsaProvenance,
+          [attestors.githubActions])).all(result, result > 0)
+      message: Podinfo image should carry signed SLSA provenance from its GitHub Actions workflow.

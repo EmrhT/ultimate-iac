@@ -1,0 +1,33 @@
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: require-namespace-security-labels
+  annotations:
+    policies.kyverno.io/title: Require Namespace Security Labels
+    policies.kyverno.io/category: Pod Security Standards
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/description: >-
+      Reports namespaces which do not explicitly select Pod Security Admission
+      enforce, audit, and warn levels.
+spec:
+  failurePolicy: Ignore
+  validationActions:
+    - Audit
+  evaluation:
+    admission:
+      enabled: true
+    background:
+      enabled: true
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: [v1]
+        operations: [CREATE, UPDATE]
+        resources: [namespaces]
+  validations:
+    - expression: >-
+        'pod-security.kubernetes.io/enforce' in object.metadata.?labels.orValue([]) &&
+        'pod-security.kubernetes.io/audit' in object.metadata.?labels.orValue([]) &&
+        'pod-security.kubernetes.io/warn' in object.metadata.?labels.orValue([])
+      message: >-
+        Namespace must declare Pod Security Admission enforce, audit, and warn labels.

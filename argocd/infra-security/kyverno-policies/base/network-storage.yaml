@@ -1,0 +1,72 @@
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: audit-host-access
+  annotations:
+    policies.kyverno.io/title: Audit Host Access
+    policies.kyverno.io/category: Pod Security Standards (Baseline)
+    policies.kyverno.io/severity: high
+spec:
+  failurePolicy: Ignore
+  validationActions: [Audit]
+  evaluation:
+    admission:
+      enabled: true
+    background:
+      enabled: true
+  autogen:
+    podControllers:
+      controllers: [deployments, statefulsets, daemonsets, jobs, cronjobs]
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: [v1]
+        operations: [CREATE, UPDATE]
+        resources: [pods]
+  variables:
+    - name: containers
+      expression: >-
+        object.spec.containers +
+        object.spec.?initContainers.orValue([]) +
+        object.spec.?ephemeralContainers.orValue([])
+  validations:
+    - expression: >-
+        !object.spec.?hostNetwork.orValue(false) &&
+        !object.spec.?hostPID.orValue(false) &&
+        !object.spec.?hostIPC.orValue(false)
+      message: Pods should not use the host network, PID, or IPC namespaces.
+    - expression: >-
+        object.spec.?volumes.orValue([]).all(v, !has(v.hostPath))
+      message: Pods should not mount hostPath volumes.
+    - expression: >-
+        variables.containers.all(c,
+          c.?ports.orValue([]).all(p, !has(p.hostPort) || p.hostPort == 0))
+      message: Containers should not bind host ports.
+---
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: restrict-external-services
+  annotations:
+    policies.kyverno.io/title: Restrict External Services
+    policies.kyverno.io/category: Networking
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/description: >-
+      Reports direct NodePort and LoadBalancer Services so exposure remains intentional.
+spec:
+  failurePolicy: Ignore
+  validationActions: [Audit]
+  evaluation:
+    admission:
+      enabled: true
+    background:
+      enabled: true
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: [v1]
+        operations: [CREATE, UPDATE]
+        resources: [services]
+  validations:
+    - expression: object.spec.?type.orValue('ClusterIP') in ['ClusterIP', 'ExternalName']
+      message: Prefer ClusterIP plus Gateway API; NodePort and LoadBalancer require review.
