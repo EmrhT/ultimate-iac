@@ -143,3 +143,11 @@ spec:
           - CreateNamespace=true
           - ServerSideApply=true
           - SkipDryRunOnMissingResource=true
+  # Kyverno installs large CRDs with API-server defaulted fields. The
+  # structured-merge diff selected by ServerSideApply reports false drift.
+  templatePatch: |
+    {{- if eq .name "kyverno" }}
+    metadata:
+      annotations:
+        argocd.argoproj.io/compare-options: ServerSideDiff=true
+    {{- end }}
