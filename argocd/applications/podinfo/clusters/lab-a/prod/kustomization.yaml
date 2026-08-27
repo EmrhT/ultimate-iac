@@ -5,7 +5,7 @@ resources:
 images:
   - name: ghcr.io/emrht/podinfo-emrah
     newName: ghcr.io/emrht/podinfo-emrah
-    digest: sha256:abd24f9d0f8237982fb1788f1b7e99d5c361c0a691bf67d0295d3c72dd0ac9ad
+    digest: sha256:d275701bd8ae2b96a43f1318fef23440f238aa5a74588a0d356caf6c99a3cd7b
 labels:
   - pairs:
       platform.example/cluster: lab-a
