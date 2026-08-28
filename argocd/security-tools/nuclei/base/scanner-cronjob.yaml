@@ -41,7 +41,7 @@ spec:
                 - -u
                 - http://podinfo.lab-a-dev.svc.cluster.local:9898
                 - -severity
-                - medium,high,critical
+                - low,medium,high,critical
                 - -jsonl
                 - -output
                 - /reports/nuclei.jsonl

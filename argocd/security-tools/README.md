@@ -89,7 +89,8 @@ Create a dedicated DefectDojo API token and add it to the existing Vault record
 Secrets Operator materializes only that field as the
 `security-nuclei-defectdojo` Secret. Do not put the token in Git.
 
-Nuclei scans `podinfo.lab-a-dev.svc.cluster.local:9898` every six hours. Reports
+Nuclei scans `podinfo.lab-a-dev.svc.cluster.local:9898` every six hours for low,
+medium, high, and critical findings. Reports
 are reimported into product `podinfo`, engagement `Recurring security scan`, and
 test `Nuclei recurring lab-a-dev`. Each execution has a timestamped build ID;
 `close_old_findings=true` lets DefectDojo reconcile fixed and recurring
