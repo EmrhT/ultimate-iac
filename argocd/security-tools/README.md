@@ -84,10 +84,10 @@ unrestricted at this troubleshooting stage.
 
 ## Nuclei report ingestion
 
-Create a dedicated DefectDojo API token and store it in Vault as field
-`defectdojo-api-token` at `kv/security/nuclei/credentials`. The Vault Secrets
-Operator materializes it as the `security-nuclei-defectdojo` Secret. Do not put
-the token in Git.
+Create a dedicated DefectDojo API token and add it to the existing Vault record
+`kv/security/defectdojo/credentials` as field `defectdojo-api-token`. The Vault
+Secrets Operator materializes only that field as the
+`security-nuclei-defectdojo` Secret. Do not put the token in Git.
 
 Nuclei scans `podinfo.lab-a-dev.svc.cluster.local:9898` every six hours. Reports
 are reimported into product `podinfo`, engagement `Recurring security scan`, and
