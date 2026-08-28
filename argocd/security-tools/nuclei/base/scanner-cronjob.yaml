@@ -95,6 +95,7 @@ spec:
                       --header 'Accept: application/json' \
                       --header 'Expect:' \
                       --header 'Connection: close' \
+                      --header 'Host: dojo.no-name.win' \
                       --header "Authorization: Token ${DEFECTDOJO_API_TOKEN}" \
                       --form 'scan_type=Nuclei Scan' \
                       --form 'test_title=Nuclei recurring lab-a-dev' \

@@ -97,6 +97,9 @@ findings while preserving scan history. The uploader bootstraps a missing test
 with `import-scan` and uses `reimport-scan` thereafter. Uploads are not retried
 automatically because repeating a non-idempotent import can duplicate scan
 history when the server accepted the request but its response was interrupted.
+The upload uses DefectDojo's canonical `dojo.no-name.win` HTTP Host while
+connecting directly to the internal Kubernetes Service, satisfying Django's
+allowed-host validation without exposing the scan through Cloudflare.
 
 ## ZAP API
 
