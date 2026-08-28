@@ -1,0 +1,247 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: security-kyverno-defectdojo
+spec:
+  schedule: "30 */6 * * *"
+  timeZone: Europe/Istanbul
+  suspend: false
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      activeDeadlineSeconds: 600
+      backoffLimit: 0
+      ttlSecondsAfterFinished: 86400
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: security-kyverno-defectdojo
+        spec:
+          serviceAccountName: security-kyverno-defectdojo
+          automountServiceAccountToken: true
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          initContainers:
+            - name: collect-openreports
+              image: curlimages/curl:8.21.0
+              imagePullPolicy: IfNotPresent
+              command:
+                - /bin/sh
+                - -ec
+              args:
+                - |
+                  api=https://kubernetes.default.svc
+                  token_file=/var/run/secrets/kubernetes.io/serviceaccount/token
+                  ca_file=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+
+                  collect() {
+                    path="$1"
+                    output="$2"
+                    curl --fail-with-body --silent --show-error \
+                      --retry 4 \
+                      --retry-all-errors \
+                      --retry-delay 2 \
+                      --connect-timeout 5 \
+                      --max-time 60 \
+                      --cacert "${ca_file}" \
+                      --header "Authorization: Bearer $(cat "${token_file}")" \
+                      --output "${output}" \
+                      "${api}${path}"
+                  }
+
+                  collect /apis/openreports.io/v1alpha1/namespaces/lab-a-dev/reports /reports/dev.json
+                  collect /apis/openreports.io/v1alpha1/namespaces/lab-a-prod/reports /reports/prod.json
+                  collect /apis/openreports.io/v1alpha1/clusterreports /reports/cluster.json
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop: ["ALL"]
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 16Mi
+                  ephemeral-storage: 8Mi
+                limits:
+                  cpu: 100m
+                  memory: 64Mi
+                  ephemeral-storage: 32Mi
+              volumeMounts:
+                - name: reports
+                  mountPath: /reports
+            - name: select-podinfo-findings
+              image: python:3.13-alpine
+              imagePullPolicy: IfNotPresent
+              command:
+                - /bin/sh
+                - -ec
+              args:
+                - |
+                  python - <<'PY'
+                  import json
+                  from pathlib import Path
+
+                  report_dir = Path("/reports")
+
+                  def load(name):
+                      with (report_dir / name).open(encoding="utf-8") as stream:
+                          return json.load(stream)
+
+                  dev = load("dev.json")
+                  prod = load("prod.json")
+                  cluster = load("cluster.json")
+
+                  reports = list(dev.get("items", [])) + list(prod.get("items", []))
+                  reports.extend(
+                      report for report in cluster.get("items", [])
+                      if report.get("scope", {}).get("kind") == "Namespace"
+                      and report.get("scope", {}).get("name") in {"lab-a-dev", "lab-a-prod"}
+                  )
+
+                  selected = []
+                  for report in reports:
+                      results = [
+                          result for result in report.get("results", [])
+                          if result.get("result") in {"fail", "warn", "error"}
+                      ]
+                      if not results:
+                          continue
+                      report["results"] = results
+                      report["summary"] = {
+                          "pass": 0,
+                          "fail": sum(result.get("result") == "fail" for result in results),
+                          "warn": sum(result.get("result") == "warn" for result in results),
+                          "error": sum(result.get("result") == "error" for result in results),
+                          "skip": 0,
+                      }
+                      selected.append(report)
+
+                  output = {
+                      "apiVersion": "v1",
+                      "kind": "List",
+                      "metadata": {},
+                      "items": selected,
+                  }
+                  with (report_dir / "openreports.json").open("w", encoding="utf-8") as stream:
+                      json.dump(output, stream, separators=(",", ":"))
+                  print(f"Selected {len(selected)} OpenReports containing current violations")
+                  PY
+              env:
+                - name: PYTHONDONTWRITEBYTECODE
+                  value: "1"
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop: ["ALL"]
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 16Mi
+                  ephemeral-storage: 8Mi
+                limits:
+                  cpu: 100m
+                  memory: 96Mi
+                  ephemeral-storage: 32Mi
+              volumeMounts:
+                - name: reports
+                  mountPath: /reports
+          containers:
+            - name: defectdojo-uploader
+              image: curlimages/curl:8.21.0
+              imagePullPolicy: IfNotPresent
+              command:
+                - /bin/sh
+                - -ec
+              args:
+                - |
+                  report=/reports/openreports.json
+                  response=/reports/defectdojo-response.json
+                  test -s "${report}"
+
+                  scan_timestamp="$(date -u +%Y%m%dT%H%M%SZ)"
+                  scan_date="$(date -u +%F)"
+
+                  upload_report() {
+                    endpoint="$1"
+                    curl --silent --show-error \
+                      --http1.1 \
+                      --connect-timeout 10 \
+                      --max-time 300 \
+                      --output "${response}" \
+                      --write-out '%{http_code}' \
+                      --header 'Accept: application/json' \
+                      --header 'Expect:' \
+                      --header 'Connection: close' \
+                      --header 'Host: dojo.no-name.win' \
+                      --header "Authorization: Token ${DEFECTDOJO_API_TOKEN}" \
+                      --form 'scan_type=OpenReports' \
+                      --form 'test_title=Kyverno policy compliance lab-a' \
+                      --form 'engagement_name=Runtime security' \
+                      --form 'product_name=podinfo' \
+                      --form 'auto_create_context=true' \
+                      --form "file=@${report};type=application/json" \
+                      --form 'minimum_severity=Info' \
+                      --form 'active=true' \
+                      --form 'verified=false' \
+                      --form 'close_old_findings=true' \
+                      --form "build_id=scheduled-${scan_timestamp}" \
+                      --form 'branch_tag=lab-a' \
+                      --form "scan_date=${scan_date}" \
+                      "http://security-defectdojo-django.security-defectdojo.svc.cluster.local/api/v2/${endpoint}/"
+                  }
+
+                  curl_exit=0
+                  http_status="$(upload_report reimport-scan)" || curl_exit=$?
+
+                  if [ "${http_status}" = 400 ]; then
+                    echo "The recurring Kyverno test does not exist yet; creating it with import-scan"
+                    curl_exit=0
+                    http_status="$(upload_report import-scan)" || curl_exit=$?
+                  fi
+
+                  case "${http_status}" in
+                    200|201|202)
+                      echo "DefectDojo accepted the Kyverno report (HTTP ${http_status}, curl ${curl_exit})"
+                      ;;
+                    *)
+                      echo "DefectDojo rejected the Kyverno report (HTTP ${http_status}, curl ${curl_exit})" >&2
+                      head -c 4000 "${response}" >&2 || true
+                      exit 1
+                      ;;
+                  esac
+              env:
+                - name: DEFECTDOJO_API_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: security-kyverno-defectdojo
+                      key: api-token
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop: ["ALL"]
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 16Mi
+                  ephemeral-storage: 8Mi
+                limits:
+                  cpu: 100m
+                  memory: 64Mi
+                  ephemeral-storage: 32Mi
+              volumeMounts:
+                - name: reports
+                  mountPath: /reports
+          volumes:
+            - name: reports
+              emptyDir:
+                sizeLimit: 16Mi

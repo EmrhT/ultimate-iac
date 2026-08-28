@@ -1,11 +1,15 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
+namespace: kyverno
 resources:
   - namespace-standards.yaml
   - workload-standards.yaml
   - pod-security.yaml
   - network-storage.yaml
   - image-trust.yaml
+  - defectdojo-exporter-rbac.yaml
+  - defectdojo-exporter-vault.yaml
+  - defectdojo-exporter-cronjob.yaml
 
 labels:
   - pairs:

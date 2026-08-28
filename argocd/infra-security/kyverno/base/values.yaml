@@ -20,6 +20,11 @@ features:
   generateValidatingAdmissionPolicy:
     enabled: false
 
+# Emit policy findings through the forward-looking OpenReports API. DefectDojo
+# can ingest this format without a custom findings parser.
+openreports:
+  enabled: true
+
 config:
   # Do not rewrite unqualified image references during this audit-only phase.
   enableDefaultRegistryMutation: false

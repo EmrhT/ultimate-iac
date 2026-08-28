@@ -1,0 +1,39 @@
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultAuth
+metadata:
+  name: kyverno-defectdojo
+  annotations:
+    argocd.argoproj.io/sync-wave: "-29"
+spec:
+  vaultConnectionRef: vault-secrets-operator/default
+  method: kubernetes
+  mount: kubernetes
+  kubernetes:
+    role: vso-admin
+    serviceAccount: security-kyverno-defectdojo
+    audiences:
+      - vault
+---
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultStaticSecret
+metadata:
+  name: kyverno-defectdojo-credentials
+  annotations:
+    argocd.argoproj.io/sync-wave: "-28"
+spec:
+  vaultAuthRef: kyverno-defectdojo
+  mount: kv
+  type: kv-v2
+  path: security/defectdojo/credentials
+  refreshAfter: 1m
+  hmacSecretData: true
+  destination:
+    create: true
+    overwrite: true
+    name: security-kyverno-defectdojo
+    type: Opaque
+    transformation:
+      excludeRaw: true
+      templates:
+        api-token:
+          text: '{{ get .Secrets "defectdojo-api-token" }}'
