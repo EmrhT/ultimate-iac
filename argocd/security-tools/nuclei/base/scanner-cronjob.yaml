@@ -45,7 +45,6 @@ spec:
                 - -jsonl
                 - -output
                 - /reports/nuclei.jsonl
-                - -no-stdout
                 - -silent
                 - -no-color
                 - -update-template-dir
