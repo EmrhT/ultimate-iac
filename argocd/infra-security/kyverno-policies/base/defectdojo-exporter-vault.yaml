@@ -41,6 +41,8 @@ spec:
     type: Opaque
     transformation:
       excludeRaw: true
+      excludes:
+        - '.*'
       templates:
         api-token:
           text: '{{ get .Secrets "defectdojo-api-token" }}'
