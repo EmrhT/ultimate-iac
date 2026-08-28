@@ -31,6 +31,11 @@ The exporter reads the existing DefectDojo API token from
 `close_old_findings=true`. Temporary JSON is limited to a `16Mi` `emptyDir` and
 is discarded with the Job; historical results live only in DefectDojo.
 
+Vault's Kubernetes authentication role `vso-admin` must authorize ServiceAccount
+`vault-auth` in namespace `kyverno`. Preserve every namespace already bound to
+the role when adding `kyverno`; the role itself is currently configured in Vault
+and is not managed by this repository.
+
 Run an immediate export and follow each stage with:
 
 ```bash
