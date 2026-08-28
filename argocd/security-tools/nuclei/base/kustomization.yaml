@@ -3,5 +3,6 @@ kind: Kustomization
 namespace: security-nuclei
 resources:
   - namespace.yaml
+  - vault-secrets.yaml
   - scanner-cronjob.yaml
   - resourcequota.yaml
