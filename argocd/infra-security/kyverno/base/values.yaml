@@ -24,6 +24,7 @@ features:
 # can ingest this format without a custom findings parser.
 openreports:
   enabled: true
+  installCrds: true
 
 config:
   # Do not rewrite unqualified image references during this audit-only phase.
