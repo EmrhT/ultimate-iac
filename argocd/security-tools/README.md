@@ -93,7 +93,10 @@ Nuclei scans `podinfo.lab-a-dev.svc.cluster.local:9898` every six hours. Reports
 are reimported into product `podinfo`, engagement `Recurring security scan`, and
 test `Nuclei recurring lab-a-dev`. Each execution has a timestamped build ID;
 `close_old_findings=true` lets DefectDojo reconcile fixed and recurring
-findings while preserving scan history.
+findings while preserving scan history. The uploader bootstraps a missing test
+with `import-scan` and uses `reimport-scan` thereafter. Uploads are not retried
+automatically because repeating a non-idempotent import can duplicate scan
+history when the server accepted the request but its response was interrupted.
 
 ## ZAP API
 

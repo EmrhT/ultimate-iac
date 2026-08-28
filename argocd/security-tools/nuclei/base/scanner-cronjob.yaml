@@ -45,6 +45,7 @@ spec:
                 - -jsonl
                 - -output
                 - /reports/nuclei.jsonl
+                - -no-stdout
                 - -silent
                 - -no-color
                 - -update-template-dir
@@ -83,37 +84,51 @@ spec:
 
                   scan_timestamp="$(date -u +%Y%m%dT%H%M%SZ)"
                   scan_date="$(date -u +%F)"
-                  http_status="$(curl --silent --show-error \
-                    --retry 5 \
-                    --retry-all-errors \
-                    --retry-delay 10 \
-                    --connect-timeout 10 \
-                    --max-time 120 \
-                    --output "${response}" \
-                    --write-out '%{http_code}' \
-                    --header "Authorization: Token ${DEFECTDOJO_API_TOKEN}" \
-                    --form 'scan_type=Nuclei Scan' \
-                    --form 'test_title=Nuclei recurring lab-a-dev' \
-                    --form 'engagement_name=Recurring security scan' \
-                    --form 'product_name=podinfo' \
-                    --form 'auto_create_context=true' \
-                    --form "file=@${report};type=application/x-ndjson" \
-                    --form 'minimum_severity=Info' \
-                    --form 'active=true' \
-                    --form 'verified=false' \
-                    --form 'close_old_findings=true' \
-                    --form "build_id=scheduled-${scan_timestamp}" \
-                    --form 'branch_tag=lab-a-dev' \
-                    --form "scan_date=${scan_date}" \
-                    http://security-defectdojo-django.security-defectdojo.svc.cluster.local/api/v2/reimport-scan/)"
+
+                  upload_report() {
+                    endpoint="$1"
+                    curl --silent --show-error \
+                      --http1.1 \
+                      --connect-timeout 10 \
+                      --max-time 300 \
+                      --output "${response}" \
+                      --write-out '%{http_code}' \
+                      --header 'Accept: application/json' \
+                      --header 'Expect:' \
+                      --header 'Connection: close' \
+                      --header "Authorization: Token ${DEFECTDOJO_API_TOKEN}" \
+                      --form 'scan_type=Nuclei Scan' \
+                      --form 'test_title=Nuclei recurring lab-a-dev' \
+                      --form 'engagement_name=Recurring security scan' \
+                      --form 'product_name=podinfo' \
+                      --form 'auto_create_context=true' \
+                      --form "file=@${report};type=application/x-ndjson" \
+                      --form 'minimum_severity=Info' \
+                      --form 'active=true' \
+                      --form 'verified=false' \
+                      --form 'close_old_findings=true' \
+                      --form "build_id=scheduled-${scan_timestamp}" \
+                      --form 'branch_tag=lab-a-dev' \
+                      --form "scan_date=${scan_date}" \
+                      "http://security-defectdojo-django.security-defectdojo.svc.cluster.local/api/v2/${endpoint}/"
+                  }
+
+                  curl_exit=0
+                  http_status="$(upload_report reimport-scan)" || curl_exit=$?
+
+                  if [ "${http_status}" = 400 ]; then
+                    echo "The recurring Nuclei test does not exist yet; creating it with import-scan"
+                    curl_exit=0
+                    http_status="$(upload_report import-scan)" || curl_exit=$?
+                  fi
 
                   case "${http_status}" in
                     200|201|202)
-                      echo "DefectDojo accepted the Nuclei report (HTTP ${http_status})"
+                      echo "DefectDojo accepted the Nuclei report (HTTP ${http_status}, curl ${curl_exit})"
                       ;;
                     *)
-                      echo "DefectDojo rejected the Nuclei report (HTTP ${http_status})" >&2
-                      cat "${response}" >&2
+                      echo "DefectDojo rejected the Nuclei report (HTTP ${http_status}, curl ${curl_exit})" >&2
+                      head -c 4000 "${response}" >&2 || true
                       exit 1
                       ;;
                   esac
