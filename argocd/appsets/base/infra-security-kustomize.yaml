@@ -76,6 +76,12 @@ spec:
             revision: main
             path: argocd/infra-security/kyverno-policies/overlays/dev
             wave: "16"
+          - name: falco-config
+            namespace: falco
+            sourceRepo: https://github.com/EmrhT/ultimate-iac.git
+            revision: main
+            path: argocd/infra-security/falco-config/overlays/dev
+            wave: "16"
           - name: argocd-config
             namespace: argocd
             sourceRepo: https://github.com/EmrhT/ultimate-iac.git
@@ -111,6 +117,12 @@ spec:
             sourceRepo: https://github.com/EmrhT/ultimate-iac.git
             revision: main
             path: argocd/security-tools/nuclei/overlays/dev
+            wave: "15"
+          - name: security-kube-bench
+            namespace: security-kube-bench
+            sourceRepo: https://github.com/EmrhT/ultimate-iac.git
+            revision: main
+            path: argocd/security-tools/kube-bench/overlays/dev
             wave: "15"
           - name: security-zap
             namespace: security-zap

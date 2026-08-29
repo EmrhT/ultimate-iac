@@ -41,18 +41,23 @@ spec:
                   api=https://kubernetes.default.svc
                   token_file=/var/run/secrets/kubernetes.io/serviceaccount/token
                   ca_file=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                  curl_config=/reports/kubernetes-api.curl
+                  trap 'rm -f "${curl_config}"' EXIT
+
+                  printf 'cacert = "%s"\n' "${ca_file}" > "${curl_config}"
+                  printf 'header = "Authorization: Bearer %s"\n' "$(cat "${token_file}")" >> "${curl_config}"
+                  chmod 600 "${curl_config}"
 
                   collect() {
                     path="$1"
                     output="$2"
                     curl --fail-with-body --silent --show-error \
+                      --config "${curl_config}" \
                       --retry 4 \
                       --retry-all-errors \
                       --retry-delay 2 \
                       --connect-timeout 5 \
                       --max-time 60 \
-                      --cacert "${ca_file}" \
-                      --header "Authorization: Bearer $(cat "${token_file}")" \
                       --output "${output}" \
                       "${api}${path}"
                   }
@@ -60,6 +65,7 @@ spec:
                   collect /apis/openreports.io/v1alpha1/namespaces/lab-a-dev/reports /reports/dev.json
                   collect /apis/openreports.io/v1alpha1/namespaces/lab-a-prod/reports /reports/prod.json
                   collect /apis/openreports.io/v1alpha1/clusterreports /reports/cluster.json
+                  rm -f "${curl_config}"
               securityContext:
                 allowPrivilegeEscalation: false
                 readOnlyRootFilesystem: true
@@ -165,14 +171,19 @@ spec:
                 - |
                   report=/reports/openreports.json
                   response=/reports/defectdojo-response.json
+                  curl_config=/reports/defectdojo.curl
                   test -s "${report}"
+                  trap 'rm -f "${curl_config}"' EXIT
 
                   scan_timestamp="$(date -u +%Y%m%dT%H%M%SZ)"
                   scan_date="$(date -u +%F)"
+                  printf 'header = "Authorization: Token %s"\n' "${DEFECTDOJO_API_TOKEN}" > "${curl_config}"
+                  chmod 600 "${curl_config}"
 
                   upload_report() {
                     endpoint="$1"
                     curl --silent --show-error \
+                      --config "${curl_config}" \
                       --http1.1 \
                       --connect-timeout 10 \
                       --max-time 300 \
@@ -182,7 +193,6 @@ spec:
                       --header 'Expect:' \
                       --header 'Connection: close' \
                       --header 'Host: dojo.no-name.win' \
-                      --header "Authorization: Token ${DEFECTDOJO_API_TOKEN}" \
                       --form 'scan_type=OpenReports' \
                       --form 'test_title=Kyverno policy compliance lab-a' \
                       --form 'engagement_name=Runtime security' \

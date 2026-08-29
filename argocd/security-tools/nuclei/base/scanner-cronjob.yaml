@@ -79,14 +79,19 @@ spec:
                 - |
                   report=/reports/nuclei.jsonl
                   response=/reports/defectdojo-response.json
+                  curl_config=/reports/defectdojo.curl
                   test -f "${report}"
+                  trap 'rm -f "${curl_config}"' EXIT
 
                   scan_timestamp="$(date -u +%Y%m%dT%H%M%SZ)"
                   scan_date="$(date -u +%F)"
+                  printf 'header = "Authorization: Token %s"\n' "${DEFECTDOJO_API_TOKEN}" > "${curl_config}"
+                  chmod 600 "${curl_config}"
 
                   upload_report() {
                     endpoint="$1"
                     curl --silent --show-error \
+                      --config "${curl_config}" \
                       --http1.1 \
                       --connect-timeout 10 \
                       --max-time 300 \
@@ -96,7 +101,6 @@ spec:
                       --header 'Expect:' \
                       --header 'Connection: close' \
                       --header 'Host: dojo.no-name.win' \
-                      --header "Authorization: Token ${DEFECTDOJO_API_TOKEN}" \
                       --form 'scan_type=Nuclei Scan' \
                       --form 'test_title=Nuclei recurring lab-a-dev' \
                       --form 'engagement_name=Recurring security scan' \

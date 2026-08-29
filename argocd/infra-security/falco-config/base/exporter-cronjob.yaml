@@ -1,0 +1,287 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: security-falco-defectdojo
+spec:
+  schedule: "15 */6 * * *"
+  timeZone: Europe/Istanbul
+  suspend: false
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      activeDeadlineSeconds: 600
+      backoffLimit: 0
+      ttlSecondsAfterFinished: 86400
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: security-falco-defectdojo
+        spec:
+          serviceAccountName: security-falco-defectdojo
+          automountServiceAccountToken: false
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          initContainers:
+            - name: collect-falco-events
+              image: python:3.13-alpine
+              imagePullPolicy: IfNotPresent
+              command:
+                - /bin/sh
+                - -ec
+              args:
+                - |
+                  python - <<'PY'
+                  import hashlib
+                  import json
+                  import ssl
+                  import urllib.parse
+                  import urllib.request
+                  from collections import defaultdict
+                  from datetime import datetime, timezone
+                  from pathlib import Path
+
+                  api = "https://kubernetes.default.svc"
+                  token = Path("/var/run/secrets/falco-collector/token").read_text().strip()
+                  context = ssl.create_default_context(cafile="/var/run/secrets/falco-collector/ca.crt")
+                  headers = {"Authorization": f"Bearer {token}", "Accept": "application/json"}
+
+                  def request(path):
+                      req = urllib.request.Request(f"{api}{path}", headers=headers)
+                      with urllib.request.urlopen(req, context=context, timeout=60) as response:
+                          return response.read().decode("utf-8", errors="replace")
+
+                  selector = urllib.parse.quote("app.kubernetes.io/name=falco", safe="")
+                  pod_list = json.loads(request(f"/api/v1/namespaces/falco/pods?labelSelector={selector}"))
+                  pod_names = sorted(item["metadata"]["name"] for item in pod_list.get("items", []))
+                  if not pod_names:
+                      raise SystemExit("No Falco pods were found")
+
+                  accepted_namespaces = {"lab-a-dev", "lab-a-prod"}
+                  severity = {
+                      "Emergency": "Critical",
+                      "Alert": "Critical",
+                      "Critical": "Critical",
+                      "Error": "High",
+                      "Warning": "Medium",
+                  }
+                  grouped = defaultdict(lambda: {
+                      "count": 0,
+                      "pods": set(),
+                      "nodes": set(),
+                      "tags": set(),
+                      "last_seen": "",
+                  })
+
+                  for pod_name in pod_names:
+                      query = urllib.parse.urlencode({
+                          "container": "falco",
+                          "sinceSeconds": "21900",
+                          "limitBytes": "4194304",
+                      })
+                      encoded_pod = urllib.parse.quote(pod_name, safe="")
+                      body = request(f"/api/v1/namespaces/falco/pods/{encoded_pod}/log?{query}")
+                      for line in body.splitlines():
+                          try:
+                              event = json.loads(line)
+                          except json.JSONDecodeError:
+                              continue
+                          fields = event.get("output_fields") or {}
+                          namespace = fields.get("k8s.ns.name")
+                          priority = event.get("priority")
+                          rule = event.get("rule")
+                          if namespace not in accepted_namespaces or priority not in severity or not rule:
+                              continue
+                          container = fields.get("container.name") or "unknown"
+                          process = fields.get("proc.name") or "unknown"
+                          key = (rule, namespace, container, process, priority)
+                          item = grouped[key]
+                          item["count"] += 1
+                          item["pods"].add(fields.get("k8s.pod.name") or pod_name)
+                          if event.get("hostname"):
+                              item["nodes"].add(str(event["hostname"]))
+                          item["tags"].update(str(tag) for tag in event.get("tags", []))
+                          item["last_seen"] = max(item["last_seen"], str(event.get("time") or ""))
+
+                  findings = []
+                  today = datetime.now(timezone.utc).date().isoformat()
+                  for key, item in sorted(grouped.items()):
+                      rule, namespace, container, process, priority = key
+                      identity = "|".join(key)
+                      unique_id = hashlib.sha256(identity.encode()).hexdigest()
+                      description = (
+                          f"Falco observed runtime behavior matching rule '{rule}'.\n\n"
+                          f"Namespace: {namespace}\n"
+                          f"Container: {container}\n"
+                          f"Process: {process}\n"
+                          f"Falco priority: {priority}\n"
+                          f"Occurrences in collection window: {item['count']}\n"
+                          f"Pods: {', '.join(sorted(item['pods']))}\n"
+                          f"Nodes: {', '.join(sorted(item['nodes'])) or 'unknown'}\n"
+                          f"Last observed: {item['last_seen'] or 'unknown'}\n\n"
+                          "Raw Falco output and command-line arguments are deliberately omitted to avoid "
+                          "copying credentials or other sensitive process data into DefectDojo."
+                      )
+                      findings.append({
+                          "title": f"Falco: {rule} ({namespace})",
+                          "date": today,
+                          "severity": severity[priority],
+                          "description": description,
+                          "mitigation": "Investigate the affected workload and process, then tune or suppress the Falco rule only if the behavior is expected.",
+                          "active": True,
+                          "verified": False,
+                          "dynamic_finding": True,
+                          "static_finding": False,
+                          "component_name": f"{namespace}/{container}",
+                          "unique_id_from_tool": unique_id,
+                          "vuln_id_from_tool": rule,
+                          "nb_occurences": item["count"],
+                          "tags": sorted({"falco", "runtime-security", namespace, *item["tags"]}),
+                      })
+
+                  output = {"findings": findings}
+                  Path("/reports/falco.json").write_text(
+                      json.dumps(output, separators=(",", ":")), encoding="utf-8"
+                  )
+                  print(f"Collected {sum(item['count'] for item in grouped.values())} Falco events into {len(findings)} findings")
+                  PY
+              env:
+                - name: PYTHONDONTWRITEBYTECODE
+                  value: "1"
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop: ["ALL"]
+              resources:
+                requests:
+                  cpu: 25m
+                  memory: 32Mi
+                  ephemeral-storage: 16Mi
+                limits:
+                  cpu: 250m
+                  memory: 128Mi
+                  ephemeral-storage: 64Mi
+              volumeMounts:
+                - name: reports
+                  mountPath: /reports
+                - name: collector-token
+                  mountPath: /var/run/secrets/falco-collector
+                  readOnly: true
+          containers:
+            - name: defectdojo-uploader
+              image: curlimages/curl:8.21.0
+              imagePullPolicy: IfNotPresent
+              command:
+                - /bin/sh
+                - -ec
+              args:
+                - |
+                  report=/reports/falco.json
+                  response=/reports/defectdojo-response.json
+                  curl_config=/reports/defectdojo.curl
+                  test -s "${report}"
+                  trap 'rm -f "${curl_config}"' EXIT
+
+                  scan_timestamp="$(date -u +%Y%m%dT%H%M%SZ)"
+                  scan_date="$(date -u +%F)"
+                  printf 'header = "Authorization: Token %s"\n' "${DEFECTDOJO_API_TOKEN}" > "${curl_config}"
+                  chmod 600 "${curl_config}"
+
+                  upload_report() {
+                    endpoint="$1"
+                    curl --silent --show-error \
+                      --config "${curl_config}" \
+                      --http1.1 \
+                      --connect-timeout 10 \
+                      --max-time 300 \
+                      --retry 3 \
+                      --retry-all-errors \
+                      --retry-delay 2 \
+                      --output "${response}" \
+                      --write-out '%{http_code}' \
+                      --header 'Accept: application/json' \
+                      --header 'Expect:' \
+                      --header 'Connection: close' \
+                      --header 'Host: dojo.no-name.win' \
+                      --form 'scan_type=Generic Findings Import' \
+                      --form 'test_title=Falco runtime alerts lab-a' \
+                      --form 'engagement_name=Runtime security' \
+                      --form 'product_name=podinfo' \
+                      --form 'auto_create_context=true' \
+                      --form "file=@${report};type=application/json" \
+                      --form 'minimum_severity=Info' \
+                      --form 'active=true' \
+                      --form 'verified=false' \
+                      --form 'close_old_findings=false' \
+                      --form "build_id=scheduled-${scan_timestamp}" \
+                      --form 'branch_tag=lab-a' \
+                      --form "scan_date=${scan_date}" \
+                      "http://security-defectdojo-django.security-defectdojo.svc.cluster.local/api/v2/${endpoint}/"
+                  }
+
+                  curl_exit=0
+                  http_status="$(upload_report reimport-scan)" || curl_exit=$?
+                  if [ "${http_status}" = 400 ]; then
+                    echo "The recurring Falco test does not exist yet; creating it with import-scan"
+                    curl_exit=0
+                    http_status="$(upload_report import-scan)" || curl_exit=$?
+                  fi
+                  rm -f "${curl_config}"
+
+                  case "${http_status}" in
+                    200|201|202)
+                      echo "DefectDojo accepted the Falco report (HTTP ${http_status}, curl ${curl_exit})"
+                      ;;
+                    *)
+                      echo "DefectDojo rejected the Falco report (HTTP ${http_status}, curl ${curl_exit})" >&2
+                      head -c 4000 "${response}" >&2 || true
+                      exit 1
+                      ;;
+                  esac
+              env:
+                - name: DEFECTDOJO_API_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: security-falco-defectdojo
+                      key: api-token
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop: ["ALL"]
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 16Mi
+                  ephemeral-storage: 8Mi
+                limits:
+                  cpu: 100m
+                  memory: 64Mi
+                  ephemeral-storage: 32Mi
+              volumeMounts:
+                - name: reports
+                  mountPath: /reports
+          volumes:
+            - name: reports
+              emptyDir:
+                sizeLimit: 32Mi
+            - name: collector-token
+              projected:
+                defaultMode: 0400
+                sources:
+                  - serviceAccountToken:
+                      path: token
+                      expirationSeconds: 600
+                  - configMap:
+                      name: kube-root-ca.crt
+                      items:
+                        - key: ca.crt
+                          path: ca.crt

@@ -1,0 +1,73 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: security-kube-bench-uploader
+data:
+  upload.sh: |
+    #!/bin/sh
+    set -eu
+
+    report=/reports/kube-bench.json
+    response=/reports/defectdojo-response.json
+    curl_config=/reports/defectdojo.curl
+    test -s "${report}"
+    : "${NODE_NAME:?NODE_NAME is required}"
+    : "${DEFECTDOJO_API_TOKEN:?DEFECTDOJO_API_TOKEN is required}"
+    trap 'rm -f "${curl_config}"' EXIT
+
+    scan_timestamp="$(date -u +%Y%m%dT%H%M%SZ)"
+    scan_date="$(date -u +%F)"
+    printf 'header = "Authorization: Token %s"\n' "${DEFECTDOJO_API_TOKEN}" > "${curl_config}"
+    chmod 600 "${curl_config}"
+
+    upload_report() {
+      endpoint="$1"
+      curl --silent --show-error \
+        --config "${curl_config}" \
+        --http1.1 \
+        --connect-timeout 10 \
+        --max-time 300 \
+        --retry 3 \
+        --retry-all-errors \
+        --retry-delay 2 \
+        --output "${response}" \
+        --write-out '%{http_code}' \
+        --header 'Accept: application/json' \
+        --header 'Expect:' \
+        --header 'Connection: close' \
+        --header 'Host: dojo.no-name.win' \
+        --form 'scan_type=kube-bench Scan' \
+        --form "test_title=kube-bench ${NODE_NAME}" \
+        --form 'engagement_name=Cluster security posture' \
+        --form 'product_name=homelab-cluster' \
+        --form 'auto_create_context=true' \
+        --form "file=@${report};type=application/json" \
+        --form 'minimum_severity=Info' \
+        --form 'active=true' \
+        --form 'verified=false' \
+        --form 'close_old_findings=true' \
+        --form "build_id=scheduled-${scan_timestamp}" \
+        --form "branch_tag=${NODE_NAME}" \
+        --form "scan_date=${scan_date}" \
+        "http://security-defectdojo-django.security-defectdojo.svc.cluster.local/api/v2/${endpoint}/"
+    }
+
+    curl_exit=0
+    http_status="$(upload_report reimport-scan)" || curl_exit=$?
+    if [ "${http_status}" = 400 ]; then
+      echo "The recurring test for ${NODE_NAME} does not exist yet; creating it with import-scan"
+      curl_exit=0
+      http_status="$(upload_report import-scan)" || curl_exit=$?
+    fi
+    rm -f "${curl_config}"
+
+    case "${http_status}" in
+      200|201|202)
+        echo "DefectDojo accepted the kube-bench report for ${NODE_NAME} (HTTP ${http_status}, curl ${curl_exit})"
+        ;;
+      *)
+        echo "DefectDojo rejected the kube-bench report for ${NODE_NAME} (HTTP ${http_status}, curl ${curl_exit})" >&2
+        head -c 4000 "${response}" >&2 || true
+        exit 1
+        ;;
+    esac
