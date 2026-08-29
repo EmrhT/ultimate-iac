@@ -71,6 +71,7 @@ spec:
                       "Critical": "Critical",
                       "Error": "High",
                       "Warning": "Medium",
+                      "Notice": "Low",
                   }
                   grouped = defaultdict(lambda: {
                       "count": 0,

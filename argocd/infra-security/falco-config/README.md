@@ -1,8 +1,10 @@
 # Falco findings in DefectDojo
 
 This component collects the previous six hours of Falco JSON logs every six hours,
-keeps runtime events for `lab-a-dev` and `lab-a-prod`, aggregates duplicates, and
-reimports them into the recurring DefectDojo test `Falco runtime alerts lab-a`.
+keeps runtime events at `Notice` or higher for `lab-a-dev` and `lab-a-prod`,
+aggregates duplicates, and reimports them into the recurring DefectDojo test
+`Falco runtime alerts lab-a`. `Notice` maps to DefectDojo `Low`;
+`Informational` and `Debug` remain excluded.
 
 The collector intentionally excludes raw Falco output and command-line fields so
 credentials observed in process arguments cannot be copied into DefectDojo.
