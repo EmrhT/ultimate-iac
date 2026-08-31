@@ -2,20 +2,23 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: security-kube-bench-workers
+  annotations:
+    argocd.argoproj.io/ignore-healthcheck: "true"
 spec:
   schedule: "10 3 * * *"
   timeZone: Europe/Istanbul
   suspend: false
   concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 600
   successfulJobsHistoryLimit: 1
-  failedJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 1
   jobTemplate:
     spec:
       completions: 3
       parallelism: 3
       activeDeadlineSeconds: 1200
       backoffLimit: 0
-      ttlSecondsAfterFinished: 7200
+      ttlSecondsAfterFinished: 1800
       template:
         metadata:
           labels:

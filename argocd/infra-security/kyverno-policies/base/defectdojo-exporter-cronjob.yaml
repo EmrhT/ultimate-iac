@@ -2,18 +2,21 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: security-kyverno-defectdojo
+  annotations:
+    argocd.argoproj.io/ignore-healthcheck: "true"
 spec:
   schedule: "30 */6 * * *"
   timeZone: Europe/Istanbul
   suspend: false
   concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 600
   successfulJobsHistoryLimit: 1
-  failedJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 1
   jobTemplate:
     spec:
       activeDeadlineSeconds: 600
       backoffLimit: 0
-      ttlSecondsAfterFinished: 86400
+      ttlSecondsAfterFinished: 1800
       template:
         metadata:
           labels:
