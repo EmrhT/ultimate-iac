@@ -6,5 +6,6 @@ resources:
   - longhorn.yaml
   - monitoring.yaml
   - traefik.yaml
+  - hubble.yaml
   - vault.yaml
   - kibana.yaml
