@@ -21,6 +21,8 @@ cilium_enable_hubble: true
 cilium_enable_hubble_ui: true
 cilium_agent_extra_args:
   - --hubble-event-buffer-capacity=65535
+cilium_memory_requests: 128Mi
+cilium_memory_limit: 768Mi
 
 kube_service_addresses: 10.233.0.0/18
 kube_pods_subnet: 10.233.64.0/18
