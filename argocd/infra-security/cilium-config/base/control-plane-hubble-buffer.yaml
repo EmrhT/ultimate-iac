@@ -1,0 +1,11 @@
+apiVersion: cilium.io/v2
+kind: CiliumNodeConfig
+metadata:
+  name: control-plane-hubble-buffer
+spec:
+  nodeSelector:
+    matchLabels:
+      node-role.kubernetes.io/control-plane: ""
+  defaults:
+    # Cilium requires the capacity to be one less than a power of two.
+    hubble-event-buffer-capacity: "8191"

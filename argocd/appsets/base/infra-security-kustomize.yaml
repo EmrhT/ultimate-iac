@@ -22,6 +22,12 @@ spec:
             revision: main
             path: argocd/infra-security/cert-manager-config/overlays/dev
             wave: "-29"
+          - name: cilium-config
+            namespace: kube-system
+            sourceRepo: https://github.com/EmrhT/ultimate-iac.git
+            revision: main
+            path: argocd/infra-security/cilium-config/overlays/dev
+            wave: "-25"
           - name: metallb-config
             namespace: metallb-system
             sourceRepo: https://github.com/EmrhT/ultimate-iac.git

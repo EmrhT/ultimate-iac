@@ -19,8 +19,10 @@ cilium_l2announcements: false
 # Cilium at 65,535 events per node; it is not persistent storage.
 cilium_enable_hubble: true
 cilium_enable_hubble_ui: true
-cilium_agent_extra_args:
-  - --hubble-event-buffer-capacity=65535
+# Workers use the global maximum. The control-plane override is managed by the
+# infra-cilium-config GitOps application through a CiliumNodeConfig object.
+cilium_config_extra_vars:
+  hubble-event-buffer-capacity: "65535"
 cilium_memory_requests: 128Mi
 cilium_memory_limit: 768Mi
 
