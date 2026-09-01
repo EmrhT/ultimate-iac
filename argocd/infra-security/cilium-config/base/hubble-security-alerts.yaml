@@ -15,7 +15,6 @@ spec:
           expr: |
             sum by (
               source_namespace,
-              source_workload,
               destination_namespace,
               destination_workload,
               traffic_direction
@@ -30,10 +29,10 @@ spec:
             severity: warning
             team: security
           annotations:
-            summary: Cilium denied traffic from {{ $labels.source_namespace }}/{{ $labels.source_workload }}
+            summary: Cilium denied traffic from namespace {{ $labels.source_namespace }}
             description: >-
               Cilium observed {{ $value | printf "%.0f" }} policy-denied drops in
-              one minute from {{ $labels.source_namespace }}/{{ $labels.source_workload }}
+              one minute from namespace {{ $labels.source_namespace }}
               to {{ $labels.destination_namespace }}/{{ $labels.destination_workload }}.
             runbook_url: https://hubble.no-name.win
 
