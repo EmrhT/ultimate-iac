@@ -20,7 +20,7 @@ spec:
               destination_workload,
               traffic_direction
             ) (
-              increase(hubble_drop_total{reason="Policy denied"}[1m])
+              increase(hubble_drop_total{reason="POLICY_DENIED"}[1m])
             )
 
         # Detect even a single unauthorized connection attempt.
