@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: netshoot
+  labels:
+    app.kubernetes.io/name: netshoot
+    app.kubernetes.io/part-of: network-testing
+    app.kubernetes.io/managed-by: argocd
+    environment: dev
+    owner: platform
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: netshoot
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: netshoot
+        app.kubernetes.io/part-of: network-testing
+        app.kubernetes.io/managed-by: argocd
+        environment: dev
+        owner: platform
+    spec:
+      serviceAccountName: netshoot
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: netshoot
+          image: nicolaka/netshoot:v0.16@sha256:b09d9b21381f47a79b3cbcb30da25266dc17186ea00ae65e99fdc51396f48e70
+          imagePullPolicy: IfNotPresent
+          command:
+            - sleep
+            - infinity
+          env:
+            - name: HOME
+              value: /tmp
+          workingDir: /tmp
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - kill -0 1
+            periodSeconds: 10
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - kill -0 1
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+              ephemeral-storage: 16Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+              ephemeral-storage: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 256Mi
+      terminationGracePeriodSeconds: 5

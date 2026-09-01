@@ -136,6 +136,12 @@ spec:
             revision: main
             path: argocd/security-tools/zap/overlays/dev
             wave: "15"
+          - name: netshoot
+            namespace: network-testing
+            sourceRepo: https://github.com/EmrhT/ultimate-iac.git
+            revision: main
+            path: argocd/infra-security/netshoot/overlays/dev
+            wave: "15"
   template:
     metadata:
       name: '{{ if hasPrefix "security-" .name }}{{ .name }}{{ else }}infra-{{ .name }}{{ end }}'
