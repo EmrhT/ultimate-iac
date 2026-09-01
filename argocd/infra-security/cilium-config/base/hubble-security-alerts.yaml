@@ -1,0 +1,62 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: hubble-security-alerts
+  labels:
+    release: kube-prometheus-stack
+spec:
+  groups:
+    - name: cilium.hubble-security
+      interval: 15s
+      rules:
+        # Normalize node-local counters into one series for each communicating
+        # workload pair. A one-minute window keeps the demo responsive.
+        - record: hubble:policy_denied_drops:increase1m
+          expr: |
+            sum by (
+              source_namespace,
+              source_workload,
+              destination_namespace,
+              destination_workload,
+              traffic_direction
+            ) (
+              increase(hubble_drop_total{reason="Policy denied"}[1m])
+            )
+
+        # Detect even a single unauthorized connection attempt.
+        - alert: CiliumPolicyDenied
+          expr: hubble:policy_denied_drops:increase1m > 0
+          labels:
+            severity: warning
+            team: security
+          annotations:
+            summary: Cilium denied traffic from {{ $labels.source_namespace }}/{{ $labels.source_workload }}
+            description: >-
+              Cilium observed {{ $value | printf "%.0f" }} policy-denied drops in
+              one minute from {{ $labels.source_namespace }}/{{ $labels.source_workload }}
+              to {{ $labels.destination_namespace }}/{{ $labels.destination_workload }}.
+            runbook_url: https://hubble.no-name.win
+
+        # Alert only for Kubernetes-ready nodes and only after the Helm-managed
+        # Hubble metrics Service exists. This prevents alarms before metrics are
+        # enabled and avoids pretending an in-cluster monitor can detect a full
+        # homelab shutdown.
+        - alert: HubbleMetricsMissingOnReadyNode
+          expr: |
+            (
+              kube_node_status_condition{condition="Ready",status="true"} == 1
+                unless on (node)
+              up{namespace="kube-system",service="hubble-metrics"} == 1
+            )
+              and on ()
+            kube_service_info{namespace="kube-system",service="hubble-metrics"} == 1
+          for: 3m
+          labels:
+            severity: warning
+            team: security
+          annotations:
+            summary: Hubble metrics are missing from ready node {{ $labels.node }}
+            description: >-
+              Kubernetes reports {{ $labels.node }} Ready, but Prometheus has
+              not been able to scrape its Hubble metrics endpoint for three minutes.
+            runbook_url: https://hubble.no-name.win

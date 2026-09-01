@@ -19,6 +19,19 @@ cilium_l2announcements: false
 # Cilium at 65,535 events per node; it is not persistent storage.
 cilium_enable_hubble: true
 cilium_enable_hubble_ui: true
+# Export only policy-drop telemetry for the initial lateral-movement demo.
+# Workload and namespace context is sufficient for actionable alerts without
+# introducing pod/IP-level metric cardinality.
+cilium_enable_hubble_metrics: true
+cilium_hubble_metrics:
+  - drop:labelsContext=source_namespace,source_workload,destination_namespace,destination_workload,traffic_direction
+cilium_extra_values:
+  hubble:
+    metrics:
+      serviceMonitor:
+        enabled: true
+        interval: 15s
+        scrapeTimeout: 10s
 # Workers use the global maximum. The control-plane override is managed by the
 # infra-cilium-config GitOps application through a CiliumNodeConfig object.
 cilium_config_extra_vars:

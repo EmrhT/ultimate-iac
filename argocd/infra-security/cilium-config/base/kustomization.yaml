@@ -3,3 +3,4 @@ kind: Kustomization
 namespace: kube-system
 resources:
   - control-plane-hubble-buffer.yaml
+  - hubble-security-alerts.yaml
