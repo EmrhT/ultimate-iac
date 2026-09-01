@@ -3,6 +3,7 @@ kind: Kustomization
 namespace: security-sonarqube
 resources:
   - namespace.yaml
+  - service-accounts.yaml
   - postgresql.yaml
   - scanner-cronjob.yaml
   - httproute.yaml

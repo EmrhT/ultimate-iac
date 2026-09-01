@@ -3,6 +3,7 @@ kind: Kustomization
 namespace: security-kube-bench
 resources:
   - namespace.yaml
+  - service-accounts.yaml
   - vault-secrets.yaml
   - uploader-configmap.yaml
   - control-plane-cronjob.yaml

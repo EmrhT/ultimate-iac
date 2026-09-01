@@ -13,6 +13,8 @@ spec:
         disabled: true
   podTemplate:
     spec:
+      serviceAccountName: platform-kibana
+      automountServiceAccountToken: false
       containers:
         - name: kibana
           resources:

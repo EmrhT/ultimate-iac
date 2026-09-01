@@ -18,6 +18,7 @@ spec:
         app.kubernetes.io/name: cloudflared
         app.kubernetes.io/component: tunnel-connector
     spec:
+      serviceAccountName: cloudflared
       automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true

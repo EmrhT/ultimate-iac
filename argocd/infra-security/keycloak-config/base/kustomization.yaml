@@ -3,5 +3,6 @@ kind: Kustomization
 namespace: keycloak
 resources:
   - namespace.yaml
+  - service-account.yaml
   - vault-secrets.yaml
   - postgresql.yaml

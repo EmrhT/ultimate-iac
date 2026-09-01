@@ -18,6 +18,7 @@ spec:
           labels:
             app.kubernetes.io/name: security-trivy-scan
         spec:
+          serviceAccountName: security-trivy-scan
           automountServiceAccountToken: false
           restartPolicy: Never
           securityContext:

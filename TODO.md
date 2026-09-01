@@ -22,3 +22,17 @@ Current mitigation:
 Operational note: kubelet does not preserve `imageMaximumGCAge` history across
 restarts, so disk-usage thresholds remain the primary protection in this
 frequently restarted homelab.
+
+## Control-plane memory capacity
+
+- [ ] Increase the control-plane node memory from approximately 4 GiB to 8 GiB;
+      treat 6 GiB as the minimum acceptable expansion.
+- [ ] Verify kube-apiserver working-set memory, overall node memory utilization,
+      the `MemoryPressure` condition, and OOM events after resizing.
+
+Current mitigation:
+
+- The control-plane Cilium Hubble buffer is limited to 8,191 events, while
+  workers retain 65,535 events.
+- Continue monitoring rather than reacting to utilization percentage alone as
+  long as `MemoryPressure` remains false and no OOM kills occur.

@@ -18,6 +18,7 @@ spec:
           labels:
             app.kubernetes.io/name: security-sonarqube-scan
         spec:
+          serviceAccountName: security-sonarqube-scan
           automountServiceAccountToken: false
           restartPolicy: Never
           securityContext:

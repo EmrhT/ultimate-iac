@@ -22,6 +22,7 @@ spec:
           labels:
             app.kubernetes.io/name: security-kube-bench-control-plane
         spec:
+          serviceAccountName: security-kube-bench-control-plane
           automountServiceAccountToken: false
           hostPID: true
           restartPolicy: Never

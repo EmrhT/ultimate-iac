@@ -6,6 +6,11 @@ fullnameOverride: security-sonarqube
 replicaCount: 1
 revisionHistoryLimit: 2
 
+serviceAccount:
+  create: true
+  name: security-sonarqube
+  automountToken: false
+
 service:
   type: ClusterIP
   externalPort: 9000

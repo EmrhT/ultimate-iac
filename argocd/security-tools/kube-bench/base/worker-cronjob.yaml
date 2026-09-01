@@ -24,6 +24,7 @@ spec:
           labels:
             app.kubernetes.io/name: security-kube-bench-worker
         spec:
+          serviceAccountName: security-kube-bench-workers
           automountServiceAccountToken: false
           hostPID: true
           restartPolicy: Never

@@ -11,6 +11,8 @@ spec:
         node.store.allow_mmap: false
       podTemplate:
         spec:
+          serviceAccountName: platform-elasticsearch
+          automountServiceAccountToken: false
           containers:
             - name: elasticsearch
               resources:
