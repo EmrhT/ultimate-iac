@@ -5,6 +5,7 @@ resources:
   - namespace.yaml
   - vault-secrets.yaml
   - automation-plan.yaml
+  - service-account.yaml
   - deployment.yaml
   - service.yaml
   - httproute-ci.yaml

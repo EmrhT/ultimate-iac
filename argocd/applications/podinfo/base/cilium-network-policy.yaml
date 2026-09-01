@@ -1,0 +1,50 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: podinfo-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: podinfo
+      io.cilium.k8s.policy.serviceaccount: podinfo
+  ingress:
+    # Public and Cloudflare traffic reaches Podinfo through the Traefik Gateway.
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: traefik
+            app.kubernetes.io/name: traefik
+            io.cilium.k8s.policy.serviceaccount: traefik
+      toPorts:
+        - ports:
+            - port: "9898"
+              protocol: TCP
+
+    # CI-triggered DAST reaches Podinfo directly through its cluster Service.
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: security-zap
+            app.kubernetes.io/name: security-zap
+            io.cilium.k8s.policy.serviceaccount: security-zap
+      toPorts:
+        - ports:
+            - port: "9898"
+              protocol: TCP
+
+    # The scheduled Nuclei scan also uses the cluster Service directly.
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: security-nuclei
+            app.kubernetes.io/name: security-nuclei-scan
+            io.cilium.k8s.policy.serviceaccount: security-nuclei-scan
+      toPorts:
+        - ports:
+            - port: "9898"
+              protocol: TCP
+
+    # Keep node-originated kubelet readiness and liveness probes available.
+    - fromEntities:
+        - host
+      toPorts:
+        - ports:
+            - port: "9898"
+              protocol: TCP

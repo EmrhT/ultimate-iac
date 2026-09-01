@@ -4,5 +4,6 @@ namespace: security-nuclei
 resources:
   - namespace.yaml
   - vault-secrets.yaml
+  - service-account.yaml
   - scanner-cronjob.yaml
   - resourcequota.yaml

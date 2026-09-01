@@ -12,6 +12,7 @@ spec:
       labels:
         app.kubernetes.io/name: podinfo
     spec:
+      serviceAccountName: podinfo
       automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true

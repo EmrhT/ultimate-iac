@@ -18,6 +18,7 @@ spec:
         app.kubernetes.io/name: security-zap
         app.kubernetes.io/part-of: security-tools
     spec:
+      serviceAccountName: security-zap
       automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true
