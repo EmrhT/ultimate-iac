@@ -3,6 +3,9 @@ driver:
 falco:
   json_output: true
   json_include_output_property: true
+  # Evaluate all matching rules so the generic built-in reverse-shell rule
+  # cannot hide the Podinfo-specific Critical rule loaded after it.
+  rule_matching: all
   http_output:
     enabled: false
 tty: false
