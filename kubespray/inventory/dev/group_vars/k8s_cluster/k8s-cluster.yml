@@ -87,6 +87,63 @@ kube_apiserver_authentication_config_anonymous:
   enabled: "{{ kube_api_anonymous_auth }}"
   conditions: []
 
+# Keep a small, metadata-only audit trail for security-sensitive human actions.
+# The active 25 MiB file plus eight rotated files is bounded to roughly 225 MiB
+# on the control-plane host, comfortably below the 1 GiB disk budget.
+kubernetes_audit: true
+audit_log_maxage: 2
+audit_log_maxbackups: 8
+audit_log_maxsize: 25
+audit_policy_custom_rules: |
+  # Interactive Pod access is the evidence used to distinguish an authorized
+  # kubectl session from a shell opened entirely inside a compromised Pod.
+  - level: Metadata
+    userGroups:
+      - keycloak:/platform/admins
+      - keycloak:/platform/devs
+    verbs: ["create", "get", "patch", "update"]
+    resources:
+      - group: ""
+        resources:
+          - "pods/exec"
+          - "pods/attach"
+          - "pods/portforward"
+          - "pods/ephemeralcontainers"
+    omitStages:
+      - RequestReceived
+
+  # Record human access to Secret metadata, never Secret values.
+  - level: Metadata
+    userGroups:
+      - keycloak:/platform/admins
+      - keycloak:/platform/devs
+    resources:
+      - group: ""
+        resources: ["secrets"]
+    omitStages:
+      - RequestReceived
+
+  # RBAC changes are rare and security-significant.
+  - level: Metadata
+    userGroups:
+      - keycloak:/platform/admins
+      - keycloak:/platform/devs
+    verbs: ["create", "patch", "update", "delete", "deletecollection"]
+    resources:
+      - group: rbac.authorization.k8s.io
+        resources:
+          - roles
+          - rolebindings
+          - clusterroles
+          - clusterrolebindings
+    omitStages:
+      - RequestReceived
+
+  # Do not consume control-plane disk with routine controller and workload API
+  # traffic. Broad authentication/authorization-failure auditing is deliberately
+  # deferred because audit policy cannot filter by response status before write.
+  - level: None
+
 # Metrics Server validates kubelet serving certificates. Have kubelets request
 # cluster-signed serving certificates instead of weakening Metrics Server with
 # --kubelet-insecure-tls.

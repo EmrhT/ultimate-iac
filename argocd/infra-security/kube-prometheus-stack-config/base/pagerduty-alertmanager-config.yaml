@@ -9,6 +9,8 @@ spec:
     receiver: pagerduty-security
     groupBy:
       - alertname
+      - rule
+      - hostname
       - source_namespace
       - destination_namespace
       - destination_workload
@@ -28,11 +30,12 @@ spec:
           url: https://events.eu.pagerduty.com/generic/2010-04-15/create_event.json
           sendResolved: true
           severity: '{{ .CommonLabels.severity }}'
-          description: '{{ .CommonAnnotations.summary }}'
+          # Prometheus alerts use summary; Falcosidekick uses description.
+          description: '{{ or .CommonAnnotations.summary .CommonAnnotations.description }}'
           details:
             - key: alert
               value: '{{ .CommonLabels.alertname }}'
             - key: description
-              value: '{{ .CommonAnnotations.description }}'
+              value: '{{ or .CommonAnnotations.description .CommonAnnotations.summary }}'
             - key: runbook
               value: '{{ .CommonAnnotations.runbook_url }}'
