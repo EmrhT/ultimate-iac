@@ -20,11 +20,16 @@ customRules:
   podinfo-runtime.yaml: |-
     - rule: Podinfo Reverse Shell
       desc: Detect a Podinfo process redirecting stdin, stdout, or stderr to a network socket.
+      # Requiring all three descriptors makes a complete reverse shell produce
+      # one alert instead of separate alerts for individual dup2 syscalls.
       condition: >
         dup
         and container
         and evt.rawres in (0, 1, 2)
         and fd.type in ("ipv4", "ipv6")
+        and fd.types[0] in ("ipv4", "ipv6")
+        and fd.types[1] in ("ipv4", "ipv6")
+        and fd.types[2] in ("ipv4", "ipv6")
         and container.name = podinfo
       output: >
         Podinfo reverse shell detected | namespace=%k8s.ns.name pod=%k8s.pod.name
