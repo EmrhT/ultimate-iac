@@ -22,8 +22,7 @@ customRules:
         and container
         and evt.rawres in (0, 1, 2)
         and fd.type in ("ipv4", "ipv6")
-        and k8s.pod.name startswith "podinfo-"
-        and k8s.ns.name in (lab-a-dev, lab-a-prod, lab-b-dev, lab-b-prod)
+        and container.name = podinfo
       output: >
         Podinfo reverse shell detected | namespace=%k8s.ns.name pod=%k8s.pod.name
         container=%container.name process=%proc.name parent=%proc.pname
