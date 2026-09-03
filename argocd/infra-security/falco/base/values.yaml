@@ -51,5 +51,5 @@ falcosidekick:
       # Default Falco Notice/Warning traffic remains visible in Falco logs but
       # cannot page PagerDuty. Only Critical and higher events are forwarded.
       minimumpriority: critical
-      expireafter: 600
+      expireafter: "600"
       extralabels: team:security,detector:falco
