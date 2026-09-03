@@ -36,3 +36,22 @@ Current mitigation:
   workers retain 65,535 events.
 - Continue monitoring rather than reacting to utilization percentage alone as
   long as `MemoryPressure` remains false and no OOM kills occur.
+
+## Kyverno enforcement hardening
+
+- [ ] Review Kyverno PolicyReports until the current audit-only policies have
+      no unexplained violations.
+- [ ] Move the workload-security policies from Audit to Enforce incrementally,
+      starting with new application namespaces before infrastructure namespaces.
+- [ ] Reject privileged containers, host namespaces, unsafe hostPath mounts,
+      added Linux capabilities, privilege escalation, root execution and missing
+      RuntimeDefault seccomp profiles.
+- [ ] Keep explicit, narrowly scoped PolicyExceptions in Git for workloads that
+      have a documented technical requirement.
+- [ ] Validate each enforcement change in a development namespace and provide a
+      rollback before applying it to production or infrastructure workloads.
+
+Current mitigation:
+
+- All Kyverno policies remain in Audit mode, so violations generate reports and
+  warnings without blocking existing workloads.

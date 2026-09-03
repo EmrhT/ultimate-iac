@@ -38,6 +38,104 @@ customRules:
       priority: CRITICAL
       tags: [container, network, shell, mitre_execution, T1059]
 
+    # Podinfo is a self-contained Go service and does not normally launch child
+    # processes. A process whose lineage starts at the application therefore
+    # indicates web-originated command execution or an active web shell.
+    - rule: Podinfo Web-Originated Process Execution
+      desc: Detect command execution initiated by the Podinfo application rather than kubectl exec.
+      condition: >
+        spawned_process
+        and container.name = podinfo
+        and (proc.pname = podinfo or proc.aname[2] = podinfo)
+      output: >
+        Podinfo web-originated process detected | namespace=%k8s.ns.name pod=%k8s.pod.name
+        container=%container.name process=%proc.name parent=%proc.pname
+        command=%proc.cmdline user=%user.name
+      priority: CRITICAL
+      tags: [container, process, webshell, mitre_execution, T1190, T1059]
+
+    # Port 9898 is Podinfo's only declared listener. Administrators should use
+    # Netshoot for network troubleshooting instead of opening ports in Podinfo.
+    - rule: Podinfo Unexpected Network Listener
+      desc: Detect a bind shell or any undeclared listening port in Podinfo.
+      condition: >
+        evt.type = listen
+        and evt.rawres = 0
+        and container.name = podinfo
+        and fd.type in ("ipv4", "ipv6")
+        and fd.lport != 9898
+      output: >
+        Podinfo unexpected listener detected | namespace=%k8s.ns.name pod=%k8s.pod.name
+        container=%container.name process=%proc.name parent=%proc.pname
+        command=%proc.cmdline address=%fd.name port=%fd.lport user=%user.name
+      priority: CRITICAL
+      tags: [container, network, bind_shell, mitre_command_and_control, T1059]
+
+    # Podinfo has a read-only root filesystem. Executing an upper-layer file is
+    # therefore both an attack signal and evidence of a security regression.
+    - rule: Podinfo Dropped Payload Execution
+      desc: Detect Podinfo executing a binary or script written after the image was built.
+      condition: >
+        spawned_process
+        and container.name = podinfo
+        and proc.is_exe_upper_layer = true
+      output: >
+        Podinfo dropped payload executed | namespace=%k8s.ns.name pod=%k8s.pod.name
+        container=%container.name process=%proc.name parent=%proc.pname
+        executable=%proc.exepath command=%proc.cmdline user=%user.name
+      priority: CRITICAL
+      tags: [container, process, payload, mitre_execution, T1059]
+
+    - list: podinfo_escape_tools
+      items: [nsenter, unshare, mount, umount, setpriv, capsh, chroot, debugfs, bpftool, modprobe, insmod]
+
+    # Podinfo needs none of these host/namespace manipulation tools. Matching
+    # their execution is considerably less noisy than paging on every failed
+    # low-level syscall while still covering common hands-on escape attempts.
+    - rule: Podinfo Container Escape Tool Execution
+      desc: Detect namespace, mount, capability, kernel or host manipulation tools in Podinfo.
+      condition: >
+        spawned_process
+        and container.name = podinfo
+        and proc.name in (podinfo_escape_tools)
+      output: >
+        Podinfo container escape tool detected | namespace=%k8s.ns.name pod=%k8s.pod.name
+        container=%container.name process=%proc.name parent=%proc.pname
+        command=%proc.cmdline capabilities=%thread.cap_effective user=%user.name
+      priority: CRITICAL
+      tags: [container, process, container_escape, mitre_privilege_escalation, T1611]
+
+    # The workload is pinned to UID 10000. A newly spawned root process means
+    # that this runtime invariant has been violated.
+    - rule: Podinfo Unexpected Root Process
+      desc: Detect successful privilege escalation resulting in a root process inside Podinfo.
+      condition: >
+        spawned_process
+        and container.name = podinfo
+        and user.uid = 0
+      output: >
+        Podinfo unexpected root process detected | namespace=%k8s.ns.name pod=%k8s.pod.name
+        container=%container.name process=%proc.name parent=%proc.pname
+        command=%proc.cmdline capabilities=%thread.cap_effective user=%user.name
+      priority: CRITICAL
+      tags: [container, process, privilege_escalation, mitre_privilege_escalation, T1068]
+
+    # Podinfo explicitly disables service-account token automounting. Any
+    # successful read below this path indicates credential injection or a
+    # workload configuration regression.
+    - rule: Podinfo Service Account Credential Access
+      desc: Detect Podinfo reading Kubernetes service-account credentials that should not be mounted.
+      condition: >
+        open_read
+        and container.name = podinfo
+        and fd.name startswith "/var/run/secrets/kubernetes.io/serviceaccount/"
+      output: >
+        Podinfo service-account credential accessed | namespace=%k8s.ns.name pod=%k8s.pod.name
+        container=%container.name process=%proc.name parent=%proc.pname
+        file=%fd.name command=%proc.cmdline user=%user.name
+      priority: CRITICAL
+      tags: [container, credential_access, kubernetes, mitre_credential_access, T1552.007]
+
 falcosidekick:
   enabled: true
   replicaCount: 1
