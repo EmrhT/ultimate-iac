@@ -48,6 +48,18 @@ prometheus:
 alertmanager:
   alertmanagerSpec:
     retention: 12h
+    # Select only centrally managed AlertmanagerConfig resources from the
+    # monitoring namespace. The route itself limits delivery to team=security.
+    alertmanagerConfigSelector:
+      matchLabels:
+        alertmanager-config: enabled
+    alertmanagerConfigNamespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: monitoring
+    # Security rules live in several namespaces (for example, Cilium rules are
+    # in kube-system), so do not inject a monitoring namespace matcher.
+    alertmanagerConfigMatcherStrategy:
+      type: None
 
 prometheus-node-exporter:
   daemonsetAnnotations:

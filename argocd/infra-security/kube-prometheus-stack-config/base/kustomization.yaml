@@ -3,3 +3,4 @@ kind: Kustomization
 namespace: monitoring
 resources:
   - vault-secrets.yaml
+  - pagerduty-alertmanager-config.yaml

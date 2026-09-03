@@ -1,0 +1,38 @@
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: AlertmanagerConfig
+metadata:
+  name: pagerduty-security
+  labels:
+    alertmanager-config: enabled
+spec:
+  route:
+    receiver: pagerduty-security
+    groupBy:
+      - alertname
+      - source_namespace
+      - destination_namespace
+      - destination_workload
+    groupWait: 10s
+    groupInterval: 5m
+    repeatInterval: 4h
+    matchers:
+      - name: team
+        matchType: "="
+        value: security
+  receivers:
+    - name: pagerduty-security
+      pagerdutyConfigs:
+        - serviceKey:
+            name: pagerduty-integration-key
+            key: service-key
+          url: https://events.eu.pagerduty.com/generic/2010-04-15/create_event.json
+          sendResolved: true
+          severity: '{{ .CommonLabels.severity }}'
+          description: '{{ .CommonAnnotations.summary }}'
+          details:
+            - key: alert
+              value: '{{ .CommonLabels.alertname }}'
+            - key: description
+              value: '{{ .CommonAnnotations.description }}'
+            - key: runbook
+              value: '{{ .CommonAnnotations.runbook_url }}'
