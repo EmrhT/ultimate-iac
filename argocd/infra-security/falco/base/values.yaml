@@ -154,18 +154,11 @@ falcosidekick:
     enabled: true
     interval: 60s
   config:
-    alertmanager:
-      hostport: http://kube-prometheus-stack-alertmanager.monitoring.svc:9093
-      endpoint: /api/v2/alerts
-      # Default Falco Notice/Warning traffic remains visible in Falco logs but
-      # cannot page PagerDuty. Only Critical and higher events are forwarded.
-      minimumpriority: critical
-      expireafter: "600"
-      extralabels: team:security,detector:falco
     otlp:
       logs:
-        # Keep Alertmanager as the real-time path and send the same Critical
-        # evidence to the OpenTelemetry Collector for durable investigation.
+        # ElastAlert2 evaluates these durable Elasticsearch events and sends
+        # PagerDuty Events API v2 notifications. Alertmanager is intentionally
+        # reserved for Hubble's metric-based alerts.
         endpoint: http://security-events-otel-collector.elastic-stack.svc:4318/v1/logs
         protocol: http/protobuf
         minimumpriority: critical

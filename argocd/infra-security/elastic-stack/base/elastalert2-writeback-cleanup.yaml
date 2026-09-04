@@ -1,0 +1,70 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: elastalert2-writeback-cleanup
+spec:
+  # ElastAlert2 records every query cycle in its writeback indices. Remove old
+  # state daily so this operational metadata cannot slowly fill the 1 GiB PVC.
+  schedule: "15 3 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      ttlSecondsAfterFinished: 3600
+      template:
+        spec:
+          serviceAccountName: elastalert2
+          automountServiceAccountToken: false
+          restartPolicy: OnFailure
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 100
+            runAsGroup: 101
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: cleanup
+              image: curlimages/curl:8.21.0
+              command:
+                - /bin/sh
+                - -ec
+                - >-
+                  curl --silent --show-error --fail
+                  --cacert /certs/ca.crt
+                  --user "elastic:${ELASTIC_PASSWORD}"
+                  --request POST
+                  'https://platform-es-http.elastic-stack.svc:9200/elastalert2*/_delete_by_query?allow_no_indices=true&ignore_unavailable=true&conflicts=proceed&refresh=false'
+                  --header 'Content-Type: application/json'
+                  --data '{"query":{"range":{"@timestamp":{"lt":"now-3d"}}}}'
+              env:
+                - name: ELASTIC_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: platform-es-elastic-user
+                      key: elastic
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop:
+                    - ALL
+              resources:
+                requests:
+                  cpu: 5m
+                  memory: 8Mi
+                limits:
+                  cpu: 50m
+                  memory: 32Mi
+              volumeMounts:
+                - name: elasticsearch-ca
+                  mountPath: /certs
+                  readOnly: true
+          volumes:
+            - name: elasticsearch-ca
+              secret:
+                secretName: platform-es-http-certs-public
+                items:
+                  - key: ca.crt
+                    path: ca.crt

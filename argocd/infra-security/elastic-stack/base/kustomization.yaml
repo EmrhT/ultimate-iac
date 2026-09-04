@@ -5,4 +5,6 @@ resources:
   - service-accounts.yaml
   - elasticsearch.yaml
   - kibana.yaml
+  - elastalert2-vault.yaml
+  - elastalert2-writeback-cleanup.yaml
   - security-events-otel-collector.yaml

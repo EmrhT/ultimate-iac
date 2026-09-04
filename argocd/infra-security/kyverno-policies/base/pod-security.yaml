@@ -37,6 +37,11 @@ spec:
           !c.?securityContext.?privileged.orValue(false))
       message: Containers must not run as privileged.
     - expression: >-
+        object.spec.?securityContext.?runAsUser.orValue(-1) != 0 &&
+        variables.containers.all(c,
+          c.?securityContext.?runAsUser.orValue(-1) != 0)
+      message: Pods and containers must not explicitly run as UID 0.
+    - expression: >-
         (object.spec.?securityContext.?runAsNonRoot.orValue(false) &&
         variables.containers.all(c, c.?securityContext.?runAsNonRoot.orValue(true))) ||
         variables.containers.all(c, c.?securityContext.?runAsNonRoot.orValue(false))

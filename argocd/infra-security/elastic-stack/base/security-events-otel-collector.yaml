@@ -26,11 +26,25 @@ data:
             parse_from: body
 
       # Falcosidekick sends Critical events using the standard OTLP/HTTP logs
-      # protocol. Its separate Alertmanager output remains the real-time path.
+      # protocol. ElastAlert2 evaluates the indexed copy for notification.
       otlp/falco:
         protocols:
           http:
             endpoint: 0.0.0.0:4318
+
+      # Kyverno's reports controller publishes structured audit findings as
+      # OpenReports resources. Watch only these two CRDs; no workload, Secret,
+      # or ConfigMap access is granted to this collector.
+      k8s_objects/kyverno:
+        auth_type: serviceAccount
+        storage: file_storage
+        objects:
+          - name: reports
+            group: openreports.io
+            mode: watch
+          - name: clusterreports
+            group: openreports.io
+            mode: watch
 
     processors:
       memory_limiter:
@@ -58,12 +72,13 @@ data:
               # admins group always suppresses notification.
               - set(attributes["classification"], "unapproved_identity") where body["objectRef"]["resource"] == "pods" and body["objectRef"]["subresource"] == "exec" and body["verb"] == "create" and body["stage"] == "ResponseStarted" and body["responseStatus"]["code"] < 400
               - set(attributes["classification"], "service_account") where attributes["classification"] == "unapproved_identity" and IsMatch(attributes["username"], "^system:serviceaccount:")
-              - set(attributes["classification"], "developer_allowed") where attributes["classification"] != nil and IsMatch(body["user"]["groups"], "keycloak:/platform/devs")
-              - set(attributes["classification"], "admin") where attributes["classification"] != nil and IsMatch(body["user"]["groups"], "keycloak:/platform/admins")
+              - set(attributes["classification"], "developer_allowed") where attributes["classification"] != nil and body["user"]["groups"][0] == "keycloak:/platform/devs"
+              - set(attributes["classification"], "admin") where attributes["classification"] != nil and body["user"]["groups"][0] == "keycloak:/platform/admins"
 
               # A denied developer exec is retained as a warning signal. Other
               # denied requests remain searchable but do not become metrics.
-              - set(attributes["classification"], "developer_denied") where body["objectRef"]["resource"] == "pods" and body["objectRef"]["subresource"] == "exec" and body["verb"] == "create" and body["stage"] == "ResponseComplete" and body["responseStatus"]["code"] == 403 and IsMatch(body["user"]["groups"], "keycloak:/platform/devs")
+              - set(attributes["classification"], "developer_denied") where body["objectRef"]["resource"] == "pods" and body["objectRef"]["subresource"] == "exec" and body["verb"] == "create" and body["stage"] == "ResponseComplete" and body["responseStatus"]["code"] == 403 and body["user"]["groups"][0] == "keycloak:/platform/devs"
+              - set(body["classification"], attributes["classification"]) where attributes["classification"] != nil
 
       transform/falco:
         error_mode: ignore
@@ -71,6 +86,15 @@ data:
           - context: log
             statements:
               - set(attributes["event.dataset"], "falco")
+
+      transform/kyverno:
+        error_mode: ignore
+        log_statements:
+          - context: log
+            statements:
+              - set(attributes["event.dataset"], "kyverno.policy_report")
+              - set(body["event"], ParseJSON("{\"dataset\":\"kyverno.policy_report\"}")) where body["event"] == nil
+              - set(body["event"]["dataset"], "kyverno.policy_report")
 
       batch/audit:
         timeout: 2s
@@ -80,32 +104,10 @@ data:
         timeout: 2s
         send_batch_size: 64
         send_batch_max_size: 128
-
-    connectors:
-      # Convert only alertable Kubernetes exec audit events into a counter.
-      # Admin events are deliberately absent. Prometheus rules below retain the
-      # existing Alertmanager and PagerDuty notification architecture.
-      count/kubernetes_exec:
-        logs:
-          kubernetes.exec.events:
-            description: Alertable Kubernetes pods/exec audit events
-            conditions:
-              - attributes["classification"] == "service_account"
-              - attributes["classification"] == "developer_allowed"
-              - attributes["classification"] == "unapproved_identity"
-              - attributes["classification"] == "developer_denied"
-            attributes:
-              - key: classification
-              - key: username
-                default_value: unknown
-              - key: namespace
-                default_value: unknown
-              - key: pod
-                default_value: unknown
-              - key: source_ip
-                default_value: unknown
-              - key: response_code
-                default_value: 0
+      batch/kyverno:
+        timeout: 2s
+        send_batch_size: 64
+        send_batch_max_size: 128
 
     exporters:
       elasticsearch/audit:
@@ -137,10 +139,19 @@ data:
           enabled: true
           queue_size: 100
 
-      prometheus:
-        endpoint: 0.0.0.0:8889
-        namespace: security_events
-        metric_expiration: 5m
+      elasticsearch/kyverno:
+        endpoint: https://platform-es-http.elastic-stack.svc:9200
+        user: elastic
+        password: ${env:ELASTIC_PASSWORD}
+        tls:
+          ca_file: /etc/elasticsearch/certs/ca.crt
+        logs_index: kyverno-write
+        mapping:
+          mode: bodymap
+        compression: gzip
+        sending_queue:
+          enabled: true
+          queue_size: 100
 
     service:
       extensions:
@@ -159,7 +170,6 @@ data:
             - batch/audit
           exporters:
             - elasticsearch/audit
-            - count/kubernetes_exec
         logs/falco:
           receivers:
             - otlp/falco
@@ -169,11 +179,15 @@ data:
             - batch/falco
           exporters:
             - elasticsearch/falco
-        metrics/kubernetes_exec:
+        logs/kyverno:
           receivers:
-            - count/kubernetes_exec
+            - k8s_objects/kyverno
+          processors:
+            - memory_limiter
+            - transform/kyverno
+            - batch/kyverno
           exporters:
-            - prometheus
+            - elasticsearch/kyverno
 
   bootstrap-indices.sh: |-
     #!/bin/sh
@@ -188,9 +202,9 @@ data:
       sleep 5
     done
 
-    # Both streams roll over before becoming large and are deleted after three
+    # All streams roll over before becoming large and are deleted after three
     # days. One primary and zero replicas are appropriate for this 1 GiB lab.
-    for stream in kubernetes-audit falco; do
+    for stream in kubernetes-audit falco kyverno; do
       curl --silent --fail --cacert "$ca" --user "$auth" \
         --request PUT "$endpoint/_ilm/policy/${stream}-small" \
         --header 'Content-Type: application/json' \
@@ -222,9 +236,6 @@ spec:
     - name: otlp-http
       port: 4318
       targetPort: otlp-http
-    - name: prometheus
-      port: 8889
-      targetPort: prometheus
 ---
 apiVersion: apps/v1
 kind: DaemonSet
@@ -240,7 +251,8 @@ spec:
         app.kubernetes.io/name: security-events-otel-collector
     spec:
       serviceAccountName: security-events-otel-collector
-      automountServiceAccountToken: false
+      # Required only by the narrowly scoped k8s_objects Kyverno receiver.
+      automountServiceAccountToken: true
       nodeSelector:
         node-role.kubernetes.io/control-plane: ""
       tolerations:
@@ -298,8 +310,6 @@ spec:
           ports:
             - name: otlp-http
               containerPort: 4318
-            - name: prometheus
-              containerPort: 8889
             - name: health
               containerPort: 13133
           livenessProbe:
@@ -363,82 +373,30 @@ spec:
               - key: ca.crt
                 path: ca.crt
 ---
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
 metadata:
   name: security-events-otel-collector
-  labels:
-    release: kube-prometheus-stack
-spec:
-  namespaceSelector:
-    matchNames:
-      - elastic-stack
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: security-events-otel-collector
-  endpoints:
-    - port: prometheus
-      interval: 15s
+rules:
+  - apiGroups:
+      - openreports.io
+    resources:
+      - reports
+      - clusterreports
+    verbs:
+      - get
+      - list
+      - watch
 ---
-apiVersion: monitoring.coreos.com/v1
-kind: PrometheusRule
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
 metadata:
-  name: kubernetes-exec-security-alerts
-  labels:
-    release: kube-prometheus-stack
-spec:
-  groups:
-    - name: kubernetes.audit-exec-security
-      interval: 15s
-      rules:
-        - alert: KubernetesServiceAccountExec
-          expr: increase(security_events_kubernetes_exec_events_total{classification="service_account"}[2m]) > 0
-          labels:
-            severity: critical
-            team: security
-            detector: kubernetes-audit
-          annotations:
-            summary: A Kubernetes service account opened a shell in a pod
-            description: >-
-              Identity {{ $labels.username }} opened an exec session in
-              {{ $labels.namespace }}/{{ $labels.pod }} from {{ $labels.source_ip }}.
-            runbook_url: https://kibana.no-name.win
-
-        - alert: KubernetesDeveloperExecAllowed
-          expr: increase(security_events_kubernetes_exec_events_total{classification="developer_allowed"}[2m]) > 0
-          labels:
-            severity: critical
-            team: security
-            detector: kubernetes-audit
-          annotations:
-            summary: A Keycloak developer was unexpectedly allowed to exec into a pod
-            description: >-
-              Identity {{ $labels.username }} opened an exec session in
-              {{ $labels.namespace }}/{{ $labels.pod }} from {{ $labels.source_ip }}.
-            runbook_url: https://kibana.no-name.win
-
-        - alert: KubernetesUnapprovedIdentityExec
-          expr: increase(security_events_kubernetes_exec_events_total{classification="unapproved_identity"}[2m]) > 0
-          labels:
-            severity: critical
-            team: security
-            detector: kubernetes-audit
-          annotations:
-            summary: An unapproved Kubernetes identity opened a shell in a pod
-            description: >-
-              Identity {{ $labels.username }} opened an exec session in
-              {{ $labels.namespace }}/{{ $labels.pod }} from {{ $labels.source_ip }}.
-            runbook_url: https://kibana.no-name.win
-
-        - alert: KubernetesDeveloperExecDenied
-          expr: increase(security_events_kubernetes_exec_events_total{classification="developer_denied"}[2m]) > 0
-          labels:
-            severity: warning
-            team: security
-            detector: kubernetes-audit
-          annotations:
-            summary: Kubernetes denied a developer attempt to exec into a pod
-            description: >-
-              Identity {{ $labels.username }} was denied an exec session in
-              {{ $labels.namespace }}/{{ $labels.pod }} from {{ $labels.source_ip }}.
-            runbook_url: https://kibana.no-name.win
+  name: security-events-otel-collector
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: security-events-otel-collector
+subjects:
+  - kind: ServiceAccount
+    name: security-events-otel-collector
+    namespace: elastic-stack

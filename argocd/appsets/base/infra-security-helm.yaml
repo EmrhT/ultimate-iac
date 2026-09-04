@@ -82,6 +82,12 @@ spec:
             chart: eck-operator
             chartVersion: 3.4.0
             wave: "0"
+          - name: elastalert2
+            namespace: elastic-stack
+            chartRepo: https://jertel.github.io/elastalert2/
+            chart: elastalert2
+            chartVersion: 2.31.0
+            wave: "16"
           - name: security-sonarqube
             namespace: security-sonarqube
             chartRepo: https://SonarSource.github.io/helm-chart-sonarqube

@@ -1,0 +1,217 @@
+replicaCount: 1
+runIntervalMins: 1
+bufferTimeMins: 1
+writebackIndex: elastalert2
+
+# VSO creates this Secret from Vault. It contains the normal ElastAlert2
+# configuration plus the PagerDuty Events API v2 routing key.
+secretConfigName: elastalert2-config
+
+elasticsearch:
+  host: platform-es-http.elastic-stack.svc
+  port: 9200
+  useSsl: "True"
+  verifyCerts: "True"
+  caCerts: /certs/ca.crt
+  credentialsSecret: platform-es-elastic-user
+  credentialsSecretPasswordKey: elastic
+  certsVolumes:
+    - name: elasticsearch-ca
+      secret:
+        secretName: platform-es-http-certs-public
+        items:
+          - key: ca.crt
+            path: ca.crt
+  certsVolumeMounts:
+    - name: elasticsearch-ca
+      mountPath: /certs
+      readOnly: true
+
+serviceAccount:
+  create: false
+  name: elastalert2
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+
+resources:
+  requests:
+    cpu: 20m
+    memory: 64Mi
+  limits:
+    cpu: 150m
+    memory: 192Mi
+
+metrics:
+  enabled: false
+
+rules:
+  kubernetes_unapproved_exec: |-
+    name: Kubernetes unapproved pods exec
+    type: any
+    index: kubernetes-audit-*
+    timestamp_field: ingested_at
+    filter:
+      - terms:
+          classification.keyword:
+            - service_account
+            - developer_allowed
+            - unapproved_identity
+    realert:
+      minutes: 1
+    include_rule_params_in_matches:
+      - pagerduty_routing_key
+    alert:
+      - post2
+    http_post2_url: https://events.eu.pagerduty.com/v2/enqueue
+    http_post2_all_values: false
+    http_post2_payload: |-
+      {
+        "routing_key": "{{ rule_param_pagerduty_routing_key }}",
+        "event_action": "trigger",
+        "dedup_key": "kubernetes-exec-{{ auditID }}",
+        "payload": {
+          "summary": "Unapproved identity {{ user.username }} opened a pod exec session",
+          "source": "ultimate-iac-kubernetes",
+          "severity": "critical",
+          "component": "kube-apiserver-audit",
+          "group": "security-runtime",
+          "class": "unauthorized-pods-exec",
+          "custom_details": {
+            "classification": "{{ classification }}",
+            "username": "{{ user.username }}",
+            "namespace": "{{ objectRef.namespace }}",
+            "pod": "{{ objectRef.name }}",
+            "source_ips": "{{ sourceIPs }}",
+            "kibana": "https://kibana.no-name.win"
+          }
+        }
+      }
+
+  kubernetes_developer_exec_denied: |-
+    name: Kubernetes denied developer pods exec
+    type: any
+    index: kubernetes-audit-*
+    timestamp_field: ingested_at
+    filter:
+      - term:
+          classification.keyword: developer_denied
+    realert:
+      minutes: 1
+    include_rule_params_in_matches:
+      - pagerduty_routing_key
+    alert:
+      - post2
+    http_post2_url: https://events.eu.pagerduty.com/v2/enqueue
+    http_post2_all_values: false
+    http_post2_payload: |-
+      {
+        "routing_key": "{{ rule_param_pagerduty_routing_key }}",
+        "event_action": "trigger",
+        "dedup_key": "kubernetes-denied-exec-{{ auditID }}",
+        "payload": {
+          "summary": "Kubernetes denied a developer pod exec attempt by {{ user.username }}",
+          "source": "ultimate-iac-kubernetes",
+          "severity": "warning",
+          "component": "kube-apiserver-audit",
+          "group": "security-runtime",
+          "class": "denied-pods-exec",
+          "custom_details": {
+            "username": "{{ user.username }}",
+            "namespace": "{{ objectRef.namespace }}",
+            "pod": "{{ objectRef.name }}",
+            "source_ips": "{{ sourceIPs }}",
+            "kibana": "https://kibana.no-name.win"
+          }
+        }
+      }
+
+  falco_critical_runtime_event: |-
+    name: Falco critical runtime event
+    type: any
+    index: falco-*
+    timestamp_field: ingested_at
+    filter:
+      - term:
+          priority.keyword: Critical
+    realert:
+      minutes: 1
+    include_rule_params_in_matches:
+      - pagerduty_routing_key
+    alert:
+      - post2
+    http_post2_url: https://events.eu.pagerduty.com/v2/enqueue
+    http_post2_all_values: false
+    http_post2_payload: |-
+      {
+        "routing_key": "{{ rule_param_pagerduty_routing_key }}",
+        "event_action": "trigger",
+        "dedup_key": "falco-{{ uuid }}",
+        "payload": {
+          "summary": "Falco: {{ rule }}",
+          "source": "{{ hostname }}",
+          "severity": "critical",
+          "component": "falco",
+          "group": "security-runtime",
+          "class": "runtime-threat",
+          "custom_details": {
+            "namespace": "{{ _data['output_fields']['k8s.ns.name'] }}",
+            "pod": "{{ _data['output_fields']['k8s.pod.name'] }}",
+            "process": "{{ _data['output_fields']['proc.name'] }}",
+            "command": "{{ _data['output_fields']['proc.cmdline'] }}",
+            "event": "{{ output }}",
+            "kibana": "https://kibana.no-name.win"
+          }
+        }
+      }
+
+  kyverno_explicit_uid_zero: |-
+    name: Kyverno explicit UID zero violation
+    type: any
+    index: kyverno-*
+    timestamp_field: ingested_at
+    filter:
+      - query:
+          query_string:
+            query: 'results.result:fail AND results.message:"Pods and containers must not explicitly run as UID 0."'
+    realert:
+      minutes: 1
+    include_rule_params_in_matches:
+      - pagerduty_routing_key
+    alert:
+      - post2
+    http_post2_url: https://events.eu.pagerduty.com/v2/enqueue
+    http_post2_all_values: false
+    http_post2_payload: |-
+      {
+        "routing_key": "{{ rule_param_pagerduty_routing_key }}",
+        "event_action": "trigger",
+        "dedup_key": "kyverno-uid-zero-{{ metadata.uid }}-{{ metadata.resourceVersion }}",
+        "payload": {
+          "summary": "Kyverno observed a workload explicitly configured with UID 0",
+          "source": "ultimate-iac-kyverno",
+          "severity": "critical",
+          "component": "kyverno",
+          "group": "security-admission",
+          "class": "pod-security-violation",
+          "custom_details": {
+            "report": "{{ metadata.name }}",
+            "namespace": "{{ metadata.namespace }}",
+            "policy": "audit-pod-security-context",
+            "kibana": "https://kibana.no-name.win"
+          }
+        }
+      }
