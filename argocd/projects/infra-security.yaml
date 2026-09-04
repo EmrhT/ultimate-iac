@@ -22,6 +22,7 @@ spec:
     - https://aquasecurity.github.io/helm-charts
     - https://raw.githubusercontent.com/DefectDojo/django-DefectDojo/helm-charts
     - https://kyverno.github.io/kyverno/
+    - https://jertel.github.io/elastalert2/
   destinations:
     - server: https://kubernetes.default.svc
       namespace: '*'
