@@ -95,12 +95,11 @@ audit_log_maxage: 2
 audit_log_maxbackups: 8
 audit_log_maxsize: 25
 audit_policy_custom_rules: |
-  # Interactive Pod access is the evidence used to distinguish an authorized
-  # kubectl session from a shell opened entirely inside a compromised Pod.
+  # Interactive Pod access is the evidence used to distinguish an API-created
+  # troubleshooting session from a shell opened entirely inside a compromised
+  # Pod. Record every identity here so break-glass kubeconfigs and automation
+  # cannot create an attribution gap.
   - level: Metadata
-    userGroups:
-      - keycloak:/platform/admins
-      - keycloak:/platform/devs
     verbs: ["create", "get", "patch", "update"]
     resources:
       - group: ""

@@ -39,3 +39,13 @@ spec:
               value: '{{ or .CommonAnnotations.description .CommonAnnotations.summary }}'
             - key: runbook
               value: '{{ .CommonAnnotations.runbook_url }}'
+            - key: detector
+              value: '{{ .CommonLabels.detector }}'
+            - key: identity
+              value: '{{ .CommonLabels.username }}'
+            - key: namespace
+              value: '{{ .CommonLabels.namespace }}'
+            - key: pod
+              value: '{{ .CommonLabels.pod }}'
+            - key: source_ip
+              value: '{{ .CommonLabels.source_ip }}'

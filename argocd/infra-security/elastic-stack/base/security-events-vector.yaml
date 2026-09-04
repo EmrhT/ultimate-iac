@@ -1,0 +1,366 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: security-events-vector
+data:
+  vector.yaml: |-
+    data_dir: /var/lib/vector
+
+    api:
+      enabled: false
+
+    sources:
+      kubernetes_audit:
+        type: file
+        include:
+          - /var/log/kubernetes/audit/kube-apiserver-audit.log
+        # Do not replay the existing host-side audit history on first install.
+        # Vector checkpoints subsequent reads in its persistent host directory.
+        read_from: end
+
+      falco:
+        type: http_server
+        address: 0.0.0.0:8686
+        decoding:
+          codec: json
+
+    transforms:
+      kubernetes_audit_normalized:
+        type: remap
+        inputs:
+          - kubernetes_audit
+        source: |-
+          parsed, err = parse_json(.message)
+          if err == null {
+            . = parsed
+          }
+          .event = {"dataset": "kubernetes.audit"}
+          .ingested_at = now()
+
+      # Classify interactive exec activity using the Kubernetes-authenticated
+      # caller. Falco cannot reliably recover this identity from the resulting
+      # process alone. Aborted events remain stored in Elasticsearch but do not
+      # generate an Alertmanager notification.
+      kubernetes_exec_alert:
+        type: remap
+        inputs:
+          - kubernetes_audit_normalized
+        drop_on_abort: true
+        reroute_dropped: false
+        source: |-
+          resource = string!(.objectRef.resource)
+          subresource = string!(.objectRef.subresource)
+          verb = string!(.verb)
+          stage = string!(.stage)
+          response_code = to_int!(.responseStatus.code)
+          username = string!(.user.username)
+          groups = array!(.user.groups)
+
+          if resource != "pods" || subresource != "exec" || verb != "create" {
+            abort
+          }
+
+          is_admin = includes(groups, "keycloak:/platform/admins")
+          is_developer = includes(groups, "keycloak:/platform/devs")
+          is_service_account = starts_with(username, "system:serviceaccount:")
+          successful = response_code < 400 && stage == "ResponseStarted"
+          denied = response_code == 403 && stage == "ResponseComplete"
+
+          if is_admin {
+            abort
+          } else if successful && is_service_account {
+            alertname = "KubernetesServiceAccountExec"
+            severity = "critical"
+            summary = "A Kubernetes service account opened a shell in a pod"
+          } else if successful && is_developer {
+            alertname = "KubernetesDeveloperExecAllowed"
+            severity = "critical"
+            summary = "A Keycloak developer was unexpectedly allowed to exec into a pod"
+          } else if successful {
+            alertname = "KubernetesUnapprovedIdentityExec"
+            severity = "critical"
+            summary = "An unapproved Kubernetes identity opened a shell in a pod"
+          } else if denied && is_developer {
+            alertname = "KubernetesDeveloperExecDenied"
+            severity = "warning"
+            summary = "Kubernetes denied a developer attempt to exec into a pod"
+          } else {
+            abort
+          }
+
+          namespace = string!(.objectRef.namespace)
+          pod = string!(.objectRef.name)
+          source_ip = if exists(.sourceIPs[0]) { string!(.sourceIPs[0]) } else { "unknown" }
+          starts_at = now()
+          ends_at = starts_at + to_duration!("10m")
+
+          description = summary + " | identity=" + username +
+            " namespace=" + namespace + " pod=" + pod +
+            " source_ip=" + source_ip + " response_code=" + to_string(response_code)
+
+          .message = encode_json([{
+            "labels": {
+              "alertname": alertname,
+              "severity": severity,
+              "team": "security",
+              "detector": "kubernetes-audit",
+              "username": username,
+              "namespace": namespace,
+              "pod": pod,
+              "source_ip": source_ip
+            },
+            "annotations": {
+              "summary": summary,
+              "description": description,
+              "runbook_url": "https://kibana.no-name.win"
+            },
+            "startsAt": format_timestamp!(starts_at, "%+"),
+            "endsAt": format_timestamp!(ends_at, "%+")
+          }])
+
+      falco_normalized:
+        type: remap
+        inputs:
+          - falco
+        source: |-
+          .event = {"dataset": "falco"}
+          .ingested_at = now()
+
+      # Preserve the first minute's evidence during an alert storm without
+      # allowing a broken rule to exhaust the 1 GiB Elasticsearch volume.
+      falco_rate_limited:
+        type: throttle
+        inputs:
+          - falco_normalized
+        threshold: 60
+        window_secs: 60
+
+    sinks:
+      kubernetes_audit_elasticsearch:
+        type: elasticsearch
+        inputs:
+          - kubernetes_audit_normalized
+        endpoints:
+          - https://platform-es-http.elastic-stack.svc:9200
+        bulk:
+          index: kubernetes-audit-write
+        auth:
+          strategy: basic
+          user: elastic
+          password: ${ELASTIC_PASSWORD}
+        tls:
+          ca_file: /etc/elasticsearch/certs/ca.crt
+        compression: gzip
+        buffer:
+          type: memory
+          max_events: 1000
+          when_full: drop_newest
+
+      falco_elasticsearch:
+        type: elasticsearch
+        inputs:
+          - falco_rate_limited
+        endpoints:
+          - https://platform-es-http.elastic-stack.svc:9200
+        bulk:
+          index: falco-write
+        auth:
+          strategy: basic
+          user: elastic
+          password: ${ELASTIC_PASSWORD}
+        tls:
+          ca_file: /etc/elasticsearch/certs/ca.crt
+        compression: gzip
+        buffer:
+          type: memory
+          max_events: 1000
+          when_full: drop_newest
+
+      kubernetes_exec_alertmanager:
+        type: http
+        inputs:
+          - kubernetes_exec_alert
+        uri: http://kube-prometheus-stack-alertmanager.monitoring.svc:9093/api/v2/alerts
+        method: post
+        framing:
+          method: bytes
+        encoding:
+          codec: raw_message
+        request:
+          headers:
+            Content-Type: application/json
+        # Each event is already one complete Alertmanager JSON array.
+        batch:
+          max_events: 1
+        healthcheck:
+          enabled: false
+        buffer:
+          type: memory
+          max_events: 100
+          when_full: drop_newest
+
+  bootstrap-indices.sh: |-
+    #!/bin/sh
+    set -eu
+
+    endpoint="https://platform-es-http.elastic-stack.svc:9200"
+    auth="elastic:${ELASTIC_PASSWORD}"
+    ca="/etc/elasticsearch/certs/ca.crt"
+
+    # Wait for the single-node Elasticsearch service after restarts.
+    until curl --silent --fail --cacert "$ca" --user "$auth" "$endpoint/_cluster/health?wait_for_status=yellow&timeout=5s" >/dev/null; do
+      sleep 5
+    done
+
+    # Both streams roll over before becoming large and are deleted after three
+    # days. One primary and zero replicas are appropriate for this 1 GiB lab.
+    for stream in kubernetes-audit falco; do
+      curl --silent --fail --cacert "$ca" --user "$auth" \
+        --request PUT "$endpoint/_ilm/policy/${stream}-small" \
+        --header 'Content-Type: application/json' \
+        --data '{"policy":{"phases":{"hot":{"actions":{"rollover":{"max_primary_shard_size":"25mb","max_age":"1d"}}},"delete":{"min_age":"3d","actions":{"delete":{}}}}}}' >/dev/null
+
+      curl --silent --fail --cacert "$ca" --user "$auth" \
+        --request PUT "$endpoint/_index_template/${stream}-small" \
+        --header 'Content-Type: application/json' \
+        --data "{\"index_patterns\":[\"${stream}-*\"],\"template\":{\"settings\":{\"index.lifecycle.name\":\"${stream}-small\",\"index.lifecycle.rollover_alias\":\"${stream}-write\",\"number_of_shards\":1,\"number_of_replicas\":0,\"refresh_interval\":\"30s\"}}}" >/dev/null
+
+      if ! curl --silent --fail --cacert "$ca" --user "$auth" "$endpoint/_alias/${stream}-write" >/dev/null; then
+        curl --silent --fail --cacert "$ca" --user "$auth" \
+          --request PUT "$endpoint/${stream}-000001" \
+          --header 'Content-Type: application/json' \
+          --data "{\"aliases\":{\"${stream}-write\":{\"is_write_index\":true}}}" >/dev/null
+      fi
+    done
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: security-events-vector
+spec:
+  selector:
+    app.kubernetes.io/name: security-events-vector
+  ports:
+    - name: falco-http
+      port: 8686
+      targetPort: falco-http
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: security-events-vector
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: security-events-vector
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: security-events-vector
+    spec:
+      serviceAccountName: security-events-vector
+      automountServiceAccountToken: false
+      nodeSelector:
+        node-role.kubernetes.io/control-plane: ""
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      initContainers:
+        - name: bootstrap-indices
+          image: curlimages/curl:8.21.0
+          command:
+            - /bin/sh
+            - /etc/vector/bootstrap-indices.sh
+          env:
+            - name: ELASTIC_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: platform-es-elastic-user
+                  key: elastic
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+          resources:
+            requests:
+              cpu: 5m
+              memory: 8Mi
+            limits:
+              cpu: 50m
+              memory: 32Mi
+          volumeMounts:
+            - name: config
+              mountPath: /etc/vector
+              readOnly: true
+            - name: elasticsearch-ca
+              mountPath: /etc/elasticsearch/certs
+              readOnly: true
+      containers:
+        - name: vector
+          image: timberio/vector:0.55.0-debian
+          args:
+            - --config
+            - /etc/vector/vector.yaml
+          env:
+            - name: ELASTIC_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: platform-es-elastic-user
+                  key: elastic
+          ports:
+            - name: falco-http
+              containerPort: 8686
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            # The API server audit file is root-owned and mode 0600.
+            runAsUser: 0
+            seccompProfile:
+              type: RuntimeDefault
+          resources:
+            requests:
+              cpu: 25m
+              memory: 48Mi
+            limits:
+              cpu: 150m
+              memory: 128Mi
+          volumeMounts:
+            - name: config
+              mountPath: /etc/vector
+              readOnly: true
+            - name: kubernetes-audit
+              mountPath: /var/log/kubernetes/audit
+              readOnly: true
+            - name: vector-data
+              mountPath: /var/lib/vector
+            - name: elasticsearch-ca
+              mountPath: /etc/elasticsearch/certs
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: security-events-vector
+            defaultMode: 0555
+        - name: kubernetes-audit
+          hostPath:
+            path: /var/log/kubernetes/audit
+            type: Directory
+        - name: vector-data
+          hostPath:
+            path: /var/lib/vector-security-events
+            type: DirectoryOrCreate
+        - name: elasticsearch-ca
+          secret:
+            secretName: platform-es-http-certs-public
+            items:
+              - key: ca.crt
+                path: ca.crt

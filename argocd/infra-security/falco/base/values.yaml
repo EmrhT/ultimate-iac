@@ -158,3 +158,9 @@ falcosidekick:
       minimumpriority: critical
       expireafter: "600"
       extralabels: team:security,detector:falco
+    webhook:
+      # Preserve Critical Falco evidence in Elasticsearch independently of the
+      # real-time Alertmanager/PagerDuty notification path.
+      address: http://security-events-vector.elastic-stack.svc:8686
+      method: POST
+      minimumpriority: critical

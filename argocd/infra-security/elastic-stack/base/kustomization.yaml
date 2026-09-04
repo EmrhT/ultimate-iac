@@ -5,3 +5,4 @@ resources:
   - service-accounts.yaml
   - elasticsearch.yaml
   - kibana.yaml
+  - security-events-vector.yaml
