@@ -66,6 +66,12 @@ data:
           successful = response_code < 400 && stage == "ResponseStarted"
           denied = response_code == 403 && stage == "ResponseComplete"
 
+          # Initialize outside the branches because VRL keeps branch-local
+          # assignments scoped to their branch.
+          alertname = ""
+          severity = ""
+          summary = ""
+
           if is_admin {
             abort
           } else if successful && is_service_account {
@@ -92,7 +98,9 @@ data:
           pod = string!(.objectRef.name)
           source_ip = if exists(.sourceIPs[0]) { string!(.sourceIPs[0]) } else { "unknown" }
           starts_at = now()
-          ends_at = starts_at + to_duration!("10m")
+          ends_at = from_unix_timestamp!(
+            to_unix_timestamp(starts_at) + to_int!(parse_duration!("10m", "s"))
+          )
 
           description = summary + " | identity=" + username +
             " namespace=" + namespace + " pod=" + pod +
