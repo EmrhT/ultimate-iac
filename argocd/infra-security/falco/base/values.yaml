@@ -106,13 +106,17 @@ customRules:
       tags: [container, process, container_escape, mitre_privilege_escalation, T1611]
 
     # The workload is pinned to UID 10000. A newly spawned root process means
-    # that this runtime invariant has been violated.
+    # that this runtime invariant has been violated. Ignore runc's transient
+    # exec-init helper: it is created by the container runtime for kubectl exec
+    # before the requested process starts with the container's configured UID.
+    # Kubernetes audit events independently classify who requested the exec.
     - rule: Podinfo Unexpected Root Process
       desc: Detect successful privilege escalation resulting in a root process inside Podinfo.
       condition: >
         spawned_process
         and container.name = podinfo
         and user.uid = 0
+        and proc.pname != runc
       output: >
         Podinfo unexpected root process detected | namespace=%k8s.ns.name pod=%k8s.pod.name
         container=%container.name process=%proc.name parent=%proc.pname
@@ -158,9 +162,10 @@ falcosidekick:
       minimumpriority: critical
       expireafter: "600"
       extralabels: team:security,detector:falco
-    webhook:
-      # Preserve Critical Falco evidence in Elasticsearch independently of the
-      # real-time Alertmanager/PagerDuty notification path.
-      address: http://security-events-vector.elastic-stack.svc:8686
-      method: POST
-      minimumpriority: critical
+    otlp:
+      logs:
+        # Keep Alertmanager as the real-time path and send the same Critical
+        # evidence to the OpenTelemetry Collector for durable investigation.
+        endpoint: http://security-events-otel-collector.elastic-stack.svc:4318/v1/logs
+        protocol: http/protobuf
+        minimumpriority: critical
