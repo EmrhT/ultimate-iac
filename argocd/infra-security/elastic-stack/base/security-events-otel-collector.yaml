@@ -213,7 +213,7 @@ data:
       curl --silent --fail --cacert "$ca" --user "$auth" \
         --request PUT "$endpoint/_index_template/${stream}-small" \
         --header 'Content-Type: application/json' \
-        --data "{\"index_patterns\":[\"${stream}-*\"],\"template\":{\"settings\":{\"index.lifecycle.name\":\"${stream}-small\",\"index.lifecycle.rollover_alias\":\"${stream}-write\",\"number_of_shards\":1,\"number_of_replicas\":0,\"refresh_interval\":\"30s\"}}}" >/dev/null
+        --data "{\"index_patterns\":[\"${stream}-*\"],\"template\":{\"settings\":{\"index.lifecycle.name\":\"${stream}-small\",\"index.lifecycle.rollover_alias\":\"${stream}-write\",\"number_of_shards\":1,\"number_of_replicas\":0,\"refresh_interval\":\"30s\"},\"mappings\":{\"properties\":{\"ingested_at\":{\"type\":\"date\"}}}}}" >/dev/null
 
       if ! curl --silent --fail --cacert "$ca" --user "$auth" "$endpoint/_alias/${stream}-write" >/dev/null; then
         curl --silent --fail --cacert "$ca" --user "$auth" \
@@ -221,7 +221,28 @@ data:
           --header 'Content-Type: application/json' \
           --data "{\"aliases\":{\"${stream}-write\":{\"is_write_index\":true}}}" >/dev/null
       fi
+
+      # Existing empty indices need the timestamp mapping immediately;
+      # otherwise ElastAlert cannot sort them before their first document.
+      curl --silent --fail --cacert "$ca" --user "$auth" \
+        --request PUT "$endpoint/${stream}-*/_mapping" \
+        --header 'Content-Type: application/json' \
+        --data '{"properties":{"ingested_at":{"type":"date"}}}' >/dev/null
     done
+
+    # ElastAlert creates five operational writeback indices. A replica is
+    # impossible on this single-node lab and would keep Elasticsearch yellow.
+    curl --silent --fail --cacert "$ca" --user "$auth" \
+      --request PUT "$endpoint/_index_template/elastalert2-single-node" \
+      --header 'Content-Type: application/json' \
+      --data '{"index_patterns":["elastalert2*"],"priority":200,"template":{"settings":{"number_of_shards":1,"number_of_replicas":0,"refresh_interval":"30s"}}}' >/dev/null
+
+    if curl --silent --fail --cacert "$ca" --user "$auth" "$endpoint/elastalert2*" >/dev/null; then
+      curl --silent --fail --cacert "$ca" --user "$auth" \
+        --request PUT "$endpoint/elastalert2*/_settings" \
+        --header 'Content-Type: application/json' \
+        --data '{"index":{"number_of_replicas":0,"refresh_interval":"30s"}}' >/dev/null
+    fi
 ---
 apiVersion: v1
 kind: Service
@@ -247,6 +268,9 @@ spec:
       app.kubernetes.io/name: security-events-otel-collector
   template:
     metadata:
+      annotations:
+        # Bump when the bootstrap script must run again on the control plane.
+        platform.example/bootstrap-revision: "2"
       labels:
         app.kubernetes.io/name: security-events-otel-collector
     spec:
