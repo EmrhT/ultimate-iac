@@ -113,6 +113,9 @@ data:
               # report itself so results.* remains stable and directly
               # searchable by ElastAlert and Kibana.
               - set(body, body["object"]) where body["object"] != nil
+              # Kubernetes field ownership contains a literal "." key, which
+              # Elasticsearch 9 rejects. It is also irrelevant to detections.
+              - delete_key(body["metadata"], "managedFields") where body["metadata"] != nil
               - set(attributes["event.dataset"], "kyverno.policy_report")
               - set(body["event"], ParseJSON("{\"dataset\":\"kyverno.policy_report\"}")) where body["event"] == nil
               - set(body["event"]["dataset"], "kyverno.policy_report")
@@ -286,7 +289,7 @@ spec:
       annotations:
         # Bump when the bootstrap script or collector ConfigMap must be
         # reloaded on the control plane.
-        platform.example/bootstrap-revision: "3"
+        platform.example/bootstrap-revision: "4"
       labels:
         app.kubernetes.io/name: security-events-otel-collector
     spec:
