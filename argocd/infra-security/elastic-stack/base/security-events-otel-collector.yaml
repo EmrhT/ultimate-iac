@@ -24,6 +24,9 @@ data:
         operators:
           - type: json_parser
             parse_from: body
+            # The parser defaults to attributes. The transforms and bodymap
+            # exporter intentionally operate on the parsed audit object body.
+            parse_to: body
 
       # Falcosidekick sends Critical events using the standard OTLP/HTTP logs
       # protocol. ElastAlert2 evaluates the indexed copy for notification.
@@ -55,11 +58,18 @@ data:
       transform/kubernetes_audit:
         error_mode: ignore
         log_statements:
+          # OTel Collector 0.160 ignores the deprecated exporter-level
+          # mapping.mode setting. Select bodymap on the signal scope so the
+          # parsed audit event is written to a normal index, not a data stream.
+          - context: scope
+            statements:
+              - set(attributes["elastic.mapping.mode"], "bodymap")
           - context: log
             statements:
               - set(attributes["event.dataset"], "kubernetes.audit")
               - set(body["event"], ParseJSON("{\"dataset\":\"kubernetes.audit\"}")) where body["event"] == nil
               - set(body["event"]["dataset"], "kubernetes.audit")
+              - set(body["ingested_at"], FormatTime(observed_time, "%Y-%m-%dT%H:%M:%S.%sZ"))
               - set(attributes["username"], body["user"]["username"]) where body["user"]["username"] != nil
               - set(attributes["namespace"], body["objectRef"]["namespace"]) where body["objectRef"]["namespace"] != nil
               - set(attributes["pod"], body["objectRef"]["name"]) where body["objectRef"]["name"] != nil
@@ -83,18 +93,26 @@ data:
       transform/falco:
         error_mode: ignore
         log_statements:
+          - context: scope
+            statements:
+              - set(attributes["elastic.mapping.mode"], "raw")
           - context: log
             statements:
               - set(attributes["event.dataset"], "falco")
+              - set(attributes["ingested_at"], FormatTime(observed_time, "%Y-%m-%dT%H:%M:%S.%sZ"))
 
       transform/kyverno:
         error_mode: ignore
         log_statements:
+          - context: scope
+            statements:
+              - set(attributes["elastic.mapping.mode"], "bodymap")
           - context: log
             statements:
               - set(attributes["event.dataset"], "kyverno.policy_report")
               - set(body["event"], ParseJSON("{\"dataset\":\"kyverno.policy_report\"}")) where body["event"] == nil
               - set(body["event"]["dataset"], "kyverno.policy_report")
+              - set(body["ingested_at"], FormatTime(observed_time, "%Y-%m-%dT%H:%M:%S.%sZ"))
 
       batch/audit:
         timeout: 2s
@@ -117,9 +135,6 @@ data:
         tls:
           ca_file: /etc/elasticsearch/certs/ca.crt
         logs_index: kubernetes-audit-write
-        mapping:
-          # Store the parsed Kubernetes audit object without an OTel envelope.
-          mode: bodymap
         compression: gzip
         sending_queue:
           enabled: true
@@ -132,8 +147,6 @@ data:
         tls:
           ca_file: /etc/elasticsearch/certs/ca.crt
         logs_index: falco-write
-        mapping:
-          mode: raw
         compression: gzip
         sending_queue:
           enabled: true
@@ -146,8 +159,6 @@ data:
         tls:
           ca_file: /etc/elasticsearch/certs/ca.crt
         logs_index: kyverno-write
-        mapping:
-          mode: bodymap
         compression: gzip
         sending_queue:
           enabled: true
