@@ -109,6 +109,10 @@ data:
               - set(attributes["elastic.mapping.mode"], "bodymap")
           - context: log
             statements:
+              # Watch mode wraps the PolicyReport as {type, object}. Store the
+              # report itself so results.* remains stable and directly
+              # searchable by ElastAlert and Kibana.
+              - set(body, body["object"]) where body["object"] != nil
               - set(attributes["event.dataset"], "kyverno.policy_report")
               - set(body["event"], ParseJSON("{\"dataset\":\"kyverno.policy_report\"}")) where body["event"] == nil
               - set(body["event"]["dataset"], "kyverno.policy_report")
@@ -280,8 +284,9 @@ spec:
   template:
     metadata:
       annotations:
-        # Bump when the bootstrap script must run again on the control plane.
-        platform.example/bootstrap-revision: "2"
+        # Bump when the bootstrap script or collector ConfigMap must be
+        # reloaded on the control plane.
+        platform.example/bootstrap-revision: "3"
       labels:
         app.kubernetes.io/name: security-events-otel-collector
     spec:
