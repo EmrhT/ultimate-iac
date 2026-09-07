@@ -86,14 +86,19 @@ data:
               # unapproved default, then replace it with more specific caller
               # classes. The admin assignment is last so membership in the
               # admins group always suppresses notification.
-              - set(attributes["classification"], "unapproved_identity") where body["objectRef"]["resource"] == "pods" and body["objectRef"]["subresource"] == "exec" and body["verb"] == "create" and body["stage"] == "ResponseStarted" and body["responseStatus"]["code"] < 400
+              # Exec requests can be POST/create or GET after Kubernetes
+              # negotiates WebSocket streaming. Both are successful when the
+              # audit stage is ResponseStarted and the response is below 400.
+              - set(attributes["classification"], "unapproved_identity") where body["objectRef"]["resource"] == "pods" and body["objectRef"]["subresource"] == "exec" and (body["verb"] == "create" or body["verb"] == "get") and body["stage"] == "ResponseStarted" and body["responseStatus"]["code"] < 400
               - set(attributes["classification"], "service_account") where attributes["classification"] == "unapproved_identity" and IsMatch(attributes["username"], "^system:serviceaccount:")
-              - set(attributes["classification"], "developer_allowed") where attributes["classification"] != nil and body["user"]["groups"][0] == "keycloak:/platform/devs"
-              - set(attributes["classification"], "admin") where attributes["classification"] != nil and body["user"]["groups"][0] == "keycloak:/platform/admins"
+              # OIDC group order is not stable. Search the complete list and
+              # apply the admin class last so it wins for dual-group users.
+              - set(attributes["classification"], "developer_allowed") where attributes["classification"] != nil and IsMatch(String(body["user"]["groups"]), "keycloak:/platform/devs")
+              - set(attributes["classification"], "admin") where attributes["classification"] != nil and IsMatch(String(body["user"]["groups"]), "keycloak:/platform/admins")
 
               # A denied developer exec is retained as a warning signal. Other
               # denied requests remain searchable but do not become metrics.
-              - set(attributes["classification"], "developer_denied") where body["objectRef"]["resource"] == "pods" and body["objectRef"]["subresource"] == "exec" and body["verb"] == "create" and body["stage"] == "ResponseComplete" and body["responseStatus"]["code"] == 403 and body["user"]["groups"][0] == "keycloak:/platform/devs"
+              - set(attributes["classification"], "developer_denied") where body["objectRef"]["resource"] == "pods" and body["objectRef"]["subresource"] == "exec" and (body["verb"] == "create" or body["verb"] == "get") and body["stage"] == "ResponseComplete" and body["responseStatus"]["code"] == 403 and IsMatch(String(body["user"]["groups"]), "keycloak:/platform/devs")
               - set(body["classification"], attributes["classification"]) where attributes["classification"] != nil
 
       transform/falco:
@@ -301,7 +306,7 @@ spec:
       annotations:
         # Bump when the bootstrap script or collector ConfigMap must be
         # reloaded on the control plane.
-        platform.example/bootstrap-revision: "6"
+        platform.example/bootstrap-revision: "7"
       labels:
         app.kubernetes.io/name: security-events-otel-collector
     spec:

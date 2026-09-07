@@ -63,7 +63,9 @@ rules:
     name: Kubernetes unapproved pods exec
     type: any
     index: kubernetes-audit-*
-    timestamp_field: ingested_at
+    # Evaluate when the API server observed the completed authorization and
+    # protocol upgrade, not when a collector happened to ingest the record.
+    timestamp_field: stageTimestamp
     filter:
       - terms:
           classification.keyword:
@@ -104,7 +106,7 @@ rules:
     name: Kubernetes denied developer pods exec
     type: any
     index: kubernetes-audit-*
-    timestamp_field: ingested_at
+    timestamp_field: stageTimestamp
     filter:
       - term:
           classification.keyword: developer_denied
@@ -141,10 +143,22 @@ rules:
     name: Falco critical runtime event
     type: any
     index: falco-*
-    timestamp_field: ingested_at
+    timestamp_field: time
     filter:
       - term:
           priority.keyword: Critical
+      # Page only for the deliberately designed Podinfo detections. An
+      # unrelated built-in Falco rule becoming Critical must not page this
+      # application's responders without an explicit review.
+      - terms:
+          rule.keyword:
+            - Podinfo Reverse Shell
+            - Podinfo Web-Originated Process Execution
+            - Podinfo Unexpected Network Listener
+            - Podinfo Dropped Payload Execution
+            - Podinfo Container Escape Tool Execution
+            - Podinfo Unexpected Root Process
+            - Podinfo Service Account Credential Access
     realert:
       minutes: 1
     include_rule_params_in_matches:
@@ -157,7 +171,7 @@ rules:
       {
         "routing_key": "{{ rule_param_pagerduty_routing_key }}",
         "event_action": "trigger",
-        "dedup_key": "falco-{{ uuid }}",
+        "dedup_key": "falco-{{ rule }}-{{ _data['output_fields']['container.id'] }}",
         "payload": {
           "summary": "Falco: {{ rule }}",
           "source": "{{ hostname }}",
@@ -185,7 +199,7 @@ rules:
     filter:
       - query:
           query_string:
-            query: 'event.dataset:"kyverno.policy_event" AND reason:"PolicyViolation" AND reportingComponent:"kyverno-admission" AND message:"policy audit-pod-security-context/ fail: Pods and containers must not explicitly run as UID 0."'
+            query: 'event.dataset:"kyverno.policy_event" AND reason:"PolicyViolation" AND reportingComponent:"kyverno-admission" AND message:"policy audit-pod-security-context/ fail: Pods and containers must not explicitly run as UID 0." AND NOT (involvedObject.namespace.keyword:"elastic-stack" AND involvedObject.name.keyword:security-events-otel-collector*)'
     realert:
       minutes: 1
     include_rule_params_in_matches:
