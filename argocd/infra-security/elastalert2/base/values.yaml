@@ -179,7 +179,9 @@ rules:
     name: Kyverno explicit UID zero violation
     type: any
     index: kyverno-*
-    timestamp_field: ingested_at
+    # Use the original Kubernetes Event time so collector restarts and event
+    # replays cannot turn an old violation into a new PagerDuty alert.
+    timestamp_field: eventTime
     filter:
       - query:
           query_string:
