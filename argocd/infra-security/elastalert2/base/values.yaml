@@ -215,3 +215,44 @@ rules:
           }
         }
       }
+
+  kyverno_privileged_container: |-
+    name: Kyverno privileged container violation
+    type: any
+    index: kyverno-*
+    # Use the original Kubernetes Event time so collector restarts and event
+    # replays cannot turn an old violation into a new PagerDuty alert.
+    timestamp_field: eventTime
+    filter:
+      - query:
+          query_string:
+            query: 'event.dataset:"kyverno.policy_event" AND reason:"PolicyViolation" AND reportingComponent:"kyverno-admission" AND message:"policy audit-pod-security-context/ fail: Containers must not run as privileged."'
+    realert:
+      minutes: 1
+    include_rule_params_in_matches:
+      - pagerduty_routing_key
+    alert:
+      - post2
+    http_post2_url: https://events.eu.pagerduty.com/v2/enqueue
+    http_post2_all_values: false
+    http_post2_payload: |-
+      {
+        "routing_key": "{{ rule_param_pagerduty_routing_key }}",
+        "event_action": "trigger",
+        "dedup_key": "kyverno-privileged-{{ involvedObject.uid }}",
+        "payload": {
+          "summary": "Kyverno observed a privileged container configuration",
+          "source": "ultimate-iac-kyverno",
+          "severity": "critical",
+          "component": "kyverno",
+          "group": "security-admission",
+          "class": "privileged-container-violation",
+          "custom_details": {
+            "event": "{{ metadata.name }}",
+            "namespace": "{{ involvedObject.namespace }}",
+            "workload_kind": "{{ involvedObject.kind }}",
+            "workload": "{{ involvedObject.name }}",
+            "policy": "audit-pod-security-context"
+          }
+        }
+      }
