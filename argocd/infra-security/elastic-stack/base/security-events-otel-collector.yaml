@@ -48,6 +48,12 @@ data:
           - name: clusterreports
             group: openreports.io
             mode: watch
+          # PolicyReports are eventually consistent (background scan). Kyverno
+          # emits PolicyViolation Events immediately during admission, so use
+          # those for real-time alerting while retaining reports for history.
+          - name: events
+            mode: watch
+            field_selector: reason=PolicyViolation
 
     processors:
       memory_limiter:
@@ -116,9 +122,10 @@ data:
               # Kubernetes field ownership contains a literal "." key, which
               # Elasticsearch 9 rejects. It is also irrelevant to detections.
               - delete_key(body["metadata"], "managedFields") where body["metadata"] != nil
-              - set(attributes["event.dataset"], "kyverno.policy_report")
+              - set(attributes["event.dataset"], "kyverno.policy_report") where body["kind"] != "Event"
+              - set(attributes["event.dataset"], "kyverno.policy_event") where body["kind"] == "Event"
               - set(body["event"], ParseJSON("{\"dataset\":\"kyverno.policy_report\"}")) where body["event"] == nil
-              - set(body["event"]["dataset"], "kyverno.policy_report")
+              - set(body["event"]["dataset"], attributes["event.dataset"])
               - set(body["ingested_at"], FormatTime(observed_time, "%Y-%m-%dT%H:%M:%S.%sZ"))
 
       batch/audit:
@@ -289,7 +296,7 @@ spec:
       annotations:
         # Bump when the bootstrap script or collector ConfigMap must be
         # reloaded on the control plane.
-        platform.example/bootstrap-revision: "4"
+        platform.example/bootstrap-revision: "5"
       labels:
         app.kubernetes.io/name: security-events-otel-collector
     spec:
@@ -421,6 +428,14 @@ kind: ClusterRole
 metadata:
   name: security-events-otel-collector
 rules:
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - get
+      - list
+      - watch
   - apiGroups:
       - openreports.io
     resources:
