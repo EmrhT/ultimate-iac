@@ -154,11 +154,10 @@ falcosidekick:
     enabled: true
     interval: 60s
   config:
-    otlp:
-      logs:
-        # ElastAlert2 evaluates these durable Elasticsearch events and sends
-        # PagerDuty Events API v2 notifications. Alertmanager is intentionally
-        # reserved for Hubble's metric-based alerts.
-        endpoint: http://security-events-otel-collector.elastic-stack.svc:4318/v1/logs
-        protocol: http/protobuf
-        minimumpriority: critical
+    webhook:
+      # Falcosidekick has no OTLP logs output. Send its native Falco JSON to
+      # OTel's webhook receiver; ElastAlert evaluates the indexed copy and
+      # Alertmanager remains reserved for Hubble's metric-based alerts.
+      address: http://security-events-otel-collector.elastic-stack.svc:8088/falco
+      method: POST
+      minimumpriority: critical

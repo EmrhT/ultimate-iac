@@ -28,12 +28,13 @@ data:
             # exporter intentionally operate on the parsed audit object body.
             parse_to: body
 
-      # Falcosidekick sends Critical events using the standard OTLP/HTTP logs
-      # protocol. ElastAlert2 evaluates the indexed copy for notification.
-      otlp/falco:
-        protocols:
-          http:
-            endpoint: 0.0.0.0:4318
+      # Falcosidekick 2.32 supports OTLP metrics and traces, but not OTLP logs.
+      # Its generic webhook output sends the original Falco JSON here instead.
+      webhook_event/falco:
+        endpoint: 0.0.0.0:8088
+        path: /falco
+        read_timeout: 2s
+        write_timeout: 2s
 
       # Kyverno's reports controller publishes structured audit findings as
       # OpenReports resources. Watch only these two CRDs; no workload, Secret,
@@ -109,6 +110,7 @@ data:
               - set(attributes["elastic.mapping.mode"], "raw")
           - context: log
             statements:
+              - set(body, ParseJSON(body))
               - set(attributes["event.dataset"], "falco")
               - set(attributes["ingested_at"], FormatTime(observed_time, "%Y-%m-%dT%H:%M:%S.%sZ"))
 
@@ -207,7 +209,7 @@ data:
             - elasticsearch/audit
         logs/falco:
           receivers:
-            - otlp/falco
+            - webhook_event/falco
           processors:
             - memory_limiter
             - transform/falco
@@ -289,9 +291,9 @@ spec:
   selector:
     app.kubernetes.io/name: security-events-otel-collector
   ports:
-    - name: otlp-http
-      port: 4318
-      targetPort: otlp-http
+    - name: falco-webhook
+      port: 8088
+      targetPort: falco-webhook
 ---
 apiVersion: apps/v1
 kind: DaemonSet
@@ -306,7 +308,7 @@ spec:
       annotations:
         # Bump when the bootstrap script or collector ConfigMap must be
         # reloaded on the control plane.
-        platform.example/bootstrap-revision: "7"
+        platform.example/bootstrap-revision: "8"
       labels:
         app.kubernetes.io/name: security-events-otel-collector
     spec:
@@ -368,8 +370,8 @@ spec:
                   name: platform-es-elastic-user
                   key: elastic
           ports:
-            - name: otlp-http
-              containerPort: 4318
+            - name: falco-webhook
+              containerPort: 8088
             - name: health
               containerPort: 13133
           livenessProbe:
