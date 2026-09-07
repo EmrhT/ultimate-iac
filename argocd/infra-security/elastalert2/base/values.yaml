@@ -95,8 +95,7 @@ rules:
             "username": "{{ user.username }}",
             "namespace": "{{ objectRef.namespace }}",
             "pod": "{{ objectRef.name }}",
-            "source_ips": "{{ sourceIPs }}",
-            "kibana": "https://kibana.no-name.win"
+            "source_ips": "{{ sourceIPs }}"
           }
         }
       }
@@ -133,8 +132,7 @@ rules:
             "username": "{{ user.username }}",
             "namespace": "{{ objectRef.namespace }}",
             "pod": "{{ objectRef.name }}",
-            "source_ips": "{{ sourceIPs }}",
-            "kibana": "https://kibana.no-name.win"
+            "source_ips": "{{ sourceIPs }}"
           }
         }
       }
@@ -172,8 +170,7 @@ rules:
             "pod": "{{ _data['output_fields']['k8s.pod.name'] }}",
             "process": "{{ _data['output_fields']['proc.name'] }}",
             "command": "{{ _data['output_fields']['proc.cmdline'] }}",
-            "event": "{{ output }}",
-            "kibana": "https://kibana.no-name.win"
+            "event": "{{ output }}"
           }
         }
       }
@@ -212,8 +209,7 @@ rules:
             "namespace": "{{ involvedObject.namespace }}",
             "workload_kind": "{{ involvedObject.kind }}",
             "workload": "{{ involvedObject.name }}",
-            "policy": "audit-pod-security-context",
-            "kibana": "https://kibana.no-name.win"
+            "policy": "audit-pod-security-context"
           }
         }
       }
