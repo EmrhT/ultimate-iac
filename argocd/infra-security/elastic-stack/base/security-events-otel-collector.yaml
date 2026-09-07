@@ -107,7 +107,11 @@ data:
         log_statements:
           - context: scope
             statements:
-              - set(attributes["elastic.mapping.mode"], "raw")
+              # Parse the webhook JSON into a map, then store that map as the
+              # complete Elasticsearch document. Raw mode would retain the
+              # payload below the OTel Body field, which is incompatible with
+              # the existing Falco queries and index mapping.
+              - set(attributes["elastic.mapping.mode"], "bodymap")
           - context: log
             statements:
               - set(body, ParseJSON(body))
@@ -308,7 +312,7 @@ spec:
       annotations:
         # Bump when the bootstrap script or collector ConfigMap must be
         # reloaded on the control plane.
-        platform.example/bootstrap-revision: "8"
+        platform.example/bootstrap-revision: "9"
       labels:
         app.kubernetes.io/name: security-events-otel-collector
     spec:
