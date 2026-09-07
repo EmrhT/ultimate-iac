@@ -122,6 +122,11 @@ data:
               # Kubernetes field ownership contains a literal "." key, which
               # Elasticsearch 9 rejects. It is also irrelevant to detections.
               - delete_key(body["metadata"], "managedFields") where body["metadata"] != nil
+              # Kubernetes Events and PolicyReports use several identical
+              # field names with incompatible types (for example, source).
+              # Retain only the stable fields required for event detection.
+              - keep_keys(body, ["apiVersion", "kind", "metadata", "reason", "message", "type", "reportingComponent", "action", "eventTime", "involvedObject"]) where body["kind"] == "Event"
+              - keep_keys(body["metadata"], ["name", "namespace", "uid", "resourceVersion", "creationTimestamp"]) where body["kind"] == "Event" and body["metadata"] != nil
               - set(attributes["event.dataset"], "kyverno.policy_report") where body["kind"] != "Event"
               - set(attributes["event.dataset"], "kyverno.policy_event") where body["kind"] == "Event"
               - set(body["event"], ParseJSON("{\"dataset\":\"kyverno.policy_report\"}")) where body["event"] == nil
@@ -296,7 +301,7 @@ spec:
       annotations:
         # Bump when the bootstrap script or collector ConfigMap must be
         # reloaded on the control plane.
-        platform.example/bootstrap-revision: "5"
+        platform.example/bootstrap-revision: "6"
       labels:
         app.kubernetes.io/name: security-events-otel-collector
     spec:
