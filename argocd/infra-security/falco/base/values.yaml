@@ -57,6 +57,8 @@ customRules:
     # Port 9898 is Podinfo's only declared listener. Detect the successful bind
     # rather than listen. Falco exposes the bound endpoint through evt.arg.addr
     # on this event; fd.lport is unset for bind and must not be used here.
+    # Go also probes ::1:0 and IPv4-mapped loopback while selecting its
+    # dual-stack strategy. Ignore only those exact short-lived local sockets.
     # Administrators should use Netshoot for network troubleshooting instead of
     # opening ports in Podinfo.
     - rule: Podinfo Unexpected Network Listener
@@ -67,6 +69,7 @@ customRules:
         and k8s.pod.label[security.no-name.win/falco-unexpected-listener] = "true"
         and fd.type in ("ipv4", "ipv6")
         and not evt.arg.addr endswith ":9898"
+        and not evt.arg.addr in ("::1:0", "::ffff:127.0.0.1:0")
       output: >
         Podinfo unexpected listener detected | namespace=%k8s.ns.name pod=%k8s.pod.name
         container=%container.name process=%proc.name parent=%proc.pname
