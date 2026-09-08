@@ -1,5 +1,9 @@
 driver:
   kind: modern_ebpf
+  modernEbpf:
+    # The modern eBPF probe does not require a fully privileged container.
+    # Let the chart grant only BPF, PERFMON, SYS_RESOURCE and SYS_PTRACE.
+    leastPrivileged: true
 falco:
   json_output: true
   json_include_output_property: true
