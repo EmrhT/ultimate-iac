@@ -54,12 +54,15 @@ customRules:
       priority: CRITICAL
       tags: [container, process, webshell, mitre_execution, T1190, T1059]
 
-    # Port 9898 is Podinfo's only declared listener. Administrators should use
-    # Netshoot for network troubleshooting instead of opening ports in Podinfo.
+    # Port 9898 is Podinfo's only declared listener. Detect the successful bind
+    # rather than listen: bind is the event that establishes the local address
+    # and port and therefore exposes reliable fd.lport data to Falco.
+    # Administrators should use Netshoot for network troubleshooting instead of
+    # opening ports in Podinfo.
     - rule: Podinfo Unexpected Network Listener
       desc: Detect a bind shell or any undeclared listening port in Podinfo.
       condition: >
-        evt.type = listen
+        evt.type = bind
         and evt.rawres = 0
         and container.name = podinfo
         and fd.type in ("ipv4", "ipv6")
