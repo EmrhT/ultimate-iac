@@ -55,8 +55,8 @@ customRules:
       tags: [container, process, webshell, mitre_execution, T1190, T1059]
 
     # Port 9898 is Podinfo's only declared listener. Detect the successful bind
-    # rather than listen: bind is the event that establishes the local address
-    # and port and therefore exposes reliable fd.lport data to Falco.
+    # rather than listen. Falco exposes the bound endpoint through evt.arg.addr
+    # on this event; fd.lport is unset for bind and must not be used here.
     # Administrators should use Netshoot for network troubleshooting instead of
     # opening ports in Podinfo.
     - rule: Podinfo Unexpected Network Listener
@@ -64,13 +64,13 @@ customRules:
       condition: >
         evt.type = bind
         and evt.rawres = 0
-        and container.name = podinfo
+        and k8s.pod.label[app.kubernetes.io/name] = podinfo
         and fd.type in ("ipv4", "ipv6")
-        and fd.lport != 9898
+        and not evt.arg.addr endswith ":9898"
       output: >
         Podinfo unexpected listener detected | namespace=%k8s.ns.name pod=%k8s.pod.name
         container=%container.name process=%proc.name parent=%proc.pname
-        command=%proc.cmdline address=%fd.name port=%fd.lport user=%user.name
+        command=%proc.cmdline address=%evt.arg.addr user=%user.name
       priority: CRITICAL
       tags: [container, network, bind_shell, mitre_command_and_control, T1059]
 
