@@ -30,7 +30,7 @@ customRules:
         and fd.types[0] in ("ipv4", "ipv6")
         and fd.types[1] in ("ipv4", "ipv6")
         and fd.types[2] in ("ipv4", "ipv6")
-        and container.name = podinfo
+        and k8s.pod.label[security.no-name.win/falco-reverse-shell] = "true"
       output: >
         Podinfo reverse shell detected | namespace=%k8s.ns.name pod=%k8s.pod.name
         container=%container.name process=%proc.name parent=%proc.pname
@@ -45,7 +45,7 @@ customRules:
       desc: Detect command execution initiated by the Podinfo application rather than kubectl exec.
       condition: >
         spawned_process
-        and container.name = podinfo
+        and k8s.pod.label[security.no-name.win/falco-web-process] = "true"
         and (proc.pname = podinfo or proc.aname[2] = podinfo)
       output: >
         Podinfo web-originated process detected | namespace=%k8s.ns.name pod=%k8s.pod.name
@@ -64,7 +64,7 @@ customRules:
       condition: >
         evt.type = bind
         and evt.rawres = 0
-        and k8s.pod.label[app.kubernetes.io/name] = podinfo
+        and k8s.pod.label[security.no-name.win/falco-unexpected-listener] = "true"
         and fd.type in ("ipv4", "ipv6")
         and not evt.arg.addr endswith ":9898"
       output: >
@@ -74,18 +74,46 @@ customRules:
       priority: CRITICAL
       tags: [container, network, bind_shell, mitre_command_and_control, T1059]
 
-    # Podinfo has a read-only root filesystem. Executing an upper-layer file is
-    # therefore both an attack signal and evidence of a security regression.
-    - rule: Podinfo Dropped Payload Execution
-      desc: Detect Podinfo executing a binary or script written after the image was built.
+    - list: podinfo_payload_interpreters
+      items: [sh, bash, dash, ash, python, python3, perl, ruby, node]
+
+    # One payload rule covers native binaries written to the overlay layer,
+    # anonymous in-memory executables, executables on common writable mounts,
+    # and interpreters loading scripts from those writable locations.
+    - rule: Podinfo Payload Execution
+      desc: Detect Podinfo executing payloads from writable storage or anonymous memory.
       condition: >
         spawned_process
-        and container.name = podinfo
-        and proc.is_exe_upper_layer = true
+        and k8s.pod.label[security.no-name.win/falco-payload-execution] = "true"
+        and
+        (
+          proc.is_exe_upper_layer = true
+          or proc.is_exe_from_memfd = true
+          or proc.exepath startswith "/tmp/"
+          or proc.exepath startswith "/var/tmp/"
+          or proc.exepath startswith "/dev/shm/"
+          or proc.exepath startswith "/run/"
+          or proc.exepath startswith "/work/"
+          or proc.exepath startswith "/data/"
+          or
+          (
+            proc.name in (podinfo_payload_interpreters)
+            and
+            (
+              proc.args contains "/tmp/"
+              or proc.args contains "/var/tmp/"
+              or proc.args contains "/dev/shm/"
+              or proc.args contains "/run/"
+              or proc.args contains "/work/"
+              or proc.args contains "/data/"
+            )
+          )
+        )
       output: >
-        Podinfo dropped payload executed | namespace=%k8s.ns.name pod=%k8s.pod.name
+        Podinfo payload executed | namespace=%k8s.ns.name pod=%k8s.pod.name
         container=%container.name process=%proc.name parent=%proc.pname
-        executable=%proc.exepath command=%proc.cmdline user=%user.name
+        executable=%proc.exepath command=%proc.cmdline upper_layer=%proc.is_exe_upper_layer
+        memfd=%proc.is_exe_from_memfd user=%user.name
       priority: CRITICAL
       tags: [container, process, payload, mitre_execution, T1059]
 
@@ -99,7 +127,7 @@ customRules:
       desc: Detect namespace, mount, capability, kernel or host manipulation tools in Podinfo.
       condition: >
         spawned_process
-        and container.name = podinfo
+        and k8s.pod.label[security.no-name.win/falco-escape-tools] = "true"
         and proc.name in (podinfo_escape_tools)
       output: >
         Podinfo container escape tool detected | namespace=%k8s.ns.name pod=%k8s.pod.name
@@ -117,7 +145,7 @@ customRules:
       desc: Detect successful privilege escalation resulting in a root process inside Podinfo.
       condition: >
         spawned_process
-        and container.name = podinfo
+        and k8s.pod.label[security.no-name.win/falco-unexpected-root] = "true"
         and user.uid = 0
         and proc.pname != runc
       output: >
@@ -134,7 +162,7 @@ customRules:
       desc: Detect Podinfo reading Kubernetes service-account credentials that should not be mounted.
       condition: >
         open_read
-        and container.name = podinfo
+        and k8s.pod.label[security.no-name.win/falco-service-account-access] = "true"
         and fd.name startswith "/var/run/secrets/kubernetes.io/serviceaccount/"
       output: >
         Podinfo service-account credential accessed | namespace=%k8s.ns.name pod=%k8s.pod.name

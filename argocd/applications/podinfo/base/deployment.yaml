@@ -11,6 +11,15 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: podinfo
+        # Falco rules are independently enabled per workload. Missing or false
+        # labels leave the corresponding detector disabled.
+        security.no-name.win/falco-reverse-shell: "true"
+        security.no-name.win/falco-web-process: "true"
+        security.no-name.win/falco-unexpected-listener: "true"
+        security.no-name.win/falco-payload-execution: "true"
+        security.no-name.win/falco-escape-tools: "true"
+        security.no-name.win/falco-unexpected-root: "true"
+        security.no-name.win/falco-service-account-access: "true"
     spec:
       serviceAccountName: podinfo
       automountServiceAccountToken: false

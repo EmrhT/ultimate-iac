@@ -155,7 +155,7 @@ rules:
             - Podinfo Reverse Shell
             - Podinfo Web-Originated Process Execution
             - Podinfo Unexpected Network Listener
-            - Podinfo Dropped Payload Execution
+            - Podinfo Payload Execution
             - Podinfo Container Escape Tool Execution
             - Podinfo Unexpected Root Process
             - Podinfo Service Account Credential Access
