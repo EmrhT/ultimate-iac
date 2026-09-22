@@ -17,13 +17,13 @@ serviceMonitor:
   create: true
   interval: 60s
 
-# Alert only on a high-confidence reverse-shell behavior in the Podinfo demo
-# workloads. A normal kubectl exec shell does not redirect its standard streams
-# to a network socket and therefore does not match this rule.
+# Each detector is enabled per workload through its own boolean Pod label. Rule
+# and alert names describe behavior rather than the application currently using
+# the detector, so the same controls scale to additional workloads.
 customRules:
   podinfo-runtime.yaml: |-
-    - rule: Podinfo Reverse Shell
-      desc: Detect a Podinfo process redirecting stdin, stdout, or stderr to a network socket.
+    - rule: Reverse Shell
+      desc: Detect a selected workload process redirecting stdin, stdout, or stderr to a network socket.
       # Requiring all three descriptors makes a complete reverse shell produce
       # one alert instead of separate alerts for individual dup2 syscalls.
       condition: >
@@ -36,7 +36,7 @@ customRules:
         and fd.types[2] in ("ipv4", "ipv6")
         and k8s.pod.label[security.no-name.win/falco-reverse-shell] = "true"
       output: >
-        Podinfo reverse shell detected | namespace=%k8s.ns.name pod=%k8s.pod.name
+        Reverse shell detected | namespace=%k8s.ns.name pod=%k8s.pod.name
         container=%container.name process=%proc.name parent=%proc.pname
         command=%proc.cmdline connection=%fd.name user=%user.name
       priority: CRITICAL
@@ -45,14 +45,14 @@ customRules:
     # Podinfo is a self-contained Go service and does not normally launch child
     # processes. A process whose lineage starts at the application therefore
     # indicates web-originated command execution or an active web shell.
-    - rule: Podinfo Web-Originated Process Execution
-      desc: Detect command execution initiated by the Podinfo application rather than kubectl exec.
+    - rule: Web-Originated Process Execution
+      desc: Detect command execution initiated by the selected web application rather than kubectl exec.
       condition: >
         spawned_process
         and k8s.pod.label[security.no-name.win/falco-web-process] = "true"
         and (proc.pname = podinfo or proc.aname[2] = podinfo)
       output: >
-        Podinfo web-originated process detected | namespace=%k8s.ns.name pod=%k8s.pod.name
+        Web-originated process detected | namespace=%k8s.ns.name pod=%k8s.pod.name
         container=%container.name process=%proc.name parent=%proc.pname
         command=%proc.cmdline user=%user.name
       priority: CRITICAL
@@ -65,8 +65,8 @@ customRules:
     # dual-stack strategy. Ignore only those exact short-lived local sockets.
     # Administrators should use Netshoot for network troubleshooting instead of
     # opening ports in Podinfo.
-    - rule: Podinfo Unexpected Network Listener
-      desc: Detect a bind shell or any undeclared listening port in Podinfo.
+    - rule: Unexpected Network Listener
+      desc: Detect a bind shell or an undeclared listening port in a selected workload.
       condition: >
         evt.type = bind
         and evt.rawres = 0
@@ -75,20 +75,20 @@ customRules:
         and not evt.arg.addr endswith ":9898"
         and not evt.arg.addr in ("::1:0", "::ffff:127.0.0.1:0")
       output: >
-        Podinfo unexpected listener detected | namespace=%k8s.ns.name pod=%k8s.pod.name
+        Unexpected network listener detected | namespace=%k8s.ns.name pod=%k8s.pod.name
         container=%container.name process=%proc.name parent=%proc.pname
         command=%proc.cmdline address=%evt.arg.addr user=%user.name
       priority: CRITICAL
       tags: [container, network, bind_shell, mitre_command_and_control, T1059]
 
-    - list: podinfo_payload_interpreters
+    - list: payload_interpreters
       items: [sh, bash, dash, ash, python, python3, perl, ruby, node]
 
     # One payload rule covers native binaries written to the overlay layer,
     # anonymous in-memory executables, executables on common writable mounts,
     # and interpreters loading scripts from those writable locations.
-    - rule: Podinfo Payload Execution
-      desc: Detect Podinfo executing payloads from writable storage or anonymous memory.
+    - rule: Payload Execution
+      desc: Detect a selected workload executing payloads from writable storage or anonymous memory.
       condition: >
         spawned_process
         and k8s.pod.label[security.no-name.win/falco-payload-execution] = "true"
@@ -104,7 +104,7 @@ customRules:
           or proc.exepath startswith "/data/"
           or
           (
-            proc.name in (podinfo_payload_interpreters)
+            proc.name in (payload_interpreters)
             and
             (
               proc.args contains "/tmp/"
@@ -117,27 +117,27 @@ customRules:
           )
         )
       output: >
-        Podinfo payload executed | namespace=%k8s.ns.name pod=%k8s.pod.name
+        Payload executed | namespace=%k8s.ns.name pod=%k8s.pod.name
         container=%container.name process=%proc.name parent=%proc.pname
         executable=%proc.exepath command=%proc.cmdline upper_layer=%proc.is_exe_upper_layer
         memfd=%proc.is_exe_from_memfd user=%user.name
       priority: CRITICAL
       tags: [container, process, payload, mitre_execution, T1059]
 
-    - list: podinfo_escape_tools
+    - list: container_escape_tools
       items: [nsenter, unshare, mount, umount, setpriv, capsh, chroot, debugfs, bpftool, modprobe, insmod]
 
     # Podinfo needs none of these host/namespace manipulation tools. Matching
     # their execution is considerably less noisy than paging on every failed
     # low-level syscall while still covering common hands-on escape attempts.
-    - rule: Podinfo Container Escape Tool Execution
-      desc: Detect namespace, mount, capability, kernel or host manipulation tools in Podinfo.
+    - rule: Container Escape Tool Execution
+      desc: Detect namespace, mount, capability, kernel or host manipulation tools in a selected workload.
       condition: >
         spawned_process
         and k8s.pod.label[security.no-name.win/falco-escape-tools] = "true"
-        and proc.name in (podinfo_escape_tools)
+        and proc.name in (container_escape_tools)
       output: >
-        Podinfo container escape tool detected | namespace=%k8s.ns.name pod=%k8s.pod.name
+        Container escape tool detected | namespace=%k8s.ns.name pod=%k8s.pod.name
         container=%container.name process=%proc.name parent=%proc.pname
         command=%proc.cmdline capabilities=%thread.cap_effective user=%user.name
       priority: CRITICAL
@@ -148,15 +148,15 @@ customRules:
     # exec-init helper: it is created by the container runtime for kubectl exec
     # before the requested process starts with the container's configured UID.
     # Kubernetes audit events independently classify who requested the exec.
-    - rule: Podinfo Unexpected Root Process
-      desc: Detect successful privilege escalation resulting in a root process inside Podinfo.
+    - rule: Unexpected Root Process
+      desc: Detect successful privilege escalation resulting in a root process inside a selected workload.
       condition: >
         spawned_process
         and k8s.pod.label[security.no-name.win/falco-unexpected-root] = "true"
         and user.uid = 0
         and proc.pname != runc
       output: >
-        Podinfo unexpected root process detected | namespace=%k8s.ns.name pod=%k8s.pod.name
+        Unexpected root process detected | namespace=%k8s.ns.name pod=%k8s.pod.name
         container=%container.name process=%proc.name parent=%proc.pname
         command=%proc.cmdline capabilities=%thread.cap_effective user=%user.name
       priority: CRITICAL
@@ -165,14 +165,14 @@ customRules:
     # Podinfo explicitly disables service-account token automounting. Any
     # successful read below this path indicates credential injection or a
     # workload configuration regression.
-    - rule: Podinfo Service Account Credential Access
-      desc: Detect Podinfo reading Kubernetes service-account credentials that should not be mounted.
+    - rule: Service Account Credential Access
+      desc: Detect a selected workload reading Kubernetes service-account credentials that should not be mounted.
       condition: >
         open_read
         and k8s.pod.label[security.no-name.win/falco-service-account-access] = "true"
         and fd.name startswith "/var/run/secrets/kubernetes.io/serviceaccount/"
       output: >
-        Podinfo service-account credential accessed | namespace=%k8s.ns.name pod=%k8s.pod.name
+        Service-account credential accessed | namespace=%k8s.ns.name pod=%k8s.pod.name
         container=%container.name process=%proc.name parent=%proc.pname
         file=%fd.name command=%proc.cmdline user=%user.name
       priority: CRITICAL
