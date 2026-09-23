@@ -156,7 +156,7 @@ rules:
             - Web-Originated Process Execution
             - Unexpected Network Listener
             - Payload Execution
-            - Container Escape Tool Execution
+            - Container Escape Behavior
             - Unexpected Root Process
             - Service Account Credential Access
     realert:

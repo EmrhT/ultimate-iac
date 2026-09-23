@@ -127,21 +127,44 @@ customRules:
     - list: container_escape_tools
       items: [nsenter, unshare, mount, umount, setpriv, capsh, chroot, debugfs, bpftool, modprobe, insmod]
 
-    # Podinfo needs none of these host/namespace manipulation tools. Matching
-    # their execution is considerably less noisy than paging on every failed
-    # low-level syscall while still covering common hands-on escape attempts.
-    - rule: Container Escape Tool Execution
-      desc: Detect namespace, mount, capability, kernel or host manipulation tools in a selected workload.
+    - list: container_escape_syscalls
+      items: [setns, unshare, mount, umount, umount2, pivot_root, chroot, init_module, finit_module, delete_module, bpf, open_by_handle_at]
+
+    # Tool names provide useful operator context, while the syscall branches
+    # also detect renamed, statically linked, and custom escape payloads. Clone
+    # is restricted to namespace-creation flags because ordinary clone calls
+    # are expected from application runtimes.
+    - rule: Container Escape Behavior
+      desc: Detect namespace, mount, root, kernel or host manipulation by a selected workload.
       condition: >
-        spawned_process
-        and k8s.pod.label[security.no-name.win/falco-escape-tools] = "true"
-        and proc.name in (container_escape_tools)
+        k8s.pod.label[security.no-name.win/falco-container-escape] = "true"
+        and
+        (
+          (spawned_process and proc.name in (container_escape_tools))
+          or evt.type in (container_escape_syscalls)
+          or
+          (
+            evt.type in (clone, clone3)
+            and
+            (
+              evt.arg.flags contains CLONE_NEWCGROUP
+              or evt.arg.flags contains CLONE_NEWIPC
+              or evt.arg.flags contains CLONE_NEWNET
+              or evt.arg.flags contains CLONE_NEWNS
+              or evt.arg.flags contains CLONE_NEWPID
+              or evt.arg.flags contains CLONE_NEWTIME
+              or evt.arg.flags contains CLONE_NEWUSER
+              or evt.arg.flags contains CLONE_NEWUTS
+            )
+          )
+        )
       output: >
-        Container escape tool detected | namespace=%k8s.ns.name pod=%k8s.pod.name
+        Container escape behavior detected | namespace=%k8s.ns.name pod=%k8s.pod.name
         container=%container.name process=%proc.name parent=%proc.pname
-        command=%proc.cmdline capabilities=%thread.cap_effective user=%user.name
+        command=%proc.cmdline syscall=%evt.type result=%evt.res
+        capabilities=%thread.cap_effective user=%user.name
       priority: CRITICAL
-      tags: [container, process, container_escape, mitre_privilege_escalation, T1611]
+      tags: [container, process, syscall, container_escape, mitre_privilege_escalation, T1611]
 
     # The workload is pinned to UID 10000. A newly spawned root process means
     # that this runtime invariant has been violated. Ignore runc's transient

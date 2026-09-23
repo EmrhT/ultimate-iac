@@ -17,7 +17,7 @@ spec:
         security.no-name.win/falco-web-process: "true"
         security.no-name.win/falco-unexpected-listener: "true"
         security.no-name.win/falco-payload-execution: "true"
-        security.no-name.win/falco-escape-tools: "true"
+        security.no-name.win/falco-container-escape: "true"
         security.no-name.win/falco-unexpected-root: "true"
         security.no-name.win/falco-service-account-access: "true"
     spec:
