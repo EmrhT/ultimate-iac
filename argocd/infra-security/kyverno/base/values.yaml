@@ -5,6 +5,13 @@ kyverno-api:
   labels:
     app.kubernetes.io/managed-by: Helm
 
+# Pin every Kyverno image rendered by chart 3.9.0. The chart does not expose a
+# separate digest field, so its tag values contain the immutable digest.
+crds:
+  migration:
+    image:
+      tag: v1.19.0@sha256:f40718123e3eea8dc36960023e2af7a980bcc76dec24842ad8705c82f4c9172e
+
 features:
   forceFailurePolicyIgnore:
     enabled: true
@@ -32,7 +39,12 @@ config:
 
 admissionController:
   replicas: 1
+  initContainer:
+    image:
+      tag: v1.19.0@sha256:3fd1640d9c77181be107d3e3c5fb9efcab9d98494bede51b64f93bf591a20276
   container:
+    image:
+      tag: v1.19.0@sha256:e5bf3b96de9ad9475f5282804859e5c8f09d351d4fb988d1c1ee77f825591742
     resources:
       requests:
         cpu: 50m
@@ -47,6 +59,8 @@ admissionController:
 
 backgroundController:
   replicas: 1
+  image:
+    tag: v1.19.0@sha256:5d9a49b0a36bb25c981bd55e57f360850ea37bfe1b4914e00ec898cc5d27cc4f
   resources:
     requests:
       cpu: 25m
@@ -65,6 +79,8 @@ cleanupController:
 
 reportsController:
   replicas: 1
+  image:
+    tag: v1.19.0@sha256:02013e2288600f514b71f814699441007fcce7aff188f1eb9e8c5da877c6e911
   resources:
     requests:
       cpu: 25m
