@@ -1,3 +1,48 @@
+# Pin active images to the artifacts validated by the running cluster and
+# on-demand images to their resolved Linux/amd64 manifests.
+image:
+  longhorn:
+    engine:
+      registry: docker.io
+      tag: v1.11.2@sha256:7482e0437fbf475e1e32696fab22f47bf99b1ef8d067ffce9e34028347722628
+    manager:
+      registry: docker.io
+      tag: v1.11.2@sha256:0f80ca11ac4eb7522f4e6e801a7afc9909ea8d3041575f3d029964c46590f096
+    ui:
+      registry: docker.io
+      tag: v1.11.2@sha256:885bc78f99f31da0d9b0fd8f533a53558a3aa81f9719c62e0d3c69ed8456d5b7
+    instanceManager:
+      registry: docker.io
+      tag: v1.11.2@sha256:16dac125ef30bd3a375bc8ff7d10636ea0302d22d208c0cfb1be37ebb93ca30b
+    shareManager:
+      registry: docker.io
+      tag: v1.11.2@sha256:c11559e998ea982e6bac1637d66cc2aaab662a6b546709f2e54e2bfa50ffb0c3
+    backingImageManager:
+      registry: docker.io
+      tag: v1.11.2@sha256:4da381ff2ecf8cffcad700c18963919eaa57e96848ad2b0f0694664a1700962e
+    supportBundleKit:
+      registry: docker.io
+      tag: v0.0.84@sha256:fac17a2397dad45a93b3dfe81565466233bfbea22dbec18ce2c445db2b0ff136
+  csi:
+    attacher:
+      registry: docker.io
+      tag: v4.11.0-20260428@sha256:fe417c28a6b86f8e7e5d49fc223e22e9ab457f894d2c4a321932d136dc2c2530
+    provisioner:
+      registry: docker.io
+      tag: v5.3.0-20260428@sha256:9e519a21a77c060104716e1f98222bb46ab617778a3bfcd861c87119a8256764
+    nodeDriverRegistrar:
+      registry: docker.io
+      tag: v2.16.0-20260428@sha256:e82a8c8f800d7fbb3c1edf3f90b557768091821a44d52280093394f7918ccb68
+    resizer:
+      registry: docker.io
+      tag: v2.1.0-20260428@sha256:41cb674d1154e798aa2c20f53f72ee2a5597f1369bcad5878d1708aee47f6663
+    snapshotter:
+      registry: docker.io
+      tag: v8.5.0-20260428@sha256:1975fac3890f4e08b98792881cb597502112ce0eeeaaef383e52458c96db94c5
+    livenessProbe:
+      registry: docker.io
+      tag: v2.18.0-20260428@sha256:eae162f7e70fb981f90d9206f299dddaf590c0c896cfb67acceca12cef526a44
+
 persistence:
   defaultClass: true
   defaultClassReplicaCount: 2
