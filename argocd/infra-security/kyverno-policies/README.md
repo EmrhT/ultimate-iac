@@ -22,15 +22,23 @@ Jobs, and CronJobs. It requires both:
 
 The allowlist is intentionally scoped to publisher namespaces such as
 `quay.io/prometheus/*`, not whole registries such as `quay.io/*`. The complete
-list is maintained in `base/workload-standards.yaml` as
-`trustedImagePrefixes`. Docker Official Images use the
-`docker.io/library/*` namespace.
+list is maintained in `base/workload-standards.yaml`. Shared publishers are in
+`trustedImagePublisherPrefixes`; Docker Official Images and other exceptions
+are exact entries in `trustedImageRepositories`. The short names `busybox`,
+`postgres`, and `python` remain temporary exact aliases while those workloads
+are migrated, but unrelated Docker Official Images such as `nginx` are not
+trusted.
 
 The policy records audit reports and returns warnings while existing tag-only
 and shorthand references are migrated. For example, `postgres:17` must become
 a fully qualified, digest-pinned reference such as
 `docker.io/library/postgres@sha256:...` before this policy can safely move to
 `Deny`.
+
+Admission-time use of an unapproved repository or the mutable `latest` tag is
+forwarded through Elasticsearch and ElastAlert2 to PagerDuty. Missing-digest
+findings remain report-only until the namespace-by-namespace digest migration
+is complete, avoiding alerts for known platform workloads during a cold start.
 
 ## Reviewing findings
 

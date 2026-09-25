@@ -137,7 +137,7 @@ spec:
         object.spec.containers +
         object.spec.?initContainers.orValue([]) +
         object.spec.?ephemeralContainers.orValue([])
-    - name: trustedImagePrefixes
+    - name: trustedImagePublisherPrefixes
       expression: >-
         [
           'docker.elastic.co/eck/',
@@ -152,7 +152,6 @@ spec:
           'docker.io/grafana/',
           'docker.io/hashicorp/',
           'docker.io/jertel/',
-          'docker.io/library/',
           'docker.io/longhornio/',
           'docker.io/nicolaka/',
           'docker.io/otel/',
@@ -164,7 +163,6 @@ spec:
           'ghcr.io/kube-vip/',
           'ghcr.io/postfinance/',
           'ghcr.io/zaproxy/',
-          'public.ecr.aws/docker/library/',
           'quay.io/argoproj/',
           'quay.io/brancz/',
           'quay.io/cilium/',
@@ -179,7 +177,29 @@ spec:
           'registry.k8s.io/',
           'us-docker.pkg.dev/os-public-container-registry/defectdojo/'
         ]
+    - name: trustedImageRepositories
+      expression: >-
+        [
+          'docker.io/library/busybox',
+          'docker.io/library/postgres',
+          'docker.io/library/python',
+          'public.ecr.aws/docker/library/redis',
+          'busybox',
+          'postgres',
+          'python'
+        ]
   validations:
+    - expression: >-
+        variables.containers.all(c,
+          variables.trustedImagePublisherPrefixes.exists(prefix,
+            c.image.startsWith(prefix)) ||
+          variables.trustedImageRepositories.exists(repository,
+            c.image == repository ||
+            c.image.startsWith(repository + ':') ||
+            c.image.startsWith(repository + '@')))
+      message: >-
+        Images should use a fully qualified repository in an approved publisher
+        namespace or an explicitly approved repository.
     - expression: >-
         variables.containers.all(c,
           !c.image.matches('^.+:latest(@sha256:[a-f0-9]{64})?$'))
@@ -188,10 +208,3 @@ spec:
         variables.containers.all(c,
           c.image.matches('^.+@sha256:[a-f0-9]{64}$'))
       message: Images should be pinned by an immutable sha256 digest.
-    - expression: >-
-        variables.containers.all(c,
-          variables.trustedImagePrefixes.exists(prefix,
-            c.image.startsWith(prefix)))
-      message: >-
-        Images should use a fully qualified repository in an approved publisher
-        namespace.
