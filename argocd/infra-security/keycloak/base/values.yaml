@@ -5,6 +5,7 @@ replicas: 1
 image:
   repository: quay.io/keycloak/keycloak
   tag: "26.6.4"
+  digest: sha256:0aae0de7fca85525f727d3354df17896092de8bb26ae4c12d89c77e5df8cbce4
   pullPolicy: IfNotPresent
 
 args:
@@ -42,6 +43,9 @@ resources:
 
 dbchecker:
   enabled: true
+  image:
+    repository: docker.io/library/busybox
+    tag: 1.37@sha256:9db7b59979c38555a39def84a31fb98b5296952f9e3afd4f6f11f05b07adfab0
 
 database:
   vendor: postgres
