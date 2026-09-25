@@ -199,7 +199,10 @@ rules:
     filter:
       - query:
           query_string:
-            query: 'event.dataset:"kyverno.policy_event" AND reason:"PolicyViolation" AND reportingComponent:"kyverno-admission" AND message:"policy audit-pod-security-context/ fail: Pods and containers must not explicitly run as UID 0." AND NOT (involvedObject.namespace.keyword:"elastic-stack" AND involvedObject.name.keyword:security-events-otel-collector*)'
+            # Grafana's root init path is recreated during a homelab cold start.
+            # Keep the Kyverno finding, but do not page for this known platform
+            # workload. Every other admission-time UID-0 violation still pages.
+            query: 'event.dataset:"kyverno.policy_event" AND reason:"PolicyViolation" AND reportingComponent:"kyverno-admission" AND message:"policy audit-pod-security-context/ fail: Pods and containers must not explicitly run as UID 0." AND NOT (involvedObject.namespace.keyword:"elastic-stack" AND involvedObject.name.keyword:security-events-otel-collector*) AND NOT (involvedObject.namespace.keyword:"monitoring" AND involvedObject.name.keyword:kube-prometheus-stack-grafana-*)'
     realert:
       minutes: 1
     include_rule_params_in_matches:
@@ -240,7 +243,10 @@ rules:
     filter:
       - query:
           query_string:
-            query: 'event.dataset:"kyverno.policy_event" AND reason:"PolicyViolation" AND reportingComponent:"kyverno-admission" AND message:"policy audit-pod-security-context/ fail: Containers must not run as privileged."'
+            # Longhorn recreates these intentionally privileged bootstrap and
+            # data-plane Pods during a homelab cold start. Keep their Kyverno
+            # findings, but reserve paging for every other privileged workload.
+            query: 'event.dataset:"kyverno.policy_event" AND reason:"PolicyViolation" AND reportingComponent:"kyverno-admission" AND message:"policy audit-pod-security-context/ fail: Containers must not run as privileged." AND NOT (involvedObject.namespace.keyword:"longhorn-system" AND (involvedObject.name.keyword:instance-manager-* OR involvedObject.name.keyword:discover-proc-kubelet-cmdline))'
     realert:
       minutes: 1
     include_rule_params_in_matches:
