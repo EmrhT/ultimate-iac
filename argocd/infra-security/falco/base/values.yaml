@@ -4,6 +4,11 @@ driver:
     # The modern eBPF probe does not require a fully privileged container.
     # Let the chart grant only BPF, PERFMON, SYS_RESOURCE and SYS_PTRACE.
     leastPrivileged: true
+image:
+  tag: 0.44.1@sha256:d0cfe422d6ac0e0f20857798f46c7d7273210e1b064b22821e4e6e7f843cde6b
+falcoctl:
+  image:
+    tag: 0.13.0@sha256:0eeb79adc580ae6a5abfdefd7f8f0fed9151fcb545f015c84e8f1d7b2d8a6b02
 falco:
   json_output: true
   json_include_output_property: true
@@ -209,6 +214,8 @@ customRules:
 
 falcosidekick:
   enabled: true
+  image:
+    tag: 2.32.0@sha256:1976da72151850aae4436f33a5ed94bdef469f42a9b61c182b4feeb5441fb081
   replicaCount: 1
   resources:
     requests:
