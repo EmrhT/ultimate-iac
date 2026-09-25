@@ -201,6 +201,12 @@ spec:
           'ghcr.io/kube-vip/kube-vip:v1.0.3',
           'ghcr.io/postfinance/kubelet-csr-approver:v1.1.0'
         ]
+    - name: longhornSystemDigestExceptions
+      expression: >-
+        [
+          'docker.io/longhornio/longhorn-engine:v1.11.2',
+          'docker.io/longhornio/longhorn-instance-manager:v1.11.2'
+        ]
   validations:
     - expression: >-
         variables.containers.all(c,
@@ -222,5 +228,8 @@ spec:
           c.image.matches('^.+@sha256:[a-f0-9]{64}$') ||
           (object.metadata.namespace == 'kube-system' &&
             variables.kubeSystemDigestExceptions.exists(image,
+              c.image == image)) ||
+          (object.metadata.namespace == 'longhorn-system' &&
+            variables.longhornSystemDigestExceptions.exists(image,
               c.image == image)))
       message: Images should be pinned by an immutable sha256 digest.
