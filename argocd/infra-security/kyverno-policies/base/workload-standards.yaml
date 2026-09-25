@@ -188,6 +188,19 @@ spec:
           'postgres',
           'python'
         ]
+    - name: kubeSystemDigestExceptions
+      expression: >-
+        [
+          'registry.k8s.io/kube-apiserver:v1.35.4',
+          'registry.k8s.io/kube-controller-manager:v1.35.4',
+          'registry.k8s.io/kube-scheduler:v1.35.4',
+          'registry.k8s.io/kube-proxy:v1.35.4',
+          'registry.k8s.io/coredns/coredns:v1.12.4',
+          'registry.k8s.io/cpa/cluster-proportional-autoscaler:v1.8.8',
+          'registry.k8s.io/dns/k8s-dns-node-cache:1.25.0',
+          'ghcr.io/kube-vip/kube-vip:v1.0.3',
+          'ghcr.io/postfinance/kubelet-csr-approver:v1.1.0'
+        ]
   validations:
     - expression: >-
         variables.containers.all(c,
@@ -206,5 +219,8 @@ spec:
       message: Images should not use the mutable latest tag.
     - expression: >-
         variables.containers.all(c,
-          c.image.matches('^.+@sha256:[a-f0-9]{64}$'))
+          c.image.matches('^.+@sha256:[a-f0-9]{64}$') ||
+          (object.metadata.namespace == 'kube-system' &&
+            variables.kubeSystemDigestExceptions.exists(image,
+              c.image == image)))
       message: Images should be pinned by an immutable sha256 digest.

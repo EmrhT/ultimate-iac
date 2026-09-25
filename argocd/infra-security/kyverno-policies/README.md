@@ -35,6 +35,14 @@ a fully qualified, digest-pinned reference such as
 `docker.io/library/postgres@sha256:...` before this policy can safely move to
 `Deny`.
 
+Kubespray-managed core components in `kube-system` are a narrow exception to
+the digest requirement. Only the exact image-and-version strings listed in
+`kubeSystemDigestExceptions` are accepted without a digest. Repository
+allowlisting and the mutable-`latest` check still apply in that namespace.
+Any Kubernetes, DNS, kube-vip, or CSR approver upgrade must update and review
+the exact exception list; arbitrary images and unexpected versions remain
+violations.
+
 Admission-time use of an unapproved repository or the mutable `latest` tag is
 forwarded through Elasticsearch and ElastAlert2 to PagerDuty. Missing-digest
 findings remain report-only until the namespace-by-namespace digest migration
