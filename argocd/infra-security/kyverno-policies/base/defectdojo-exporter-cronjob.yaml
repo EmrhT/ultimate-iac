@@ -34,7 +34,7 @@ spec:
               type: RuntimeDefault
           initContainers:
             - name: collect-openreports
-              image: curlimages/curl:8.21.0
+              image: docker.io/curlimages/curl@sha256:7c12af72ceb38b7432ab85e1a265cff6ae58e06f95539d539b654f2cfa64bb13
               imagePullPolicy: IfNotPresent
               command:
                 - /bin/sh
@@ -87,7 +87,7 @@ spec:
                 - name: reports
                   mountPath: /reports
             - name: select-podinfo-findings
-              image: python:3.13-alpine
+              image: docker.io/library/python@sha256:79e7a9b9ff1cbceff819f856fb374477792a5967759d94df266de7b7b4120e6f
               imagePullPolicy: IfNotPresent
               command:
                 - /bin/sh
@@ -165,7 +165,7 @@ spec:
                   mountPath: /reports
           containers:
             - name: defectdojo-uploader
-              image: curlimages/curl:8.21.0
+              image: docker.io/curlimages/curl@sha256:7c12af72ceb38b7432ab85e1a265cff6ae58e06f95539d539b654f2cfa64bb13
               imagePullPolicy: IfNotPresent
               command:
                 - /bin/sh
