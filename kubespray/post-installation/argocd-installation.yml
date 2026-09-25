@@ -16,6 +16,16 @@
       https://raw.githubusercontent.com/argoproj/argo-cd/{{ post_install_argocd_version }}/manifests/install.yaml
     post_install_argocd_manifest_sha256: >-
       69114b8c9eb48a1d08598e6f654a0869b10ae902456ea4b70796cb563760f5ec
+    post_install_argocd_source_image: quay.io/argoproj/argocd:v3.4.2
+    post_install_argocd_pinned_image: >-
+      quay.io/argoproj/argocd@sha256:c612d570cb6d6ff29afb72932c1bfe98a1ecc234df50f8ea4873fb7066e760fc
+    post_install_argocd_dex_source_image: ghcr.io/dexidp/dex:v2.45.0
+    post_install_argocd_dex_pinned_image: >-
+      ghcr.io/dexidp/dex@sha256:b8469881d3cb3a73001506f0d3aaefecb9c45d2311c1e0f405d8ac538316c59d
+    post_install_argocd_redis_source_image: >-
+      public.ecr.aws/docker/library/redis:8.2.3-alpine
+    post_install_argocd_redis_pinned_image: >-
+      public.ecr.aws/docker/library/redis@sha256:08ad0b1d280850169a790dba1393ff7a90aef951fc19632cf4d3ce4f78e679ba
     post_install_argocd_field_manager: argocd-installation
 
   tasks:
@@ -85,6 +95,38 @@
               The downloaded Argo CD manifest does not match the pinned
               SHA-256 checksum. Refusing to apply it.
 
+        - name: Validate the Argo CD image pins
+          ansible.builtin.assert:
+            that:
+              - post_install_argocd_pinned_image is match('^quay\.io/argoproj/argocd@sha256:[a-f0-9]{64}$')
+              - post_install_argocd_dex_pinned_image is match('^ghcr\.io/dexidp/dex@sha256:[a-f0-9]{64}$')
+              - post_install_argocd_redis_pinned_image is match('^public\.ecr\.aws/docker/library/redis@sha256:[a-f0-9]{64}$')
+              - post_install_argocd_manifest.content.count(post_install_argocd_source_image) == 8
+              - post_install_argocd_manifest.content.count(post_install_argocd_dex_source_image) == 1
+              - post_install_argocd_manifest.content.count(post_install_argocd_redis_source_image) == 1
+            fail_msg: >-
+              The expected Argo CD, Dex, and Redis source images must occur
+              exactly 8, 1, and 1 times in the checksum-verified manifest.
+
+        - name: Pin every Argo CD namespace image by digest
+          ansible.builtin.set_fact:
+            post_install_argocd_rendered_manifest: >-
+              {{
+                post_install_argocd_manifest.content
+                | replace(
+                    post_install_argocd_source_image,
+                    post_install_argocd_pinned_image
+                  )
+                | replace(
+                    post_install_argocd_dex_source_image,
+                    post_install_argocd_dex_pinned_image
+                  )
+                | replace(
+                    post_install_argocd_redis_source_image,
+                    post_install_argocd_redis_pinned_image
+                  )
+              }}
+
         - name: Create the Argo CD namespace declaratively
           ansible.builtin.command:
             argv:
@@ -122,7 +164,7 @@
               - --namespace
               - "{{ post_install_argocd_namespace }}"
               - --filename=-
-            stdin: "{{ post_install_argocd_manifest.content }}"
+            stdin: "{{ post_install_argocd_rendered_manifest }}"
           register: post_install_argocd_diff
           changed_when: false
           failed_when: post_install_argocd_diff.rc not in [0, 1]
@@ -142,7 +184,7 @@
               - --namespace
               - "{{ post_install_argocd_namespace }}"
               - --filename=-
-            stdin: "{{ post_install_argocd_manifest.content }}"
+            stdin: "{{ post_install_argocd_rendered_manifest }}"
           when: post_install_argocd_diff.rc == 1
           changed_when: true
           no_log: true

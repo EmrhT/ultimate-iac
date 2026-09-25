@@ -224,9 +224,11 @@ ansible-playbook \
 ```
 
 Argo CD is installed from the official `v3.4.2` manifest with its SHA-256
-checksum pinned in the playbook. Future post-install components should be
-added as separate tagged blocks rather than coupled to the upstream Kubespray
-roles.
+checksum pinned in the playbook. After that checksum is verified, the playbook
+replaces the Argo CD, Dex, and Redis image tags with their independently pinned
+image digests before diffing or applying the manifest. Future post-install
+components should be added as separate tagged blocks rather than coupled to the
+upstream Kubespray roles.
 
 For a fresh installation, run the complete `cluster.yml` once. Do not split
 the normal installation into separate control-plane and CNI runs. Kubespray
