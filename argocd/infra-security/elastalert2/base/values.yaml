@@ -58,6 +58,10 @@ resources:
 metrics:
   enabled: false
 
+image:
+  repository: docker.io/jertel/elastalert2
+  tag: 2.31.0@sha256:3cbf63f9b7dc09d416e6985b948d9d9095e7d793e7bebe0eb9d207682e8548ac
+
 rules:
   kubernetes_unapproved_exec: |-
     name: Kubernetes unapproved pods exec
