@@ -23,7 +23,7 @@ metallb_pool_start_host = 120
 metallb_pool_end_host   = 129
 
 control_plane_vcpu      = 2
-control_plane_memory_mb = 4096
+control_plane_memory_mb = 6144
 control_plane_disk_gib  = 30
 
 worker_vcpu      = 4
