@@ -1,6 +1,9 @@
 controller:
   replicas: 1
   manager:
+    image:
+      repository: docker.io/hashicorp/vault-secrets-operator
+      tag: 1.5.0@sha256:77d8c28e6f85796474ac76588ccdce75a1922687f2cb824b48d3eee144525768
     globalVaultAuthOptions:
       allowDefaultGlobals: false
     clientCache:
@@ -13,6 +16,9 @@ controller:
         cpu: 200m
         memory: 256Mi
   kubeRbacProxy:
+    image:
+      repository: quay.io/brancz/kube-rbac-proxy
+      tag: v0.18.1@sha256:e6a323504999b2a4d2a6bf94f8580a050378eba0900fd31335cf9df5787d9a9b
     resources:
       requests:
         cpu: 5m

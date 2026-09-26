@@ -185,6 +185,7 @@ spec:
           'docker.io/library/postgres',
           'docker.io/library/python',
           'docker.io/library/sonarqube',
+          'docker.io/library/traefik',
           'public.ecr.aws/docker/library/redis',
           'busybox',
           'postgres',
