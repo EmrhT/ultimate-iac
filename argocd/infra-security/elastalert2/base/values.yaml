@@ -246,10 +246,10 @@ rules:
     filter:
       - query:
           query_string:
-            # Grafana's root init path is recreated during a homelab cold start.
-            # Keep the Kyverno finding, but do not page for this known platform
-            # workload. Every other admission-time UID-0 violation still pages.
-            query: 'event.dataset:"kyverno.policy_event" AND reason:"PolicyViolation" AND reportingComponent:"kyverno-admission" AND message:"policy audit-pod-security-context/ fail: Pods and containers must not explicitly run as UID 0." AND NOT (involvedObject.namespace.keyword:"elastic-stack" AND involvedObject.name.keyword:security-events-otel-collector*) AND NOT (involvedObject.namespace.keyword:"monitoring" AND involvedObject.name.keyword:kube-prometheus-stack-grafana-*)'
+            # Page only for an executing Pod, not both its controller and Pod.
+            # These exclusions are limited to platform init/scanner containers
+            # which require UID 0; their Kyverno findings remain reportable.
+            query: 'event.dataset:"kyverno.policy_event" AND reason:"PolicyViolation" AND reportingComponent:"kyverno-admission" AND involvedObject.kind.keyword:"Pod" AND message:"policy audit-pod-security-context/ fail: Pods and containers must not explicitly run as UID 0." AND NOT (involvedObject.namespace.keyword:"elastic-stack" AND involvedObject.name.keyword:security-events-otel-collector*) AND NOT (involvedObject.namespace.keyword:"monitoring" AND involvedObject.name.keyword:kube-prometheus-stack-grafana-*) AND NOT (involvedObject.namespace.keyword:"security-kube-bench" AND (involvedObject.name.keyword:security-kube-bench-control-plane-* OR involvedObject.name.keyword:security-kube-bench-workers-*)) AND NOT (involvedObject.namespace.keyword:"longhorn-system" AND involvedObject.name.keyword:longhorn-driver-deployer-*)'
     realert:
       minutes: 1
     include_rule_params_in_matches:
@@ -290,10 +290,10 @@ rules:
     filter:
       - query:
           query_string:
-            # Longhorn recreates these intentionally privileged bootstrap and
-            # data-plane Pods during a homelab cold start. Keep their Kyverno
-            # findings, but reserve paging for every other privileged workload.
-            query: 'event.dataset:"kyverno.policy_event" AND reason:"PolicyViolation" AND reportingComponent:"kyverno-admission" AND message:"policy audit-pod-security-context/ fail: Containers must not run as privileged." AND NOT (involvedObject.namespace.keyword:"longhorn-system" AND (involvedObject.name.keyword:instance-manager-* OR involvedObject.name.keyword:discover-proc-kubelet-cmdline))'
+            # Page only for an executing Pod, not both its controller and Pod.
+            # Longhorn, Cilium, kube-proxy, and the SonarQube sysctl initializer
+            # require privileged execution; Kyverno still records the findings.
+            query: 'event.dataset:"kyverno.policy_event" AND reason:"PolicyViolation" AND reportingComponent:"kyverno-admission" AND involvedObject.kind.keyword:"Pod" AND message:"policy audit-pod-security-context/ fail: Containers must not run as privileged." AND NOT (involvedObject.namespace.keyword:"longhorn-system" AND (involvedObject.name.keyword:instance-manager-* OR involvedObject.name.keyword:discover-proc-kubelet-cmdline* OR involvedObject.name.keyword:longhorn-manager-* OR involvedObject.name.keyword:longhorn-csi-plugin-* OR involvedObject.name.keyword:engine-image-*)) AND NOT (involvedObject.namespace.keyword:"kube-system" AND (involvedObject.name.keyword:kube-proxy-* OR involvedObject.name.keyword:cilium-?????)) AND NOT (involvedObject.namespace.keyword:"security-sonarqube" AND involvedObject.name.keyword:"security-sonarqube-0")'
     realert:
       minutes: 1
     include_rule_params_in_matches:
