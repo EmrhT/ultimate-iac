@@ -11,6 +11,10 @@ kube_owner: root
 # addresses will be managed by GitOps, so Cilium L2 announcements stay disabled.
 kube_proxy_mode: ipvs
 kube_proxy_strict_arp: true
+# kube-proxy uses one shared configuration across all nodes, so bind metrics on
+# every node interface for the Prometheus ServiceMonitor to reach port 10249.
+# This port must remain restricted to the private cluster network.
+kube_proxy_metrics_bind_address: 0.0.0.0:10249
 cilium_kube_proxy_replacement: false
 cilium_l2announcements: false
 
