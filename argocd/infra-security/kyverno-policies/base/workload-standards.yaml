@@ -160,6 +160,7 @@ spec:
           'docker.io/valkey/',
           'ghcr.io/dexidp/',
           'ghcr.io/emrht/',
+          'ghcr.io/jkroepke/',
           'ghcr.io/kube-vip/',
           'ghcr.io/postfinance/',
           'ghcr.io/zaproxy/',
@@ -183,6 +184,7 @@ spec:
           'docker.io/library/busybox',
           'docker.io/library/postgres',
           'docker.io/library/python',
+          'docker.io/library/sonarqube',
           'public.ecr.aws/docker/library/redis',
           'busybox',
           'postgres',
@@ -206,6 +208,11 @@ spec:
         [
           'docker.io/longhornio/longhorn-engine:v1.11.2',
           'docker.io/longhornio/longhorn-instance-manager:v1.11.2'
+        ]
+    - name: sonarqubeDigestExceptions
+      expression: >-
+        [
+          'docker.io/library/sonarqube:26.7.0.124771-community'
         ]
   validations:
     - expression: >-
@@ -231,5 +238,8 @@ spec:
               c.image == image)) ||
           (object.metadata.namespace == 'longhorn-system' &&
             variables.longhornSystemDigestExceptions.exists(image,
+              c.image == image)) ||
+          (object.metadata.namespace == 'security-sonarqube' &&
+            variables.sonarqubeDigestExceptions.exists(image,
               c.image == image)))
       message: Images should be pinned by an immutable sha256 digest.

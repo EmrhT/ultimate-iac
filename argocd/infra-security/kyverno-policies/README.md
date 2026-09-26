@@ -53,6 +53,15 @@ repository allowlist and mutable-`latest` check still apply to every Longhorn
 image. Review this exception whenever Longhorn is upgraded and remove it once
 no legacy engine or instance-manager resources remain.
 
+The upstream SonarQube chart uses the image tag as the
+`app.kubernetes.io/version` label and does not expose a separate digest field.
+Placing a digest in the image tag therefore produces an invalid
+StatefulSet label. Only the
+exact SonarQube image listed in `sonarqubeDigestExceptions` is exempt in the
+`security-sonarqube` namespace; its PostgreSQL and scanner images remain
+digest-pinned. Review or remove this exception when the chart adds native digest
+support.
+
 Admission-time use of an unapproved repository or the mutable `latest` tag is
 forwarded through Elasticsearch and ElastAlert2 to PagerDuty. Missing-digest
 findings remain report-only until the namespace-by-namespace digest migration
