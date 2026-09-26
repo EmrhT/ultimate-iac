@@ -63,8 +63,8 @@ image:
   tag: 2.31.0@sha256:3cbf63f9b7dc09d416e6985b948d9d9095e7d793e7bebe0eb9d207682e8548ac
 
 rules:
-  kubernetes_unapproved_exec: |-
-    name: Kubernetes unapproved pods exec
+  kubernetes_non_admin_interactive_pod_access: |-
+    name: Kubernetes non-admin interactive pod access
     type: any
     index: kubernetes-audit-*
     # Evaluate when the API server observed the completed authorization and
@@ -88,26 +88,28 @@ rules:
       {
         "routing_key": "{{ rule_param_pagerduty_routing_key }}",
         "event_action": "trigger",
-        "dedup_key": "kubernetes-exec-{{ auditID }}",
+        "dedup_key": "kubernetes-interactive-access-{{ auditID }}",
         "payload": {
-          "summary": "Unapproved identity {{ user.username }} opened a pod exec session",
+          "summary": "Non-admin identity {{ user.username }} used pods/{{ objectRef.subresource }}",
           "source": "ultimate-iac-kubernetes",
           "severity": "critical",
           "component": "kube-apiserver-audit",
           "group": "security-runtime",
-          "class": "unauthorized-pods-exec",
+          "class": "interactive-pod-access",
           "custom_details": {
             "classification": "{{ classification }}",
             "username": "{{ user.username }}",
             "namespace": "{{ objectRef.namespace }}",
             "pod": "{{ objectRef.name }}",
+            "subresource": "{{ objectRef.subresource }}",
+            "verb": "{{ verb }}",
             "source_ips": "{{ sourceIPs }}"
           }
         }
       }
 
-  kubernetes_developer_exec_denied: |-
-    name: Kubernetes denied developer pods exec
+  kubernetes_developer_interactive_access_denied: |-
+    name: Kubernetes denied developer interactive pod access
     type: any
     index: kubernetes-audit-*
     timestamp_field: stageTimestamp
@@ -126,18 +128,20 @@ rules:
       {
         "routing_key": "{{ rule_param_pagerduty_routing_key }}",
         "event_action": "trigger",
-        "dedup_key": "kubernetes-denied-exec-{{ auditID }}",
+        "dedup_key": "kubernetes-denied-interactive-access-{{ auditID }}",
         "payload": {
-          "summary": "Kubernetes denied a developer pod exec attempt by {{ user.username }}",
+          "summary": "Kubernetes denied {{ user.username }} access to pods/{{ objectRef.subresource }}",
           "source": "ultimate-iac-kubernetes",
           "severity": "warning",
           "component": "kube-apiserver-audit",
           "group": "security-runtime",
-          "class": "denied-pods-exec",
+          "class": "denied-interactive-pod-access",
           "custom_details": {
             "username": "{{ user.username }}",
             "namespace": "{{ objectRef.namespace }}",
             "pod": "{{ objectRef.name }}",
+            "subresource": "{{ objectRef.subresource }}",
+            "verb": "{{ verb }}",
             "source_ips": "{{ sourceIPs }}"
           }
         }
