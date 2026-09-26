@@ -10,6 +10,20 @@ revisionHistoryLimit: 2
 trackConfig: enabled
 disableHooks: true
 
+images:
+  django:
+    image:
+      registry: docker.io
+      repository: defectdojo/defectdojo-django
+      tag: 3.2.201
+      digest: sha256:fef875bf59b37ca42ef756334517e441d67b3b82314ab3297446fe55d3ea9c35
+  nginx:
+    image:
+      registry: docker.io
+      repository: defectdojo/defectdojo-nginx
+      tag: 3.2.201
+      digest: sha256:e4d3790a6c975dc9f675b6f027fcfe3d9238f54fe1aec1142f0c680e93b14aec
+
 # Credentials are supplied by Vault Secrets Operator. The chart must never
 # generate random Secrets, which would create both drift and broken upgrades.
 createSecret: false
@@ -137,6 +151,8 @@ initializer:
 
 postgresql:
   enabled: true
+  image:
+    digest: sha256:926356130b77d5742d8ce605b258d35db9b62f2f8fd1601f9dbaef0c8a710a8d
   architecture: standalone
   auth:
     username: defectdojo
@@ -178,6 +194,10 @@ postgresql:
 
 valkey:
   enabled: true
+  image:
+    registry: docker.io
+    repository: valkey/valkey
+    tag: 9.1.0-alpine3.23@sha256:c9b77919daeba2c02ad954d0c844cc4e7142069d177b89c5fd771f405daf9e02
   architecture: standalone
   replicaCount: 1
   podSecurityContext:

@@ -1,6 +1,11 @@
 community:
   enabled: true
 
+image:
+  repository: docker.io/library/sonarqube
+  tag: 26.7.0.124771-community
+  pullPolicy: IfNotPresent
+
 fullnameOverride: security-sonarqube
 
 replicaCount: 1

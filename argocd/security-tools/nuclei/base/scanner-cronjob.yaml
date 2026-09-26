@@ -34,7 +34,7 @@ spec:
               type: RuntimeDefault
           initContainers:
             - name: scanner
-              image: projectdiscovery/nuclei:v3.11.1
+              image: docker.io/projectdiscovery/nuclei:v3.11.1@sha256:9fd705284ac4b5f721fa1e23bf366f26e985cd4ec65927fe9a53cb3fcb0417a6
               imagePullPolicy: IfNotPresent
               securityContext:
                 allowPrivilegeEscalation: false
@@ -74,7 +74,7 @@ spec:
                   mountPath: /reports
           containers:
             - name: defectdojo-uploader
-              image: curlimages/curl:8.21.0
+              image: docker.io/curlimages/curl:8.21.0@sha256:7c12af72ceb38b7432ab85e1a265cff6ae58e06f95539d539b654f2cfa64bb13
               imagePullPolicy: IfNotPresent
               command:
                 - /bin/sh

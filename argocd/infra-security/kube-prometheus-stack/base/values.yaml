@@ -1,6 +1,14 @@
 grafana:
   enabled: true
   defaultDashboardsEnabled: true
+  image:
+    sha: 5dad0df181cb644a14e13617b913b261a54f7d4fd4510721dba420929f35bea2
+  initChownData:
+    image:
+      sha: dc2d74b28e4cf8984fa52af1f39bc7c3d9c73760b41a74d629f5d11b1ab28616
+  sidecar:
+    image:
+      sha: 694950d736c8b532eba4006527ccbdac98fefc9f30b3346ba2de50b6cad91c94
   admin:
     existingSecret: grafana-admin-credentials
     userKey: admin-user
@@ -21,6 +29,8 @@ grafana:
     size: 300Mi
 prometheus:
   prometheusSpec:
+    image:
+      sha: f39df5334dee301b885f77e0ff1159f5d8a43bf9db518f885544594799a1e3c2
     retention: 12h
     # This limits persisted blocks only. WAL, head chunks, and temporary
     # compaction files are additional, so keep substantial PVC headroom.
@@ -47,6 +57,8 @@ prometheus:
               storage: 1536Mi
 alertmanager:
   alertmanagerSpec:
+    image:
+      sha: af26fbe4dd1886ac0efd7bd55cd9027da262e105b137a376522b7c14c3626e4a
     retention: 12h
     # Select only centrally managed AlertmanagerConfig resources from the
     # monitoring namespace. The route itself limits delivery to team=security.
@@ -62,8 +74,27 @@ alertmanager:
       type: None
 
 prometheus-node-exporter:
+  image:
+    digest: sha256:6112664fd761bb964d8a2d3d0119d6c8402618a89edbb3a43c8f7b4090fb53c9
   daemonsetAnnotations:
     argocd.argoproj.io/ignore-healthcheck: "true"
+
+kube-state-metrics:
+  image:
+    sha: sha256:85108987d044b18a098126732f98602df408888c0f7d456241f5abefb9744bc1
+
+prometheusOperator:
+  image:
+    sha: 9e53e13139218aca79ee000172de73355e9174ef2904585bfad9497fc71aae2d
+  prometheusConfigReloader:
+    image:
+      sha: 7d9e4eea5f1139e602508871f422b0116c60e87c662f3dcd234d5ab60cd0d8c1
+  thanosImage:
+    sha: c2f322e5ea9727bce5153730da133820235844bd5ba72da7e9428c3739a73cab
+  admissionWebhooks:
+    patch:
+      image:
+        sha: 2c3848e012dde192bbc16463e65c42b2a3199a599a983d2e12496365c2dece60
 
 kubeApiServer:
   serviceMonitor:

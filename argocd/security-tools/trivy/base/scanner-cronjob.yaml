@@ -30,7 +30,7 @@ spec:
               type: RuntimeDefault
           containers:
             - name: scanner
-              image: aquasec/trivy:0.73.0
+              image: docker.io/aquasec/trivy:0.73.0@sha256:7cced7cae583819fc7806d4cbc0dbbc7cad18b99f7d3e235192e6da8c091045c
               imagePullPolicy: IfNotPresent
               securityContext:
                 allowPrivilegeEscalation: false
