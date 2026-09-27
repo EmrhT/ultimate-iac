@@ -27,6 +27,23 @@
     post_install_argocd_redis_pinned_image: >-
       public.ecr.aws/docker/library/redis@sha256:08ad0b1d280850169a790dba1393ff7a90aef951fc19632cf4d3ce4f78e679ba
     post_install_argocd_field_manager: argocd-installation
+    post_install_argocd_falco_labels:
+      argocd-repo-server:
+        security.no-name.win/falco-reverse-shell: "true"
+        security.no-name.win/falco-web-process: "false"
+        security.no-name.win/falco-unexpected-listener: "false"
+        security.no-name.win/falco-payload-execution: "true"
+        security.no-name.win/falco-container-escape: "true"
+        security.no-name.win/falco-unexpected-root: "true"
+        security.no-name.win/falco-service-account-access: "true"
+      argocd-server:
+        security.no-name.win/falco-reverse-shell: "true"
+        security.no-name.win/falco-web-process: "false"
+        security.no-name.win/falco-unexpected-listener: "false"
+        security.no-name.win/falco-payload-execution: "true"
+        security.no-name.win/falco-container-escape: "true"
+        security.no-name.win/falco-unexpected-root: "true"
+        security.no-name.win/falco-service-account-access: "false"
 
   tasks:
     - name: Validate post-installation inputs
@@ -204,6 +221,36 @@
             - applicationsets.argoproj.io
             - appprojects.argoproj.io
           changed_when: false
+
+        - name: Apply workload-specific Falco labels to exposed Argo CD components
+          tags:
+            - argocd-falco-labels
+          ansible.builtin.command:
+            argv:
+              - "{{ post_install_kubectl }}"
+              - --kubeconfig
+              - "{{ post_install_kubeconfig }}"
+              - --namespace
+              - "{{ post_install_argocd_namespace }}"
+              - patch
+              - "deployment/{{ item.key }}"
+              - --type=merge
+              - --patch
+              - >-
+                {{
+                  {
+                    'spec': {
+                      'template': {
+                        'metadata': {
+                          'labels': item.value
+                        }
+                      }
+                    }
+                  } | to_json
+                }}
+          loop: "{{ post_install_argocd_falco_labels | dict2items }}"
+          register: post_install_argocd_falco_label_patch
+          changed_when: "'no change' not in post_install_argocd_falco_label_patch.stdout"
 
         - name: Wait for Argo CD deployments
           ansible.builtin.command:

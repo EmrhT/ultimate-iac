@@ -39,6 +39,14 @@ trivy:
   debugMode: false
   skipDBUpdate: false
   dbRepository: ghcr.io/aquasecurity/trivy-db
+  labels:
+    security.no-name.win/falco-reverse-shell: "true"
+    security.no-name.win/falco-web-process: "false"
+    security.no-name.win/falco-unexpected-listener: "false"
+    security.no-name.win/falco-payload-execution: "true"
+    security.no-name.win/falco-container-escape: "true"
+    security.no-name.win/falco-unexpected-root: "false"
+    security.no-name.win/falco-service-account-access: "true"
   cache:
     redis:
       enabled: false

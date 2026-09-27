@@ -17,6 +17,13 @@ spec:
       labels:
         app.kubernetes.io/name: security-zap
         app.kubernetes.io/part-of: security-tools
+        security.no-name.win/falco-reverse-shell: "true"
+        security.no-name.win/falco-web-process: "false"
+        security.no-name.win/falco-unexpected-listener: "false"
+        security.no-name.win/falco-payload-execution: "true"
+        security.no-name.win/falco-container-escape: "true"
+        security.no-name.win/falco-unexpected-root: "false"
+        security.no-name.win/falco-service-account-access: "true"
     spec:
       serviceAccountName: security-zap
       automountServiceAccountToken: false
