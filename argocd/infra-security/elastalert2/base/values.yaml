@@ -495,3 +495,87 @@ rules:
           }
         }
       }
+
+  kyverno_critical_direct_host_access: |-
+    name: Kyverno critical direct host access
+    type: any
+    index: kyverno-*
+    # Page only for new Pod admission. The Kyverno policy removes exact
+    # infrastructure identities and path sets before violations reach here.
+    timestamp_field: eventTime
+    filter:
+      - query:
+          query_string:
+            query: 'event.dataset:"kyverno.policy_event" AND reason:"PolicyViolation" AND reportingComponent:"kyverno-admission" AND involvedObject.kind.keyword:"Pod" AND (message:"policy audit-host-access/ fail: Pods must not use the host PID namespace without an exact approved identity." OR message:"policy audit-host-access/ fail: Pods must not use the host IPC namespace." OR message:"policy audit-host-access/ fail: Pods must not mount hostPath volumes outside their exact approved identity and path set." OR message:"policy audit-host-access/ fail: Approved read-only hostPath mounts must not become writable.")'
+    realert:
+      minutes: 1
+    include_rule_params_in_matches:
+      - pagerduty_routing_key
+    alert:
+      - post2
+    http_post2_url: https://events.eu.pagerduty.com/v2/enqueue
+    http_post2_all_values: false
+    http_post2_payload: |-
+      {
+        "routing_key": "{{ rule_param_pagerduty_routing_key }}",
+        "event_action": "trigger",
+        "dedup_key": "kyverno-host-access-critical-{{ involvedObject.uid }}",
+        "payload": {
+          "summary": "Kyverno observed critical direct host access",
+          "source": "ultimate-iac-kyverno",
+          "severity": "critical",
+          "component": "kyverno",
+          "group": "security-admission",
+          "class": "direct-host-access",
+          "custom_details": {
+            "event": "{{ metadata.name }}",
+            "namespace": "{{ involvedObject.namespace }}",
+            "workload_kind": "{{ involvedObject.kind }}",
+            "workload": "{{ involvedObject.name }}",
+            "policy": "audit-host-access",
+            "violation": "{{ message }}"
+          }
+        }
+      }
+
+  kyverno_unapproved_host_network_exposure: |-
+    name: Kyverno unapproved host network exposure
+    type: any
+    index: kyverno-*
+    # Keep unexpected network exposure separate from direct filesystem and
+    # process-namespace access so its PagerDuty severity can remain High.
+    timestamp_field: eventTime
+    filter:
+      - query:
+          query_string:
+            query: 'event.dataset:"kyverno.policy_event" AND reason:"PolicyViolation" AND reportingComponent:"kyverno-admission" AND involvedObject.kind.keyword:"Pod" AND (message:"policy audit-host-access/ fail: Pods must not use the host network without an exact approved identity." OR message:"policy audit-host-access/ fail: Containers must not bind host ports outside their exact approved identity and port set.")'
+    realert:
+      minutes: 1
+    include_rule_params_in_matches:
+      - pagerduty_routing_key
+    alert:
+      - post2
+    http_post2_url: https://events.eu.pagerduty.com/v2/enqueue
+    http_post2_all_values: false
+    http_post2_payload: |-
+      {
+        "routing_key": "{{ rule_param_pagerduty_routing_key }}",
+        "event_action": "trigger",
+        "dedup_key": "kyverno-host-network-high-{{ involvedObject.uid }}",
+        "payload": {
+          "summary": "Kyverno observed unapproved host network exposure",
+          "source": "ultimate-iac-kyverno",
+          "severity": "error",
+          "component": "kyverno",
+          "group": "security-admission",
+          "class": "host-network-exposure",
+          "custom_details": {
+            "event": "{{ metadata.name }}",
+            "namespace": "{{ involvedObject.namespace }}",
+            "workload_kind": "{{ involvedObject.kind }}",
+            "workload": "{{ involvedObject.name }}",
+            "policy": "audit-host-access",
+            "violation": "{{ message }}"
+          }
+        }
+      }

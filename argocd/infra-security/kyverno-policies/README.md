@@ -85,6 +85,26 @@ containers remain covered by the separate privileged-container alert because
 privileged mode implicitly grants capabilities without requiring an
 `add` list.
 
+## Direct host access
+
+`audit-host-access` evaluates host PID, IPC, and network namespaces,
+`hostPath` volumes, and host ports independently. It permits only the exact
+host access currently required by the security-event collector, Falco, Cilium,
+Kubernetes control-plane components, kube-proxy, kube-vip, NodeLocal DNS,
+Longhorn, MetalLB/FRR, Prometheus node-exporter, and kube-bench.
+
+Every exception matches the namespace, ServiceAccount, expected container and
+image identity. Host paths and ports are additionally restricted to explicit
+sets. Host mounts which are read-only in the approved specification must remain
+read-only. Longhorn exceptions are component-specific rather than
+namespace-wide; kube-bench exceptions apply only to its two scanner
+ServiceAccounts and declared host inspection paths. No workload is permitted
+to use `hostIPC`.
+
+Admission-time use of `hostPID`, `hostIPC`, or an unapproved `hostPath`
+is sent to PagerDuty as Critical. Unexpected `hostNetwork` or `hostPort`
+use is routed separately as High. These policies remain non-blocking.
+
 ## Reviewing findings
 
 ```bash

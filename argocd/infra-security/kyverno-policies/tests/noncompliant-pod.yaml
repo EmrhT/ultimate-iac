@@ -5,6 +5,7 @@ metadata:
   name: kyverno-audit-fixture
   namespace: default
 spec:
+  hostIPC: true
   containers:
     - name: app
       image: nginx:latest
@@ -12,3 +13,11 @@ spec:
         capabilities:
           drop: [ALL]
           add: [SYS_ADMIN]
+      volumeMounts:
+        - name: host-root
+          mountPath: /host
+          readOnly: true
+  volumes:
+    - name: host-root
+      hostPath:
+        path: /

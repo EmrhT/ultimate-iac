@@ -6,6 +6,9 @@ metadata:
     policies.kyverno.io/title: Audit Host Access
     policies.kyverno.io/category: Pod Security Standards (Baseline)
     policies.kyverno.io/severity: high
+    policies.kyverno.io/description: >-
+      Reports direct host namespace, filesystem, and port access unless the
+      exact infrastructure identity and requested access have been approved.
 spec:
   failurePolicy: Ignore
   validationActions: [Audit]
@@ -29,19 +32,360 @@ spec:
         object.spec.containers +
         object.spec.?initContainers.orValue([]) +
         object.spec.?ephemeralContainers.orValue([])
+    - name: volumes
+      expression: object.spec.?volumes.orValue([])
+    - name: serviceAccount
+      expression: object.spec.?serviceAccountName.orValue('default')
+    - name: isSecurityEventsCollector
+      expression: >-
+        object.metadata.namespace == 'elastic-stack' &&
+        variables.serviceAccount == 'security-events-otel-collector' &&
+        variables.containers.exists(c,
+          c.name == 'otel-collector' &&
+          c.image == 'docker.io/otel/opentelemetry-collector-contrib@sha256:799dc6cf12c96192af37b5bdba804da8c10b3bc563b43cb90c3f3c58d9572ad6')
+    - name: isFalco
+      expression: >-
+        object.metadata.namespace == 'falco' &&
+        variables.serviceAccount == 'falco' &&
+        variables.containers.exists(c,
+          c.name == 'falco' &&
+          c.image == 'docker.io/falcosecurity/falco:0.44.1@sha256:d0cfe422d6ac0e0f20857798f46c7d7273210e1b064b22821e4e6e7f843cde6b')
+    - name: isCilium
+      expression: >-
+        object.metadata.namespace == 'kube-system' &&
+        variables.serviceAccount == 'cilium' &&
+        variables.containers.exists(c,
+          c.name == 'cilium-agent' &&
+          c.image == 'quay.io/cilium/cilium:v1.19.3@sha256:2e61680593cddca8b6c055f6d4c849d87a26a1c91c7e3b8b56c7fb76ab7b7b10')
+    - name: isCiliumEnvoy
+      expression: >-
+        object.metadata.namespace == 'kube-system' &&
+        variables.serviceAccount == 'cilium-envoy' &&
+        variables.containers.exists(c,
+          c.name == 'cilium-envoy' &&
+          c.image == 'quay.io/cilium/cilium-envoy:v1.34.10-1762597008-ff7ae7d623be00078865cff1b0672cc5d9bfc6d5@sha256:ba0ab8adac082d50d525fd2c5ba096c8facea3a471561b7c61c7a5b9c2e0de0d')
+    - name: isCiliumOperator
+      expression: >-
+        object.metadata.namespace == 'kube-system' &&
+        variables.serviceAccount == 'cilium-operator' &&
+        variables.containers.exists(c,
+          c.name == 'cilium-operator' &&
+          c.image == 'quay.io/cilium/operator-generic:v1.19.3@sha256:205b09b0ed6accbf9fe688d312a9f0fcfc6a316fc081c23fbffb472af5dd62cd')
+    - name: isKubeAPIServer
+      expression: >-
+        object.metadata.namespace == 'kube-system' &&
+        variables.serviceAccount == 'default' &&
+        variables.containers.exists(c,
+          c.name == 'kube-apiserver' &&
+          c.image == 'registry.k8s.io/kube-apiserver:v1.35.4')
+    - name: isKubeControllerManager
+      expression: >-
+        object.metadata.namespace == 'kube-system' &&
+        variables.serviceAccount == 'default' &&
+        variables.containers.exists(c,
+          c.name == 'kube-controller-manager' &&
+          c.image == 'registry.k8s.io/kube-controller-manager:v1.35.4')
+    - name: isKubeScheduler
+      expression: >-
+        object.metadata.namespace == 'kube-system' &&
+        variables.serviceAccount == 'default' &&
+        variables.containers.exists(c,
+          c.name == 'kube-scheduler' &&
+          c.image == 'registry.k8s.io/kube-scheduler:v1.35.4')
+    - name: isKubeProxy
+      expression: >-
+        object.metadata.namespace == 'kube-system' &&
+        variables.serviceAccount == 'kube-proxy' &&
+        variables.containers.exists(c,
+          c.name == 'kube-proxy' &&
+          c.image == 'registry.k8s.io/kube-proxy:v1.35.4')
+    - name: isKubeVip
+      expression: >-
+        object.metadata.namespace == 'kube-system' &&
+        variables.serviceAccount == 'default' &&
+        variables.containers.exists(c,
+          c.name == 'kube-vip' &&
+          c.image == 'ghcr.io/kube-vip/kube-vip:v1.0.3')
+    - name: isNodeLocalDNS
+      expression: >-
+        object.metadata.namespace == 'kube-system' &&
+        variables.serviceAccount == 'nodelocaldns' &&
+        variables.containers.exists(c,
+          c.name == 'node-cache' &&
+          c.image == 'registry.k8s.io/dns/k8s-dns-node-cache:1.25.0')
+    - name: isLonghornCsiController
+      expression: >-
+        object.metadata.namespace == 'longhorn-system' &&
+        variables.serviceAccount == 'longhorn-service-account' &&
+        variables.containers.exists(c,
+          c.image in [
+            'docker.io/longhornio/csi-attacher:v4.11.0-20260428@sha256:fe417c28a6b86f8e7e5d49fc223e22e9ab457f894d2c4a321932d136dc2c2530',
+            'docker.io/longhornio/csi-provisioner:v5.3.0-20260428@sha256:9e519a21a77c060104716e1f98222bb46ab617778a3bfcd861c87119a8256764',
+            'docker.io/longhornio/csi-resizer:v2.1.0-20260428@sha256:41cb674d1154e798aa2c20f53f72ee2a5597f1369bcad5878d1708aee47f6663',
+            'docker.io/longhornio/csi-snapshotter:v8.5.0-20260428@sha256:1975fac3890f4e08b98792881cb597502112ce0eeeaaef383e52458c96db94c5'])
+    - name: isLonghornCsiPlugin
+      expression: >-
+        object.metadata.namespace == 'longhorn-system' &&
+        variables.serviceAccount == 'longhorn-service-account' &&
+        variables.containers.exists(c,
+          c.name == 'longhorn-csi-plugin' &&
+          c.image == 'docker.io/longhornio/longhorn-manager:v1.11.2@sha256:0f80ca11ac4eb7522f4e6e801a7afc9909ea8d3041575f3d029964c46590f096')
+    - name: isLonghornEngineImage
+      expression: >-
+        object.metadata.namespace == 'longhorn-system' &&
+        variables.serviceAccount == 'longhorn-service-account' &&
+        variables.containers.exists(c,
+          c.name.startsWith('engine-image-') &&
+          c.image in [
+            'docker.io/longhornio/longhorn-engine:v1.11.2',
+            'docker.io/longhornio/longhorn-engine:v1.11.2@sha256:7482e0437fbf475e1e32696fab22f47bf99b1ef8d067ffce9e34028347722628'])
+    - name: isLonghornInstanceManager
+      expression: >-
+        object.metadata.namespace == 'longhorn-system' &&
+        variables.serviceAccount == 'longhorn-service-account' &&
+        variables.containers.exists(c,
+          c.name == 'instance-manager' &&
+          c.image == 'docker.io/longhornio/longhorn-instance-manager:v1.11.2@sha256:16dac125ef30bd3a375bc8ff7d10636ea0302d22d208c0cfb1be37ebb93ca30b')
+    - name: isLonghornManager
+      expression: >-
+        object.metadata.namespace == 'longhorn-system' &&
+        variables.serviceAccount == 'longhorn-service-account' &&
+        variables.containers.exists(c,
+          c.name == 'longhorn-manager' &&
+          c.image == 'docker.io/longhornio/longhorn-manager:v1.11.2@sha256:0f80ca11ac4eb7522f4e6e801a7afc9909ea8d3041575f3d029964c46590f096')
+    - name: isLonghornRecurringJob
+      expression: >-
+        object.metadata.namespace == 'longhorn-system' &&
+        variables.serviceAccount == 'longhorn-service-account' &&
+        variables.containers.exists(c,
+          c.name in ['filesystem-trim', 'prometheus-daily-snapshot',
+            'prometheus-daily-snapshot-delete', 'prometheus-daily-trim',
+            'security-tools-daily-trim', 'vault-daily-snapshot'] &&
+          c.image == 'docker.io/longhornio/longhorn-manager:v1.11.2@sha256:0f80ca11ac4eb7522f4e6e801a7afc9909ea8d3041575f3d029964c46590f096')
+    - name: isMetalLBFrr
+      expression: >-
+        object.metadata.namespace == 'metallb-system' &&
+        variables.serviceAccount == 'metallb-frr-k8s-controller' &&
+        variables.containers.exists(c,
+          c.name == 'controller' &&
+          c.image == 'quay.io/metallb/frr-k8s:v0.0.25@sha256:1cb06fb2d5538c9f9b20d3adf00da8d1e6cb0166bc15df8add0d9efe578641a4') &&
+        variables.containers.exists(c,
+          c.name == 'frr' &&
+          c.image == 'quay.io/frrouting/frr:10.4.3@sha256:8745af1f9bbbc26ab11d99ccdf35e07aa3427a199749bef0cd6bb5132bb130df')
+    - name: isMetalLBStatusCleaner
+      expression: >-
+        object.metadata.namespace == 'metallb-system' &&
+        variables.serviceAccount == 'metallb-frr-k8s-controller' &&
+        variables.containers.exists(c,
+          c.name == 'frr-k8s-statuscleaner' &&
+          c.image == 'quay.io/metallb/frr-k8s:v0.0.25@sha256:1cb06fb2d5538c9f9b20d3adf00da8d1e6cb0166bc15df8add0d9efe578641a4')
+    - name: isMetalLBSpeaker
+      expression: >-
+        object.metadata.namespace == 'metallb-system' &&
+        variables.serviceAccount == 'metallb-speaker' &&
+        variables.containers.exists(c,
+          c.name == 'speaker' &&
+          c.image == 'quay.io/metallb/speaker:v0.16.1@sha256:16561e96531e1852d5c229ad7fae6e994dcfa983ff7f4de6b6208b34a4e2ddbc')
+    - name: isNodeExporter
+      expression: >-
+        object.metadata.namespace == 'monitoring' &&
+        variables.serviceAccount == 'kube-prometheus-stack-prometheus-node-exporter' &&
+        variables.containers.exists(c,
+          c.name == 'node-exporter' &&
+          c.image == 'quay.io/prometheus/node-exporter:v1.11.1-distroless@sha256:6112664fd761bb964d8a2d3d0119d6c8402618a89edbb3a43c8f7b4090fb53c9')
+    - name: isKubeBenchControlPlane
+      expression: >-
+        object.metadata.namespace == 'security-kube-bench' &&
+        variables.serviceAccount == 'security-kube-bench-control-plane' &&
+        variables.containers.exists(c,
+          c.name == 'scanner' &&
+          c.image == 'docker.io/aquasec/kube-bench:v0.16.0@sha256:d2e6f685f16cf71228630305d7d69b1fe0c6cbf42a3275cdfc8a55f5f925bbee')
+    - name: isKubeBenchWorker
+      expression: >-
+        object.metadata.namespace == 'security-kube-bench' &&
+        variables.serviceAccount == 'security-kube-bench-workers' &&
+        variables.containers.exists(c,
+          c.name == 'scanner' &&
+          c.image == 'docker.io/aquasec/kube-bench:v0.16.0@sha256:d2e6f685f16cf71228630305d7d69b1fe0c6cbf42a3275cdfc8a55f5f925bbee')
   validations:
     - expression: >-
-        !object.spec.?hostNetwork.orValue(false) &&
-        !object.spec.?hostPID.orValue(false) &&
-        !object.spec.?hostIPC.orValue(false)
-      message: Pods should not use the host network, PID, or IPC namespaces.
+        !object.spec.?hostPID.orValue(false) ||
+        variables.isNodeExporter ||
+        variables.isKubeBenchControlPlane ||
+        variables.isKubeBenchWorker
+      message: Pods must not use the host PID namespace without an exact approved identity.
+    - expression: "!object.spec.?hostIPC.orValue(false)"
+      message: Pods must not use the host IPC namespace.
     - expression: >-
-        object.spec.?volumes.orValue([]).all(v, !has(v.hostPath))
-      message: Pods should not mount hostPath volumes.
+        !object.spec.?hostNetwork.orValue(false) ||
+        variables.isCilium ||
+        variables.isCiliumEnvoy ||
+        variables.isCiliumOperator ||
+        variables.isKubeAPIServer ||
+        variables.isKubeControllerManager ||
+        variables.isKubeScheduler ||
+        variables.isKubeProxy ||
+        variables.isKubeVip ||
+        variables.isNodeLocalDNS ||
+        variables.isMetalLBFrr ||
+        variables.isMetalLBStatusCleaner ||
+        variables.isMetalLBSpeaker ||
+        variables.isNodeExporter
+      message: Pods must not use the host network without an exact approved identity.
+    - expression: >-
+        object.spec.?volumes.orValue([]).all(v,
+          !has(v.hostPath) ||
+          (variables.isSecurityEventsCollector &&
+            v.hostPath.path in ['/var/log/kubernetes/audit',
+              '/var/lib/otelcol-security-events']) ||
+          (variables.isFalco &&
+            v.hostPath.path in ['/var/run/docker.sock',
+              '/run/podman/podman.sock', '/run/host-containerd/containerd.sock',
+              '/run/containerd/containerd.sock', '/run/crio/crio.sock',
+              '/run/k3s/containerd/containerd.sock', '/boot', '/lib/modules',
+              '/usr', '/etc', '/sys/kernel', '/proc']) ||
+          (variables.isCilium &&
+            v.hostPath.path in ['/var/run/cilium', '/var/run/netns',
+              '/sys/fs/bpf', '/proc', '/run/cilium/cgroupv2', '/opt/cni/bin',
+              '/etc/cni/net.d', '/lib/modules', '/run/xtables.lock',
+              '/var/run/cilium/envoy/sockets', '/proc/sys/net',
+              '/proc/sys/kernel']) ||
+          (variables.isCiliumEnvoy &&
+            v.hostPath.path in ['/var/run/cilium/envoy/sockets',
+              '/var/run/cilium/envoy/artifacts', '/sys/fs/bpf']) ||
+          (variables.isKubeAPIServer &&
+            v.hostPath.path in ['/var/log/kubernetes/audit',
+              '/etc/kubernetes/audit-policy',
+              '/etc/kubernetes/apiserver-authentication-config-v1.yaml',
+              '/etc/ssl/certs', '/etc/ca-certificates', '/etc/ssl/etcd/ssl',
+              '/etc/kubernetes/ssl', '/usr/local/share/ca-certificates',
+              '/usr/share/ca-certificates']) ||
+          (variables.isKubeControllerManager &&
+            v.hostPath.path in ['/etc/ssl/certs', '/etc/ca-certificates',
+              '/usr/libexec/kubernetes/kubelet-plugins/volume/exec',
+              '/etc/kubernetes/ssl',
+              '/etc/kubernetes/controller-manager.conf',
+              '/usr/local/share/ca-certificates',
+              '/usr/share/ca-certificates']) ||
+          (variables.isKubeScheduler &&
+            v.hostPath.path in ['/etc/kubernetes/scheduler.conf',
+              '/etc/kubernetes/kubescheduler-config.yaml']) ||
+          (variables.isKubeProxy &&
+            v.hostPath.path in ['/run/xtables.lock', '/lib/modules']) ||
+          (variables.isKubeVip &&
+            v.hostPath.path == '/etc/kubernetes/super-admin.conf') ||
+          (variables.isNodeLocalDNS &&
+            v.hostPath.path == '/run/xtables.lock') ||
+          (variables.isLonghornCsiController &&
+            v.hostPath.path == '/var/lib/kubelet/plugins/driver.longhorn.io') ||
+          (variables.isLonghornCsiPlugin &&
+            v.hostPath.path in [
+              '/var/lib/kubelet/plugins/kubernetes.io/csi',
+              '/var/lib/kubelet/plugins_registry',
+              '/var/lib/kubelet/plugins/driver.longhorn.io',
+              '/var/lib/kubelet/pods', '/dev', '/proc', '/sys',
+              '/lib/modules']) ||
+          (variables.isLonghornEngineImage &&
+            v.hostPath.path.startsWith('/var/lib/longhorn/engine-binaries/')) ||
+          (variables.isLonghornInstanceManager &&
+            v.hostPath.path in ['/', '/var/lib/longhorn/engine-binaries/',
+              '/var/lib/longhorn/unix-domain-socket/',
+              '/var/lib/longhorn/logs']) ||
+          (variables.isLonghornManager &&
+            v.hostPath.path in ['/boot/', '/dev/', '/proc/', '/etc/',
+              '/var/lib/longhorn/']) ||
+          (variables.isLonghornRecurringJob &&
+            v.hostPath.path == '/var/lib/longhorn/engine-binaries/') ||
+          (variables.isNodeExporter &&
+            v.hostPath.path in ['/proc', '/sys', '/']) ||
+          ((variables.isKubeBenchControlPlane ||
+              variables.isKubeBenchWorker) &&
+            v.hostPath.path in ['/var/lib/cni', '/var/lib/kubelet',
+              '/etc/systemd', '/lib/systemd', '/etc/kubernetes', '/usr/bin',
+              '/etc/cni/net.d', '/opt/cni/bin', '/etc/passwd', '/etc/group'] ||
+            (variables.isKubeBenchControlPlane &&
+              v.hostPath.path == '/var/lib/etcd')))
+      message: Pods must not mount hostPath volumes outside their exact approved identity and path set.
     - expression: >-
         variables.containers.all(c,
-          c.?ports.orValue([]).all(p, !has(p.hostPort) || p.hostPort == 0))
-      message: Containers should not bind host ports.
+          c.?volumeMounts.orValue([]).all(m,
+            variables.volumes.filter(v,
+              v.name == m.name && has(v.hostPath)).all(v,
+                !(
+                  (variables.isSecurityEventsCollector &&
+                    v.hostPath.path == '/var/log/kubernetes/audit') ||
+                  (variables.isFalco &&
+                    v.hostPath.path in ['/etc', '/sys/kernel']) ||
+                  (variables.isCilium &&
+                    v.hostPath.path == '/lib/modules') ||
+                  (variables.isCiliumEnvoy &&
+                    v.hostPath.path == '/var/run/cilium/envoy/artifacts') ||
+                  (variables.isKubeAPIServer &&
+                    v.hostPath.path in ['/etc/ca-certificates',
+                      '/etc/kubernetes/ssl', '/etc/ssl/certs',
+                      '/etc/ssl/etcd/ssl',
+                      '/usr/local/share/ca-certificates',
+                      '/usr/share/ca-certificates']) ||
+                  (variables.isKubeControllerManager &&
+                    v.hostPath.path in ['/etc/ca-certificates',
+                      '/etc/kubernetes/controller-manager.conf',
+                      '/etc/kubernetes/ssl', '/etc/ssl/certs',
+                      '/usr/local/share/ca-certificates',
+                      '/usr/share/ca-certificates']) ||
+                  (variables.isKubeScheduler &&
+                    v.hostPath.path in ['/etc/kubernetes/scheduler.conf',
+                      '/etc/kubernetes/kubescheduler-config.yaml']) ||
+                  (variables.isKubeProxy &&
+                    v.hostPath.path == '/lib/modules') ||
+                  (variables.isLonghornCsiPlugin &&
+                    v.hostPath.path == '/lib/modules') ||
+                  (variables.isLonghornManager &&
+                    v.hostPath.path in ['/boot/', '/etc/', '/proc/']) ||
+                  variables.isNodeExporter ||
+                  variables.isKubeBenchControlPlane ||
+                  variables.isKubeBenchWorker
+                ) ||
+                m.?readOnly.orValue(false))))
+      message: Approved read-only hostPath mounts must not become writable.
+    - expression: >-
+        variables.containers.all(c,
+          c.?ports.orValue([]).all(p,
+            !has(p.hostPort) || p.hostPort == 0 ||
+            (variables.isCilium && c.name == 'cilium-agent' &&
+              p.hostPort in [9879, 4244, 9965] &&
+              p.?protocol.orValue('TCP') == 'TCP') ||
+            (variables.isCiliumEnvoy && c.name == 'cilium-envoy' &&
+              p.hostPort == 9964 && p.?protocol.orValue('TCP') == 'TCP') ||
+            (variables.isCiliumOperator && c.name == 'cilium-operator' &&
+              p.hostPort in [9234, 9963] &&
+              p.?protocol.orValue('TCP') == 'TCP') ||
+            (variables.isKubeAPIServer && c.name == 'kube-apiserver' &&
+              p.hostPort == 6443 && p.?protocol.orValue('TCP') == 'TCP') ||
+            (variables.isKubeControllerManager &&
+              c.name == 'kube-controller-manager' &&
+              p.hostPort == 10257 && p.?protocol.orValue('TCP') == 'TCP') ||
+            (variables.isKubeScheduler && c.name == 'kube-scheduler' &&
+              p.hostPort == 10259 && p.?protocol.orValue('TCP') == 'TCP') ||
+            (variables.isNodeLocalDNS && c.name == 'node-cache' &&
+              ((p.hostPort == 53 &&
+                  p.?protocol.orValue('TCP') in ['TCP', 'UDP']) ||
+                (p.hostPort == 9253 &&
+                  p.?protocol.orValue('TCP') == 'TCP'))) ||
+            (variables.isMetalLBFrr &&
+              ((c.name == 'controller' && p.hostPort == 9140) ||
+                (c.name == 'frr-metrics' && p.hostPort == 9141)) &&
+              p.?protocol.orValue('TCP') == 'TCP') ||
+            (variables.isMetalLBStatusCleaner &&
+              c.name == 'frr-k8s-statuscleaner' && p.hostPort == 19443 &&
+              p.?protocol.orValue('TCP') == 'TCP') ||
+            (variables.isMetalLBSpeaker && c.name == 'speaker' &&
+              ((p.hostPort == 9120 &&
+                  p.?protocol.orValue('TCP') == 'TCP') ||
+                (p.hostPort == 7946 &&
+                  p.?protocol.orValue('TCP') in ['TCP', 'UDP']))) ||
+            (variables.isNodeExporter && c.name == 'node-exporter' &&
+              p.hostPort == 9100 && p.?protocol.orValue('TCP') == 'TCP')))
+      message: Containers must not bind host ports outside their exact approved identity and port set.
 ---
 apiVersion: policies.kyverno.io/v1
 kind: ValidatingPolicy
