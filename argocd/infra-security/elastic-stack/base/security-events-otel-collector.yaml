@@ -265,7 +265,7 @@ data:
 
     # All streams roll over before becoming large and are deleted after three
     # days. One primary and zero replicas are appropriate for this 1 GiB lab.
-    for stream in kubernetes-audit falco kyverno; do
+    for stream in kubernetes-audit falco kyverno cilium-hubble; do
       curl --silent --fail --cacert "$ca" --user "$auth" \
         --request PUT "$endpoint/_ilm/policy/${stream}-small" \
         --header 'Content-Type: application/json' \
@@ -332,7 +332,7 @@ spec:
       annotations:
         # Bump when the bootstrap script or collector ConfigMap must be
         # reloaded on the control plane.
-        platform.example/bootstrap-revision: "9"
+        platform.example/bootstrap-revision: "10"
       labels:
         app.kubernetes.io/name: security-events-otel-collector
     spec:

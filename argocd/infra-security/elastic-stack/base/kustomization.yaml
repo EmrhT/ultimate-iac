@@ -8,3 +8,4 @@ resources:
   - elastalert2-vault.yaml
   - elastalert2-writeback-cleanup.yaml
   - security-events-otel-collector.yaml
+  - cilium-hubble-flow-collector.yaml
