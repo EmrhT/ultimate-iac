@@ -57,7 +57,13 @@ spec:
     matchLabels:
       io.cilium.k8s.policy.serviceaccount: podinfo
       k8s:security.no-name.win/quarantined: "true"
+  # Empty endpoint selectors deny traffic from/to every Cilium-managed Pod.
+  # Entity rules additionally cover host, world, and other non-endpoint identities.
   ingressDeny:
+    - fromEndpoints:
+        - {}
     - fromEntities: ["all"]
   egressDeny:
+    - toEndpoints:
+        - {}
     - toEntities: ["all"]

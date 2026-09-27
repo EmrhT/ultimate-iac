@@ -7,55 +7,17 @@ namespace="${1:-lab-a-dev}"
 selector='app.kubernetes.io/name=podinfo'
 pod="$(kubectl -n "$namespace" get pods -l "$selector" -o jsonpath='{.items[0].metadata.name}')"
 client_namespace="security-zap"
-client_pod="falco-talon-quarantine-test"
+client_pod="$(kubectl -n "$client_namespace" get pods -l app.kubernetes.io/name=security-zap -o jsonpath='{.items[0].metadata.name}')"
 
 cleanup() {
-  kubectl -n "$namespace" label pod "$pod" security.no-name.win/quarantined- --ignore-not-found
-  kubectl -n "$client_namespace" delete pod "$client_pod" --ignore-not-found --wait=false
+  if kubectl -n "$namespace" get pod "$pod" >/dev/null 2>&1; then
+    kubectl -n "$namespace" label pod "$pod" security.no-name.win/quarantined-
+  fi
 }
 trap cleanup EXIT
 
 echo "Target: $namespace/$pod"
-echo "Creating an allowlisted, restricted temporary client using security-zap's identity."
-kubectl apply -f - <<'EOF_MANIFEST'
-apiVersion: v1
-kind: Pod
-metadata:
-  name: falco-talon-quarantine-test
-  namespace: security-zap
-  labels:
-    app.kubernetes.io/name: falco-talon-quarantine-test
-spec:
-  serviceAccountName: security-zap
-  automountServiceAccountToken: false
-  restartPolicy: Never
-  securityContext:
-    runAsNonRoot: true
-    runAsUser: 1000
-    runAsGroup: 1000
-    seccompProfile:
-      type: RuntimeDefault
-  containers:
-    - name: curl
-      image: docker.io/curlimages/curl:8.21.0@sha256:7c12af72ceb38b7432ab85e1a265cff6ae58e06f95539d539b654f2cfa64bb13
-      imagePullPolicy: IfNotPresent
-      command: [/bin/sh]
-      args: [-ec, sleep 300]
-      resources:
-        requests:
-          cpu: 10m
-          memory: 16Mi
-        limits:
-          cpu: 50m
-          memory: 32Mi
-      securityContext:
-        allowPrivilegeEscalation: false
-        readOnlyRootFilesystem: true
-        capabilities:
-          drop: [ALL]
-EOF_MANIFEST
-kubectl -n "$client_namespace" wait --for=condition=Ready "pod/$client_pod" --timeout=60s
-
+echo "Using the existing allowlisted security-zap Pod: $client_pod"
 echo "Baseline: the allowlisted DAST identity reaches Podinfo."
 kubectl -n "$client_namespace" exec "$client_pod" -- curl --fail --connect-timeout 3 --max-time 5 \
   "http://podinfo.$namespace.svc.cluster.local:9898/"
