@@ -452,3 +452,46 @@ rules:
           }
         }
       }
+
+  kyverno_unapproved_capability_addition: |-
+    name: Kyverno unapproved Linux capability addition
+    type: any
+    index: kyverno-*
+    # Use the original Kubernetes Event time so collector restarts and event
+    # replays cannot turn an old violation into a new PagerDuty alert. The
+    # Kyverno policy itself contains the exact infrastructure exceptions.
+    timestamp_field: eventTime
+    filter:
+      - query:
+          query_string:
+            query: 'event.dataset:"kyverno.policy_event" AND reason:"PolicyViolation" AND reportingComponent:"kyverno-admission" AND involvedObject.kind.keyword:"Pod" AND message:"policy audit-pod-security-context/ fail: Containers may add only NET_BIND_SERVICE or the capability set approved for their exact infrastructure identity."'
+    realert:
+      minutes: 1
+    include_rule_params_in_matches:
+      - pagerduty_routing_key
+    alert:
+      - post2
+    http_post2_url: https://events.eu.pagerduty.com/v2/enqueue
+    http_post2_all_values: false
+    http_post2_payload: |-
+      {
+        "routing_key": "{{ rule_param_pagerduty_routing_key }}",
+        "event_action": "trigger",
+        "dedup_key": "kyverno-unapproved-capability-{{ involvedObject.uid }}",
+        "payload": {
+          "summary": "Kyverno observed an unapproved Linux capability addition",
+          "source": "ultimate-iac-kyverno",
+          "severity": "critical",
+          "component": "kyverno",
+          "group": "security-admission",
+          "class": "linux-capability-violation",
+          "custom_details": {
+            "event": "{{ metadata.name }}",
+            "namespace": "{{ involvedObject.namespace }}",
+            "workload_kind": "{{ involvedObject.kind }}",
+            "workload": "{{ involvedObject.name }}",
+            "policy": "audit-pod-security-context",
+            "violation": "{{ message }}"
+          }
+        }
+      }

@@ -69,6 +69,22 @@ image without an immutable digest is forwarded through Elasticsearch and
 ElastAlert2 to PagerDuty. The exact namespace-and-version exceptions documented
 above pass policy evaluation and therefore do not generate these alerts.
 
+## Added Linux capabilities
+
+`audit-pod-security-context` permits containers to add only
+`NET_BIND_SERVICE` by default. Falco, Cilium, kube-vip, NodeLocal DNS,
+Longhorn CSI, MetalLB/FRR, and Grafana's data-permission initializer have
+narrow exceptions matching their namespace, ServiceAccount, container name,
+exact image reference, and approved capability subset.
+
+An exception permits only capabilities already required by that container. An
+image, identity, or capability change therefore fails policy evaluation instead
+of inheriting trust from its namespace. Admission-time Pod violations are
+forwarded through Elasticsearch and ElastAlert2 to PagerDuty. Privileged
+containers remain covered by the separate privileged-container alert because
+privileged mode implicitly grants capabilities without requiring an
+`add` list.
+
 ## Reviewing findings
 
 ```bash

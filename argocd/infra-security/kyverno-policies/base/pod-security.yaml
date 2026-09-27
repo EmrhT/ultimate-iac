@@ -7,7 +7,8 @@ metadata:
     policies.kyverno.io/category: Pod Security Standards (Restricted)
     policies.kyverno.io/severity: high
     policies.kyverno.io/description: >-
-      Reports privileged execution and missing container hardening settings.
+      Reports privileged execution, unapproved Linux capability additions, and
+      missing container hardening settings.
 spec:
   failurePolicy: Ignore
   validationActions: [Audit]
@@ -31,6 +32,8 @@ spec:
         object.spec.containers +
         object.spec.?initContainers.orValue([]) +
         object.spec.?ephemeralContainers.orValue([])
+    - name: globallyAllowedAddedCapabilities
+      expression: "['NET_BIND_SERVICE']"
   validations:
     - expression: >-
         variables.containers.all(c,
@@ -54,6 +57,70 @@ spec:
         variables.containers.all(c,
           'ALL' in c.?securityContext.?capabilities.?drop.orValue([]))
       message: Every container should drop ALL Linux capabilities.
+    - expression: >-
+        variables.containers.all(c,
+          c.?securityContext.?capabilities.?add.orValue([]).all(capability,
+            capability in variables.globallyAllowedAddedCapabilities ||
+            (object.metadata.namespace == 'falco' &&
+              object.spec.?serviceAccountName.orValue('default') == 'falco' &&
+              c.name == 'falco' &&
+              c.image == 'docker.io/falcosecurity/falco:0.44.1@sha256:d0cfe422d6ac0e0f20857798f46c7d7273210e1b064b22821e4e6e7f843cde6b' &&
+              capability in ['BPF', 'PERFMON', 'SYS_PTRACE', 'SYS_RESOURCE']) ||
+            (object.metadata.namespace == 'kube-system' &&
+              object.spec.?serviceAccountName.orValue('default') == 'cilium' &&
+              c.image == 'quay.io/cilium/cilium:v1.19.3@sha256:2e61680593cddca8b6c055f6d4c849d87a26a1c91c7e3b8b56c7fb76ab7b7b10' &&
+              ((c.name in ['apply-sysctl-overwrites', 'mount-cgroup'] &&
+                  capability in ['SYS_ADMIN', 'SYS_CHROOT', 'SYS_PTRACE']) ||
+                (c.name == 'cilium-agent' &&
+                  capability in ['CHOWN', 'DAC_OVERRIDE', 'FOWNER', 'IPC_LOCK',
+                    'KILL', 'NET_ADMIN', 'NET_RAW', 'SETGID', 'SETUID',
+                    'SYSLOG', 'SYS_ADMIN', 'SYS_MODULE', 'SYS_RESOURCE']) ||
+                (c.name == 'clean-cilium-state' &&
+                  capability in ['NET_ADMIN', 'SYS_ADMIN', 'SYS_MODULE',
+                    'SYS_RESOURCE']) ||
+                (c.name == 'config' && capability == 'NET_ADMIN'))) ||
+            (object.metadata.namespace == 'kube-system' &&
+              object.spec.?serviceAccountName.orValue('default') == 'cilium-envoy' &&
+              c.name == 'cilium-envoy' &&
+              c.image == 'quay.io/cilium/cilium-envoy:v1.34.10-1762597008-ff7ae7d623be00078865cff1b0672cc5d9bfc6d5@sha256:ba0ab8adac082d50d525fd2c5ba096c8facea3a471561b7c61c7a5b9c2e0de0d' &&
+              capability in ['NET_ADMIN', 'SYS_ADMIN']) ||
+            (object.metadata.namespace == 'kube-system' &&
+              object.spec.?serviceAccountName.orValue('default') == 'default' &&
+              c.name == 'kube-vip' &&
+              c.image == 'ghcr.io/kube-vip/kube-vip:v1.0.3' &&
+              capability in ['NET_ADMIN', 'NET_RAW']) ||
+            (object.metadata.namespace == 'kube-system' &&
+              object.spec.?serviceAccountName.orValue('default') == 'nodelocaldns' &&
+              c.name == 'node-cache' &&
+              c.image == 'registry.k8s.io/dns/k8s-dns-node-cache:1.25.0' &&
+              capability == 'NET_ADMIN') ||
+            (object.metadata.namespace == 'longhorn-system' &&
+              object.spec.?serviceAccountName.orValue('default') == 'longhorn-service-account' &&
+              c.name == 'longhorn-csi-plugin' &&
+              c.image == 'docker.io/longhornio/longhorn-manager:v1.11.2@sha256:0f80ca11ac4eb7522f4e6e801a7afc9909ea8d3041575f3d029964c46590f096' &&
+              capability == 'SYS_ADMIN') ||
+            (object.metadata.namespace == 'metallb-system' &&
+              object.spec.?serviceAccountName.orValue('default') == 'metallb-frr-k8s-controller' &&
+              ((c.name == 'controller' &&
+                  c.image == 'quay.io/metallb/frr-k8s:v0.0.25@sha256:1cb06fb2d5538c9f9b20d3adf00da8d1e6cb0166bc15df8add0d9efe578641a4' &&
+                  capability == 'NET_RAW') ||
+                (c.name == 'frr' &&
+                  c.image == 'quay.io/frrouting/frr:10.4.3@sha256:8745af1f9bbbc26ab11d99ccdf35e07aa3427a199749bef0cd6bb5132bb130df' &&
+                  capability in ['NET_ADMIN', 'NET_BIND_SERVICE', 'NET_RAW',
+                    'SYS_ADMIN']))) ||
+            (object.metadata.namespace == 'metallb-system' &&
+              object.spec.?serviceAccountName.orValue('default') == 'metallb-speaker' &&
+              c.name == 'speaker' &&
+              c.image == 'quay.io/metallb/speaker:v0.16.1@sha256:16561e96531e1852d5c229ad7fae6e994dcfa983ff7f4de6b6208b34a4e2ddbc' &&
+              capability == 'NET_RAW') ||
+            (object.metadata.namespace == 'monitoring' &&
+              object.spec.?serviceAccountName.orValue('default') == 'kube-prometheus-stack-grafana' &&
+              c.name == 'init-chown-data' &&
+              c.image == 'docker.io/library/busybox:1.38.0@sha256:dc2d74b28e4cf8984fa52af1f39bc7c3d9c73760b41a74d629f5d11b1ab28616' &&
+              capability in ['CHOWN', 'DAC_OVERRIDE'])))
+      message: >-
+        Containers may add only NET_BIND_SERVICE or the capability set
+        approved for their exact infrastructure identity.
     - expression: >-
         variables.containers.all(c,
           c.?securityContext.?readOnlyRootFilesystem.orValue(false))

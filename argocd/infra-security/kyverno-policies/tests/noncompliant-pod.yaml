@@ -8,3 +8,7 @@ spec:
   containers:
     - name: app
       image: nginx:latest
+      securityContext:
+        capabilities:
+          drop: [ALL]
+          add: [SYS_ADMIN]
