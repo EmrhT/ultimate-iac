@@ -36,6 +36,35 @@ cilium_extra_values:
         enabled: true
         interval: 15s
         scrapeTimeout: 10s
+# Persist only denied and errored flows long enough for incident investigation.
+# The dynamic exporter writes node-local JSON for the GitOps-managed collector;
+# rotation bounds this staging area to 15 MiB per node.
+cilium_hubble_export_dynamic_enabled: true
+cilium_hubble_export_dynamic_config_content:
+  - name: security-events
+    filePath: /var/run/cilium/hubble/security-events.log
+    fileMaxSizeMb: 5
+    fileMaxBackups: 2
+    fileCompress: false
+    fieldMask:
+      - time
+      - verdict
+      - drop_reason_desc
+      - source
+      - destination
+      - source_service
+      - destination_service
+      - IP
+      - l4
+      - node_name
+      - traffic_direction
+      - is_reply
+      - event_type
+    includeFilters:
+      - verdict:
+          - DROPPED
+          - ERROR
+    excludeFilters: []
 # Workers use the global maximum. The control-plane override is managed by the
 # infra-cilium-config GitOps application through a CiliumNodeConfig object.
 cilium_config_extra_vars:
