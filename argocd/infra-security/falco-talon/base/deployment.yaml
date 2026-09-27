@@ -63,7 +63,14 @@ spec:
               mountPath: /etc/falco-talon/rules.yaml
               subPath: rules.yaml
               readOnly: true
+            # Talon's embedded NATS JetStream uses /tmp/jetstream for its
+            # five-second deduplication window.
+            - name: tmp
+              mountPath: /tmp
       volumes:
         - name: config
           configMap:
             name: falco-talon-config
+        - name: tmp
+          emptyDir:
+            sizeLimit: 32Mi

@@ -13,4 +13,5 @@ labels:
       app.kubernetes.io/component: runtime-response
       app.kubernetes.io/part-of: falco
       app.kubernetes.io/managed-by: argocd
+      owner: platform
     includeSelectors: false
