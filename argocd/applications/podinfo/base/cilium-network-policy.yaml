@@ -58,8 +58,6 @@ spec:
       io.cilium.k8s.policy.serviceaccount: podinfo
       k8s:security.no-name.win/quarantined: "true"
   ingressDeny:
-    - fromEntities:
-        - all
+    - fromEntities: ["all"]
   egressDeny:
-    - toEntities:
-        - all
+    - toEntities: ["all"]
