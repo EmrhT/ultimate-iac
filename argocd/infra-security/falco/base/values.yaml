@@ -97,6 +97,12 @@ customRules:
       condition: >
         spawned_process
         and k8s.pod.label[security.no-name.win/falco-payload-execution] = "true"
+        and not
+        (
+          k8s.ns.name = argocd
+          and k8s.pod.name startswith "argocd-repo-server-"
+          and container.name = copyutil
+        )
         and
         (
           proc.is_exe_upper_layer = true
