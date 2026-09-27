@@ -1,0 +1,28 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: falco-talon-quarantine
+rules:
+  # The label action resolves the target and then patches only that Pod. Talon
+  # has no permission to delete workloads, exec, inspect secrets, or create
+  # network policies.
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "patch"]
+  # Record that containment happened without granting broader write access.
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: falco-talon-quarantine
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: falco-talon-quarantine
+subjects:
+  - kind: ServiceAccount
+    name: falco-talon
+    namespace: falco

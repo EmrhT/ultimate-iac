@@ -37,6 +37,14 @@ spec:
       destination:
         server: "{{ .server }}"
         namespace: "{{ .cluster }}-{{ .environment }}"
+      # Falco Talon applies this one label only after a critical runtime event.
+      # The quarantine CiliumNetworkPolicy is already Git-managed; Argo must not
+      # remove the incident-response label while the investigation is active.
+      ignoreDifferences:
+        - group: ""
+          kind: Pod
+          jqPathExpressions:
+            - '.metadata.labels["security.no-name.win/quarantined"]'
       syncPolicy:
         automated:
           prune: true
@@ -57,3 +65,4 @@ spec:
         syncOptions:
           - CreateNamespace=true
           - ServerSideApply=true
+          - RespectIgnoreDifferences=true

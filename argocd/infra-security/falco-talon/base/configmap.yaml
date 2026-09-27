@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: falco-talon-config
+data:
+  config.yaml: |
+    listen_address: "0.0.0.0"
+    listen_port: "2803"
+    log_format: json
+    watch_rules: true
+    print_all_events: false
+    deduplication:
+      # A single replica removes the need for lease permissions.
+      leader_election: false
+      time_window_seconds: 5
+    default_notifiers:
+      # Kubernetes events provide a lightweight, local record of each response.
+      - k8sevents
+  rules.yaml: |
+    - action: Quarantine Pod
+      description: Add the transient label consumed by the Git-managed Cilium policy.
+      actionner: kubernetes:label
+      parameters:
+        labels:
+          security.no-name.win/quarantined: "true"
+
+    # Only the four externally exposed Podinfo namespaces are in this first
+    # response phase. Cilium makes the effect Podinfo-specific through the
+    # service-account selector in podinfo-quarantine.
+    - rule: Quarantine Podinfo after critical runtime detection in lab-a-dev
+      match:
+        rules: [Reverse Shell, Container Escape Behavior]
+        output_fields: [k8s.ns.name=lab-a-dev]
+      actions: [{action: Quarantine Pod}]
+    - rule: Quarantine Podinfo after critical runtime detection in lab-a-prod
+      match:
+        rules: [Reverse Shell, Container Escape Behavior]
+        output_fields: [k8s.ns.name=lab-a-prod]
+      actions: [{action: Quarantine Pod}]
+    - rule: Quarantine Podinfo after critical runtime detection in lab-b-dev
+      match:
+        rules: [Reverse Shell, Container Escape Behavior]
+        output_fields: [k8s.ns.name=lab-b-dev]
+      actions: [{action: Quarantine Pod}]
+    - rule: Quarantine Podinfo after critical runtime detection in lab-b-prod
+      match:
+        rules: [Reverse Shell, Container Escape Behavior]
+        output_fields: [k8s.ns.name=lab-b-prod]
+      actions: [{action: Quarantine Pod}]

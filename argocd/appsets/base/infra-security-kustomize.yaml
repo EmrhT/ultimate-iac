@@ -88,6 +88,12 @@ spec:
             revision: main
             path: argocd/infra-security/falco-config/overlays/dev
             wave: "16"
+          - name: falco-talon
+            namespace: falco
+            sourceRepo: https://github.com/EmrhT/ultimate-iac.git
+            revision: main
+            path: argocd/infra-security/falco-talon/overlays/dev
+            wave: "17"
           - name: argocd-config
             namespace: argocd
             sourceRepo: https://github.com/EmrhT/ultimate-iac.git

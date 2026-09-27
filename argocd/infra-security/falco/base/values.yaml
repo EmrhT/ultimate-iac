@@ -241,3 +241,8 @@ falcosidekick:
       address: http://security-events-otel-collector.elastic-stack.svc:8088/falco
       method: POST
       minimumpriority: critical
+    talon:
+      # Keep the existing Elasticsearch/PagerDuty webhook above. Talon receives
+      # the same Critical Falco event independently and performs containment.
+      address: http://falco-talon.falco.svc:2803
+      minimumpriority: critical

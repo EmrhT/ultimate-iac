@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: falco-talon
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: falco-talon
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: falco-talon
+    spec:
+      serviceAccountName: falco-talon
+      # Talon needs its projected token to patch the affected Pod.
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1234
+        runAsGroup: 1234
+        fsGroup: 1234
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: falco-talon
+          image: docker.io/falcosecurity/falco-talon:0.3.0@sha256:0a06b6a5e9f0e45d4ccdcf4c7a8c5ac4156e728f81ffd0122cb6675e3b525b40
+          imagePullPolicy: IfNotPresent
+          args: [server, -c, /etc/falco-talon/config.yaml, -r, /etc/falco-talon/rules.yaml]
+          ports:
+            - name: http
+              containerPort: 2803
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: config
+              mountPath: /etc/falco-talon/config.yaml
+              subPath: config.yaml
+              readOnly: true
+            - name: config
+              mountPath: /etc/falco-talon/rules.yaml
+              subPath: rules.yaml
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: falco-talon-config
