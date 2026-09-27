@@ -1,0 +1,124 @@
+<mxfile host="Electron" agent="Codex">
+  <diagram id="security-detection-architecture" name="Security Detection Architecture">
+    <mxGraphModel dx="1683" dy="853" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=24;fontStyle=1;fontColor=#1F2937;" value="Homelab Kubernetes Security Detection Architecture" vertex="1">
+          <mxGeometry height="40" width="880" x="360" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="subtitle" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=13;fontColor=#4B5563;" value="Four independent detection sources, alert paths, and retained evidence" vertex="1">
+          <mxGeometry height="25" width="880" x="360" y="58" as="geometry" />
+        </mxCell>
+        <mxCell id="sources-group" parent="1" style="swimlane;html=1;rounded=1;startSize=30;fillColor=#F8FAFC;strokeColor=#94A3B8;fontStyle=1;fontColor=#334155;" value="Detection Sources" vertex="1">
+          <mxGeometry height="610" width="280" x="40" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="audit" parent="sources-group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DBEAFE;strokeColor=#2563EB;fontColor=#1E3A8A;" value="&lt;b&gt;Kubernetes Audit&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;API identity, RBAC mutations,&lt;br&gt;interactive Pod access&lt;/font&gt;" vertex="1">
+          <mxGeometry height="90" width="230" x="25" y="65" as="geometry" />
+        </mxCell>
+        <mxCell id="falco" parent="sources-group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEE2E2;strokeColor=#DC2626;fontColor=#7F1D1D;" value="&lt;b&gt;Falco&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;Container runtime and syscall&lt;br&gt;behaviour&lt;/font&gt;" vertex="1">
+          <mxGeometry height="90" width="230" x="25" y="190" as="geometry" />
+        </mxCell>
+        <mxCell id="kyverno" parent="sources-group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDE9FE;strokeColor=#7C3AED;fontColor=#4C1D95;" value="&lt;b&gt;Kyverno&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;Admission policy and workload&lt;br&gt;configuration findings&lt;/font&gt;" vertex="1">
+          <mxGeometry height="90" width="230" x="25" y="315" as="geometry" />
+        </mxCell>
+        <mxCell id="cilium" parent="sources-group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#16A34A;fontColor=#14532D;" value="&lt;b&gt;Cilium / Hubble&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;Network policy enforcement,&lt;br&gt;flow verdicts and metadata&lt;/font&gt;" vertex="1">
+          <mxGeometry height="90" width="230" x="25" y="440" as="geometry" />
+        </mxCell>
+        <mxCell id="collection-group" parent="1" style="swimlane;html=1;rounded=1;startSize=30;fillColor=#F8FAFC;strokeColor=#94A3B8;fontStyle=1;fontColor=#334155;" value="Collection and Detection" vertex="1">
+          <mxGeometry height="610" width="420" x="385" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="otel-security" parent="collection-group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF7ED;strokeColor=#EA580C;fontColor=#7C2D12;" value="&lt;b&gt;Security Events&lt;br&gt;OTel Collector&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;Audit files · Falco webhook&lt;br&gt;Kyverno reports/events&lt;/font&gt;" vertex="1">
+          <mxGeometry height="105" width="240" x="105" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="hubble-export" parent="collection-group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ECFDF5;strokeColor=#059669;fontColor=#065F46;" value="&lt;b&gt;Hubble dynamic exporter&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;DROPPED / ERROR only&lt;br&gt;bounded node-local flow files&lt;/font&gt;" vertex="1">
+          <mxGeometry height="80" width="185" x="15" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="hubble-metrics" parent="collection-group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ECFDF5;strokeColor=#059669;fontColor=#065F46;" value="&lt;b&gt;Hubble Metrics&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;Policy-denied drop counters&lt;br&gt;per workload pair&lt;/font&gt;" vertex="1">
+          <mxGeometry height="80" width="185" x="15" y="510" as="geometry" />
+        </mxCell>
+        <mxCell id="otel-hubble" parent="collection-group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF7ED;strokeColor=#EA580C;fontColor=#7C2D12;" value="&lt;b&gt;Hubble Flow&lt;br&gt;OTel Collector&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;One DaemonSet Pod per node&lt;br&gt;tails exported flow files&lt;/font&gt;" vertex="1">
+          <mxGeometry height="80" width="170" x="235" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-export-otel" edge="1" parent="collection-group" source="hubble-export" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#16A34A;endArrow=block;endFill=1;" target="otel-hubble">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="storage-group" parent="1" style="swimlane;html=1;rounded=1;startSize=30;fillColor=#F8FAFC;strokeColor=#94A3B8;fontStyle=1;fontColor=#334155;" value="Evidence Retention and Alerting" vertex="1">
+          <mxGeometry height="610" width="320" x="870" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="elastic" parent="storage-group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E0F2FE;strokeColor=#0284C7;fontColor=#0C4A6E;" value="&lt;b&gt;Elasticsearch&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;Audit · Falco · Kyverno&lt;br&gt;Cilium Hubble flows&lt;br&gt;&lt;i&gt;Three-day retention&lt;/i&gt;&lt;/font&gt;" vertex="1">
+          <mxGeometry height="120" width="210" x="20" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="prometheus" parent="storage-group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3C7;strokeColor=#D97706;fontColor=#78350F;" value="&lt;b&gt;Prometheus&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;Cilium policy-denied rules&lt;br&gt;including cold-start coverage&lt;/font&gt;" vertex="1">
+          <mxGeometry height="90" width="210" x="55" y="470" as="geometry" />
+        </mxCell>
+        <mxCell id="elastalert" parent="storage-group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3C7;strokeColor=#D97706;fontColor=#78350F;" value="&lt;b&gt;ElastAlert2&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;Source-specific event rules&lt;br&gt;and PagerDuty payloads&lt;/font&gt;" vertex="1">
+          <mxGeometry height="90" width="210" x="90" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-es-elastalert" edge="1" parent="storage-group" source="elastic" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0284C7;endArrow=block;endFill=1;" target="elastalert">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="delivery-group" parent="1" style="swimlane;html=1;rounded=1;startSize=30;fillColor=#F8FAFC;strokeColor=#94A3B8;fontStyle=1;fontColor=#334155;" value="Incident Delivery" vertex="1">
+          <mxGeometry height="610" width="285" x="1255" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="alertmanager" parent="delivery-group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3C7;strokeColor=#D97706;fontColor=#78350F;" value="&lt;b&gt;Alertmanager&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;Prometheus alert routing&lt;/font&gt;" vertex="1">
+          <mxGeometry height="80" width="205" x="55" y="475" as="geometry" />
+        </mxCell>
+        <mxCell id="pagerduty" parent="delivery-group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FCE7F3;strokeColor=#DB2777;fontColor=#831843;fontSize=15;" value="&lt;b&gt;PagerDuty&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;Security incidents&lt;br&gt;and escalation&lt;/font&gt;" vertex="1">
+          <mxGeometry height="100" width="205" x="55" y="295" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-audit-otel" edge="1" parent="1" source="audit" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#2563EB;endArrow=block;endFill=1;" target="otel-security">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="392.57" y="220" />
+              <mxPoint x="392.57" y="250" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge-falco-otel" edge="1" parent="1" source="falco" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#DC2626;endArrow=block;endFill=1;" target="otel-security">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="392.57" y="345" />
+              <mxPoint x="392.57" y="320" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge-kyverno-otel" edge="1" parent="1" source="kyverno" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#7C3AED;endArrow=block;endFill=1;" target="otel-security">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="600" y="440" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge-cilium-export" edge="1" parent="1" source="cilium" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#16A34A;endArrow=block;endFill=1;fontSize=11;" target="hubble-export" value="flow verdicts">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-cilium-metrics" edge="1" parent="1" source="cilium" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#16A34A;endArrow=block;endFill=1;fontSize=11;" target="hubble-metrics" value="policy drops">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-otel-es" edge="1" parent="1" source="otel-security" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#EA580C;endArrow=block;endFill=1;" target="elastic">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-hubble-otel-es" edge="1" parent="1" source="otel-hubble" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#EA580C;endArrow=block;endFill=1;" target="elastic">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="940" y="510" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge-metrics-prom" edge="1" parent="1" source="hubble-metrics" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#16A34A;endArrow=block;endFill=1;" target="prometheus">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-elastalert-pd" edge="1" parent="1" source="elastalert" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#DB2777;endArrow=block;endFill=1;fontSize=11;" target="pagerduty" value="incident events">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-prom-am" edge="1" parent="1" source="prometheus" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#D97706;endArrow=block;endFill=1;" target="alertmanager">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-am-pd" edge="1" parent="1" source="alertmanager" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#DB2777;endArrow=block;endFill=1;fontSize=11;" target="pagerduty" value="Cilium policy alerts">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
