@@ -34,20 +34,29 @@ spec:
         object.spec.?ephemeralContainers.orValue([])
     - name: globallyAllowedAddedCapabilities
       expression: "['NET_BIND_SERVICE']"
+    - name: isCiliumHubbleFlowCollector
+      expression: >-
+        object.metadata.namespace == 'elastic-stack' &&
+        object.spec.?serviceAccountName.orValue('default') == 'cilium-hubble-flow-collector' &&
+        variables.containers.exists(c,
+          c.name == 'otel-collector' &&
+          c.image == 'docker.io/otel/opentelemetry-collector-contrib@sha256:799dc6cf12c96192af37b5bdba804da8c10b3bc563b43cb90c3f3c58d9572ad6')
   validations:
     - expression: >-
         variables.containers.all(c,
           !c.?securityContext.?privileged.orValue(false))
       message: Containers must not run as privileged.
     - expression: >-
-        object.spec.?securityContext.?runAsUser.orValue(-1) != 0 &&
+        variables.isCiliumHubbleFlowCollector ||
+        (object.spec.?securityContext.?runAsUser.orValue(-1) != 0 &&
         variables.containers.all(c,
-          c.?securityContext.?runAsUser.orValue(-1) != 0)
+          c.?securityContext.?runAsUser.orValue(-1) != 0))
       message: Pods and containers must not explicitly run as UID 0.
     - expression: >-
-        (object.spec.?securityContext.?runAsNonRoot.orValue(false) &&
+        variables.isCiliumHubbleFlowCollector ||
+        ((object.spec.?securityContext.?runAsNonRoot.orValue(false) &&
         variables.containers.all(c, c.?securityContext.?runAsNonRoot.orValue(true))) ||
-        variables.containers.all(c, c.?securityContext.?runAsNonRoot.orValue(false))
+        variables.containers.all(c, c.?securityContext.?runAsNonRoot.orValue(false)))
       message: Pods or every container should explicitly set runAsNonRoot to true.
     - expression: >-
         variables.containers.all(c,
