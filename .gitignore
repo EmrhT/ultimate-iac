@@ -45,3 +45,6 @@ terraform.rc
 
 *.tfplan
 *.plan
+
+
+visual/.$*.bkp
