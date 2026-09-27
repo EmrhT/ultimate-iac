@@ -277,7 +277,9 @@ rules:
           priority.keyword: Critical
       # Page only for the deliberately designed label-enabled detections. An
       # unrelated built-in Falco rule becoming Critical must not page this
-      # application's responders without an explicit review.
+      # application's responders without an explicit review. The two built-in
+      # rules below are narrowly scoped, high-confidence escape and fileless
+      # execution signals that have been explicitly reviewed for this cluster.
       - terms:
           rule.keyword:
             - Reverse Shell
@@ -287,6 +289,8 @@ rules:
             - Container Escape Behavior
             - Unexpected Root Process
             - Service Account Credential Access
+            - Detect release_agent File Container Escapes
+            - Fileless execution via memfd_create
     realert:
       minutes: 1
     include_rule_params_in_matches:
