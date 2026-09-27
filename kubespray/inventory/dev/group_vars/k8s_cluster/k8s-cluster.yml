@@ -126,11 +126,10 @@ audit_policy_custom_rules: |
     omitStages:
       - RequestReceived
 
-  # RBAC changes are rare and security-significant.
-  - level: Metadata
-    userGroups:
-      - keycloak:/platform/admins
-      - keycloak:/platform/devs
+  # RBAC mutations are rare and security-significant. Capture the request body
+  # for every identity so alerts can distinguish routine GitOps reconciliation
+  # from privilege grants. Read-only RBAC traffic remains excluded.
+  - level: Request
     verbs: ["create", "patch", "update", "delete", "deletecollection"]
     resources:
       - group: rbac.authorization.k8s.io

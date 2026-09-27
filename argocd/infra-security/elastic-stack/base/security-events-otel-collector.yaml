@@ -102,7 +102,20 @@ data:
               # path is retained as a warning signal. Other denied requests
               # remain searchable but do not become alerts.
               - set(attributes["classification"], "developer_denied") where body["objectRef"]["resource"] == "pods" and IsMatch(body["objectRef"]["subresource"], "^(exec|attach|portforward|ephemeralcontainers)$") and (body["verb"] == "create" or body["verb"] == "get" or body["verb"] == "patch" or body["verb"] == "update") and body["stage"] == "ResponseComplete" and body["responseStatus"]["code"] == 403 and IsMatch(String(body["user"]["groups"]), "keycloak:/platform/devs")
+              # Classify all completed RBAC mutation attempts. Keycloak admins,
+              # system:masters clients, and Argo CD application controller
+              # are approved writers. Everything else alerts on success or
+              # failure. A successful cluster-admin binding, wildcard grant,
+              # or impersonate/bind/escalate permission is high-risk regardless
+              # of who submitted it.
+              - set(attributes["classification"], "rbac_unapproved_success") where IsMatch(body["objectRef"]["resource"], "^(roles|rolebindings|clusterroles|clusterrolebindings)$") and IsMatch(body["verb"], "^(create|patch|update|delete|deletecollection)$") and body["stage"] == "ResponseComplete" and body["responseStatus"]["code"] < 400
+              - set(attributes["classification"], "rbac_unapproved_denied") where IsMatch(body["objectRef"]["resource"], "^(roles|rolebindings|clusterroles|clusterrolebindings)$") and IsMatch(body["verb"], "^(create|patch|update|delete|deletecollection)$") and body["stage"] == "ResponseComplete" and body["responseStatus"]["code"] >= 400
+              - set(attributes["classification"], "rbac_approved") where IsMatch(attributes["classification"], "^rbac_") and (IsMatch(String(body["user"]["groups"]), "keycloak:/platform/admins") or IsMatch(String(body["user"]["groups"]), "system:masters") or attributes["username"] == "system:serviceaccount:argocd:argocd-application-controller")
+              - set(attributes["rbac_risk"], "cluster_admin_binding") where IsMatch(body["objectRef"]["resource"], "^(rolebindings|clusterrolebindings)$") and body["stage"] == "ResponseComplete" and body["responseStatus"]["code"] < 400 and IsMatch(String(body["requestObject"]), "cluster-admin")
+              - set(attributes["rbac_risk"], "wildcard_or_sensitive_permission") where IsMatch(body["objectRef"]["resource"], "^(roles|clusterroles)$") and body["stage"] == "ResponseComplete" and body["responseStatus"]["code"] < 400 and IsMatch(String(body["requestObject"]["rules"]), "([*]|impersonate|bind|escalate)")
+              - set(attributes["classification"], "rbac_high_risk_grant") where attributes["rbac_risk"] != nil
               - set(body["classification"], attributes["classification"]) where attributes["classification"] != nil
+              - set(body["rbac_risk"], attributes["rbac_risk"]) where attributes["rbac_risk"] != nil
 
       transform/falco:
         error_mode: ignore

@@ -147,6 +147,126 @@ rules:
         }
       }
 
+  kubernetes_unapproved_rbac_write: |-
+    name: Kubernetes unapproved RBAC write
+    type: any
+    index: kubernetes-audit-*
+    timestamp_field: stageTimestamp
+    filter:
+      - term:
+          classification.keyword: rbac_unapproved_success
+    realert:
+      minutes: 1
+    include_rule_params_in_matches:
+      - pagerduty_routing_key
+    alert:
+      - post2
+    http_post2_url: https://events.eu.pagerduty.com/v2/enqueue
+    http_post2_all_values: false
+    http_post2_payload: |-
+      {
+        "routing_key": "{{ rule_param_pagerduty_routing_key }}",
+        "event_action": "trigger",
+        "dedup_key": "kubernetes-rbac-write-{{ auditID }}",
+        "payload": {
+          "summary": "Unapproved identity {{ user.username }} changed Kubernetes RBAC",
+          "source": "ultimate-iac-kubernetes",
+          "severity": "critical",
+          "component": "kube-apiserver-audit",
+          "group": "security-authorization",
+          "class": "unapproved-rbac-write",
+          "custom_details": {
+            "username": "{{ user.username }}",
+            "verb": "{{ verb }}",
+            "resource": "{{ objectRef.resource }}",
+            "namespace": "{{ objectRef.namespace }}",
+            "object": "{{ objectRef.name }}",
+            "response_code": "{{ responseStatus.code }}",
+            "source_ips": "{{ sourceIPs }}"
+          }
+        }
+      }
+
+  kubernetes_unapproved_rbac_write_denied: |-
+    name: Kubernetes denied unapproved RBAC write
+    type: any
+    index: kubernetes-audit-*
+    timestamp_field: stageTimestamp
+    filter:
+      - term:
+          classification.keyword: rbac_unapproved_denied
+    realert:
+      minutes: 1
+    include_rule_params_in_matches:
+      - pagerduty_routing_key
+    alert:
+      - post2
+    http_post2_url: https://events.eu.pagerduty.com/v2/enqueue
+    http_post2_all_values: false
+    http_post2_payload: |-
+      {
+        "routing_key": "{{ rule_param_pagerduty_routing_key }}",
+        "event_action": "trigger",
+        "dedup_key": "kubernetes-denied-rbac-write-{{ auditID }}",
+        "payload": {
+          "summary": "Kubernetes denied an RBAC write by {{ user.username }}",
+          "source": "ultimate-iac-kubernetes",
+          "severity": "warning",
+          "component": "kube-apiserver-audit",
+          "group": "security-authorization",
+          "class": "denied-rbac-write",
+          "custom_details": {
+            "username": "{{ user.username }}",
+            "verb": "{{ verb }}",
+            "resource": "{{ objectRef.resource }}",
+            "namespace": "{{ objectRef.namespace }}",
+            "object": "{{ objectRef.name }}",
+            "response_code": "{{ responseStatus.code }}",
+            "source_ips": "{{ sourceIPs }}"
+          }
+        }
+      }
+
+  kubernetes_high_risk_rbac_grant: |-
+    name: Kubernetes high-risk RBAC grant
+    type: any
+    index: kubernetes-audit-*
+    timestamp_field: stageTimestamp
+    filter:
+      - term:
+          classification.keyword: rbac_high_risk_grant
+    realert:
+      minutes: 1
+    include_rule_params_in_matches:
+      - pagerduty_routing_key
+    alert:
+      - post2
+    http_post2_url: https://events.eu.pagerduty.com/v2/enqueue
+    http_post2_all_values: false
+    http_post2_payload: |-
+      {
+        "routing_key": "{{ rule_param_pagerduty_routing_key }}",
+        "event_action": "trigger",
+        "dedup_key": "kubernetes-high-risk-rbac-{{ auditID }}",
+        "payload": {
+          "summary": "High-risk Kubernetes RBAC grant by {{ user.username }}",
+          "source": "ultimate-iac-kubernetes",
+          "severity": "critical",
+          "component": "kube-apiserver-audit",
+          "group": "security-authorization",
+          "class": "high-risk-rbac-grant",
+          "custom_details": {
+            "username": "{{ user.username }}",
+            "risk": "{{ rbac_risk }}",
+            "verb": "{{ verb }}",
+            "resource": "{{ objectRef.resource }}",
+            "namespace": "{{ objectRef.namespace }}",
+            "object": "{{ objectRef.name }}",
+            "source_ips": "{{ sourceIPs }}"
+          }
+        }
+      }
+
   falco_critical_runtime_event: |-
     name: Falco critical runtime event
     type: any
