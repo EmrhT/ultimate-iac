@@ -1,6 +1,6 @@
-<mxfile host="Electron" agent="Codex">
+<mxfile host="app.diagrams.net" agent="Codex">
   <diagram id="security-detection-architecture" name="Security Detection Architecture">
-    <mxGraphModel dx="1683" dy="853" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="900" math="0" shadow="0">
+    <mxGraphModel dx="1584" dy="874" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="900" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -56,7 +56,12 @@
           <mxGeometry height="90" width="210" x="90" y="300" as="geometry" />
         </mxCell>
         <mxCell id="edge-es-elastalert" edge="1" parent="storage-group" source="elastic" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0284C7;endArrow=block;endFill=1;" target="elastalert">
-          <mxGeometry relative="1" as="geometry" />
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="195" y="230" />
+              <mxPoint x="195" y="230" />
+            </Array>
+          </mxGeometry>
         </mxCell>
         <mxCell id="delivery-group" parent="1" style="swimlane;html=1;rounded=1;startSize=30;fillColor=#F8FAFC;strokeColor=#94A3B8;fontStyle=1;fontColor=#334155;" value="Incident Delivery" vertex="1">
           <mxGeometry height="610" width="285" x="1255" y="110" as="geometry" />
