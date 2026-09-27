@@ -208,7 +208,8 @@ spec:
       expression: >-
         [
           'docker.io/longhornio/longhorn-engine:v1.11.2',
-          'docker.io/longhornio/longhorn-instance-manager:v1.11.2'
+          'docker.io/longhornio/longhorn-instance-manager:v1.11.2',
+          'docker.io/longhornio/longhorn-manager:v1.11.2'
         ]
     - name: sonarqubeDigestExceptions
       expression: >-

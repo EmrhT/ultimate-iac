@@ -44,14 +44,16 @@ the exact exception list; arbitrary images and unexpected versions remain
 violations.
 
 Existing attached Longhorn volumes retain their original engine and instance
-manager image references until each volume is detached and migrated. In this
-homelab, those disruptive migrations are intentionally deferred. Only the
-exact `v1.11.2` engine and instance-manager references listed in
-`longhornSystemDigestExceptions` are exempt from the digest requirement in
-`longhorn-system`. New Longhorn chart workloads remain digest-pinned, and the
-repository allowlist and mutable-`latest` check still apply to every Longhorn
-image. Review this exception whenever Longhorn is upgraded and remove it once
-no legacy engine or instance-manager resources remain.
+manager image references until each volume is detached and migrated. Longhorn
+also creates recurring-job Pods from its tag-only manager image reference. In
+this homelab, those disruptive or controller-managed migrations are
+intentionally deferred. Only the exact `v1.11.2` engine, instance-manager, and
+manager references listed in `longhornSystemDigestExceptions` are exempt from
+the digest requirement in `longhorn-system`. Other Longhorn chart workloads
+remain digest-pinned, and the repository allowlist and mutable-`latest` check
+still apply to every Longhorn image. Review these exceptions whenever Longhorn
+is upgraded and remove them when the corresponding operational constraints no
+longer apply.
 
 The upstream SonarQube chart uses the image tag as the
 `app.kubernetes.io/version` label and does not expose a separate digest field.
@@ -62,10 +64,10 @@ exact SonarQube image listed in `sonarqubeDigestExceptions` is exempt in the
 digest-pinned. Review or remove this exception when the chart adds native digest
 support.
 
-Admission-time use of an unapproved repository or the mutable `latest` tag is
-forwarded through Elasticsearch and ElastAlert2 to PagerDuty. Missing-digest
-findings remain report-only until the namespace-by-namespace digest migration
-is complete, avoiding alerts for known platform workloads during a cold start.
+Admission-time use of an unapproved repository, the mutable `latest` tag, or an
+image without an immutable digest is forwarded through Elasticsearch and
+ElastAlert2 to PagerDuty. The exact namespace-and-version exceptions documented
+above pass policy evaluation and therefore do not generate these alerts.
 
 ## Reviewing findings
 

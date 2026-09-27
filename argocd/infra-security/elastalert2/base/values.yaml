@@ -325,14 +325,15 @@ rules:
     name: Kyverno unsafe image source violation
     type: any
     index: kyverno-*
-    # Page only for admission-time Pods using an unapproved repository or the
-    # mutable latest tag. Digest-only findings remain visible in Kyverno while
-    # the controlled namespace-by-namespace migration is still in progress.
+    # Page only for admission-time Pods using an unapproved repository, the
+    # mutable latest tag, or an image that is not pinned by digest. The Kyverno
+    # policy handles the reviewed namespace-and-version exceptions before an
+    # admission violation reaches this rule.
     timestamp_field: eventTime
     filter:
       - query:
           query_string:
-            query: 'event.dataset:"kyverno.policy_event" AND reason:"PolicyViolation" AND reportingComponent:"kyverno-admission" AND involvedObject.kind.keyword:"Pod" AND (message:"policy require-safe-image-references/ fail: Images should use a fully qualified repository in an approved publisher namespace or an explicitly approved repository." OR message:"policy require-safe-image-references/ fail: Images should not use the mutable latest tag.")'
+            query: 'event.dataset:"kyverno.policy_event" AND reason:"PolicyViolation" AND reportingComponent:"kyverno-admission" AND involvedObject.kind.keyword:"Pod" AND (message:"policy require-safe-image-references/ fail: Images should use a fully qualified repository in an approved publisher namespace or an explicitly approved repository." OR message:"policy require-safe-image-references/ fail: Images should not use the mutable latest tag." OR message:"policy require-safe-image-references/ fail: Images should be pinned by an immutable sha256 digest.")'
     realert:
       minutes: 1
     include_rule_params_in_matches:
@@ -347,7 +348,7 @@ rules:
         "event_action": "trigger",
         "dedup_key": "kyverno-unsafe-image-{{ involvedObject.uid }}",
         "payload": {
-          "summary": "Kyverno observed an unapproved or mutable image reference",
+          "summary": "Kyverno observed an unsafe or unpinned image reference",
           "source": "ultimate-iac-kyverno",
           "severity": "critical",
           "component": "kyverno",
