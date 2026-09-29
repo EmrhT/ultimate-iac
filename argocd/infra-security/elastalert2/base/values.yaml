@@ -321,6 +321,55 @@ rules:
         }
       }
 
+  falco_talon_quarantine_succeeded: |-
+    name: Falco Talon quarantined a workload
+    type: any
+    index: falco-talon-*
+    timestamp_field: time
+    # This is the completed response action, not the original Falco detection
+    # and not a later Cilium drop. It pages only after Talon successfully
+    # applies the transient label consumed by the quarantine policy.
+    filter:
+      - term:
+          status.keyword: success
+      - term:
+          action.keyword: Quarantine Pod
+      - term:
+          actionner.keyword: kubernetes:label
+      - terms:
+          rule.keyword:
+            - Quarantine Podinfo after critical runtime detection in lab-a-dev
+            - Quarantine Podinfo after critical runtime detection in lab-a-prod
+            - Quarantine Podinfo after critical runtime detection in lab-b-dev
+            - Quarantine Podinfo after critical runtime detection in lab-b-prod
+    realert:
+      minutes: 1
+    include_rule_params_in_matches:
+      - pagerduty_routing_key
+    alert:
+      - post2
+    http_post2_url: https://events.eu.pagerduty.com/v2/enqueue
+    http_post2_all_values: false
+    http_post2_payload: |-
+      {
+        "routing_key": "{{ rule_param_pagerduty_routing_key }}",
+        "event_action": "trigger",
+        "dedup_key": "falco-talon-quarantine-{{ trace_id }}",
+        "payload": {
+          "summary": "Falco Talon quarantined {{ namespace }}/{{ pod }}",
+          "source": "{{ hostname }}",
+          "severity": "critical",
+          "component": "falco-talon",
+          "group": "security-runtime",
+          "class": "automated-workload-quarantine",
+          "custom_details": {
+            "talon_rule": "{{ rule }}",
+            "action": "{{ action }}",
+            "namespace": "{{ namespace }}",
+            "pod": "{{ pod }}",
+            "originating_event": "{{ event }}",
+            "trace_id": "{{ trace_id }}"
+          }
   kyverno_unsafe_image_source: |-
     name: Kyverno unsafe image source violation
     type: any

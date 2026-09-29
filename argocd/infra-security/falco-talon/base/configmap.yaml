@@ -13,9 +13,16 @@ data:
       # A single replica removes the need for lease permissions.
       leader_election: false
       time_window_seconds: 5
+    notifiers:
+      webhook:
+        # The collector stores only Talon's action result in falco-talon-*.
+        url: http://security-events-otel-collector.elastic-stack.svc:8089/talon
+        http_method: POST
+        content_type: application/json; charset=utf-8
     default_notifiers:
       # Kubernetes events provide a lightweight, local record of each response.
       - k8sevents
+      - webhook
   rules.yaml: |
     - action: Quarantine Pod
       description: Add the transient label consumed by the Git-managed Cilium policy.

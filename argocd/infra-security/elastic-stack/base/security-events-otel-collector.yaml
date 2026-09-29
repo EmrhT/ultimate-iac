@@ -36,6 +36,15 @@ data:
         read_timeout: 2s
         write_timeout: 2s
 
+
+      # Talon sends only the outcome of its response action here. Keep this
+      # separate from raw Falco detections so a successful containment has its
+      # own incident and retention stream.
+      webhook_event/talon:
+        endpoint: 0.0.0.0:8089
+        path: /talon
+        read_timeout: 2s
+        write_timeout: 2s
       # Kyverno's reports controller publishes structured audit findings as
       # OpenReports resources. Watch only these two CRDs; no workload, Secret,
       # or ConfigMap access is granted to this collector.
@@ -138,6 +147,20 @@ data:
               - set(attributes["event.dataset"], "falco")
               - set(attributes["ingested_at"], FormatTime(observed_time, "%Y-%m-%dT%H:%M:%S.%sZ"))
 
+
+      transform/talon:
+        error_mode: ignore
+        log_statements:
+          - context: scope
+            statements:
+              - set(attributes["elastic.mapping.mode"], "bodymap")
+          - context: log
+            statements:
+              - set(body, ParseJSON(body))
+              - set(attributes["event.dataset"], "falco.talon")
+              - set(body["event"], ParseJSON("{\"dataset\":\"falco.talon\"}")) where body["event"] == nil
+              - set(body["ingested_at"], FormatTime(observed_time, "%Y-%m-%dT%H:%M:%S.%sZ"))
+
       transform/kyverno:
         error_mode: ignore
         log_statements:
@@ -172,10 +195,15 @@ data:
         timeout: 2s
         send_batch_size: 64
         send_batch_max_size: 128
+      batch/talon:
+        timeout: 2s
+        send_batch_size: 32
+        send_batch_max_size: 64
       batch/kyverno:
         timeout: 2s
         send_batch_size: 64
         send_batch_max_size: 128
+
 
     exporters:
       elasticsearch/audit:
@@ -202,6 +230,17 @@ data:
           enabled: true
           queue_size: 100
 
+      elasticsearch/talon:
+        endpoint: https://platform-es-http.elastic-stack.svc:9200
+        user: elastic
+        password: ${env:ELASTIC_PASSWORD}
+        tls:
+          ca_file: /etc/elasticsearch/certs/ca.crt
+        logs_index: falco-talon-write
+        compression: gzip
+        sending_queue:
+          enabled: true
+          queue_size: 50
       elasticsearch/kyverno:
         endpoint: https://platform-es-http.elastic-stack.svc:9200
         user: elastic
@@ -213,6 +252,7 @@ data:
         sending_queue:
           enabled: true
           queue_size: 100
+
 
     service:
       extensions:
@@ -240,6 +280,15 @@ data:
             - batch/falco
           exporters:
             - elasticsearch/falco
+        logs/talon:
+          receivers:
+            - webhook_event/talon
+          processors:
+            - memory_limiter
+            - transform/talon
+            - batch/talon
+          exporters:
+            - elasticsearch/talon
         logs/kyverno:
           receivers:
             - k8s_objects/kyverno
@@ -249,6 +298,7 @@ data:
             - batch/kyverno
           exporters:
             - elasticsearch/kyverno
+
 
   bootstrap-indices.sh: |-
     #!/bin/sh
@@ -265,7 +315,7 @@ data:
 
     # All streams roll over before becoming large and are deleted after three
     # days. One primary and zero replicas are appropriate for this 1 GiB lab.
-    for stream in kubernetes-audit falco kyverno cilium-hubble; do
+    for stream in kubernetes-audit falco falco-talon kyverno cilium-hubble; do
       curl --silent --fail --cacert "$ca" --user "$auth" \
         --request PUT "$endpoint/_ilm/policy/${stream}-small" \
         --header 'Content-Type: application/json' \
@@ -318,6 +368,9 @@ spec:
     - name: falco-webhook
       port: 8088
       targetPort: falco-webhook
+    - name: talon-webhook
+      port: 8089
+      targetPort: talon-webhook
 ---
 apiVersion: apps/v1
 kind: DaemonSet
@@ -332,7 +385,7 @@ spec:
       annotations:
         # Bump when the bootstrap script or collector ConfigMap must be
         # reloaded on the control plane.
-        platform.example/bootstrap-revision: "10"
+        platform.example/bootstrap-revision: "11"
       labels:
         app.kubernetes.io/name: security-events-otel-collector
     spec:
@@ -396,6 +449,8 @@ spec:
           ports:
             - name: falco-webhook
               containerPort: 8088
+            - name: talon-webhook
+              containerPort: 8089
             - name: health
               containerPort: 13133
           livenessProbe:

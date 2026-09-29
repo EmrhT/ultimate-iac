@@ -10,10 +10,10 @@ spec:
       interval: 15s
       rules:
         # Normalize node-local counters into one series for each communicating
-        # workload pair. A one-minute window keeps the demo responsive. The
+        # workload pair. A five-minute window reliably captures a single drop
         # second branch detects the first non-zero sample of a new series;
         # increase() alone treats that sample as its baseline and would miss it.
-        - record: hubble:policy_denied_drops:increase1m
+        - record: hubble:policy_denied_drops:increase5m
           expr: |
             sum by (
               source_namespace,
@@ -22,19 +22,19 @@ spec:
               traffic_direction
             ) (
               (
-                increase(hubble_drop_total{reason="POLICY_DENIED"}[1m]) > 0
+                increase(hubble_drop_total{reason="POLICY_DENIED"}[5m]) > 0
               )
               or
               (
                 hubble_drop_total{reason="POLICY_DENIED"} > 0
                   unless
-                hubble_drop_total{reason="POLICY_DENIED"} offset 1m
+                hubble_drop_total{reason="POLICY_DENIED"} offset 5m
               )
             )
 
         # Detect even a single unauthorized connection attempt.
         - alert: CiliumPolicyDenied
-          expr: hubble:policy_denied_drops:increase1m > 0
+          expr: hubble:policy_denied_drops:increase5m > 0
           labels:
             severity: warning
             team: security
@@ -42,7 +42,7 @@ spec:
             summary: Cilium denied traffic from namespace {{ $labels.source_namespace }}
             description: >-
               Cilium observed {{ $value | printf "%.0f" }} policy-denied drops in
-              one minute from namespace {{ $labels.source_namespace }}
+              five minutes from namespace {{ $labels.source_namespace }}
               to {{ $labels.destination_namespace }}/{{ $labels.destination_workload }}.
             runbook_url: https://hubble.no-name.win
 
