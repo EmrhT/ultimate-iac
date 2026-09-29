@@ -316,6 +316,13 @@ data:
     # All streams roll over before becoming large and are deleted after three
     # days. One primary and zero replicas are appropriate for this 1 GiB lab.
     for stream in kubernetes-audit falco falco-talon kyverno cilium-hubble; do
+      # falco-talon-* is intentionally more specific than falco-*. Give it
+      # higher precedence so Elasticsearch accepts the overlapping templates.
+      template_priority=0
+      if [ "$stream" = "falco-talon" ]; then
+        template_priority=100
+      fi
+
       curl --silent --fail --cacert "$ca" --user "$auth" \
         --request PUT "$endpoint/_ilm/policy/${stream}-small" \
         --header 'Content-Type: application/json' \
@@ -324,7 +331,7 @@ data:
       curl --silent --fail --cacert "$ca" --user "$auth" \
         --request PUT "$endpoint/_index_template/${stream}-small" \
         --header 'Content-Type: application/json' \
-        --data "{\"index_patterns\":[\"${stream}-*\"],\"template\":{\"settings\":{\"index.lifecycle.name\":\"${stream}-small\",\"index.lifecycle.rollover_alias\":\"${stream}-write\",\"number_of_shards\":1,\"number_of_replicas\":0,\"refresh_interval\":\"30s\"},\"mappings\":{\"properties\":{\"ingested_at\":{\"type\":\"date\"}}}}}" >/dev/null
+        --data "{\"index_patterns\":[\"${stream}-*\"],\"priority\":${template_priority},\"template\":{\"settings\":{\"index.lifecycle.name\":\"${stream}-small\",\"index.lifecycle.rollover_alias\":\"${stream}-write\",\"number_of_shards\":1,\"number_of_replicas\":0,\"refresh_interval\":\"30s\"},\"mappings\":{\"properties\":{\"ingested_at\":{\"type\":\"date\"}}}}}" >/dev/null
 
       if ! curl --silent --fail --cacert "$ca" --user "$auth" "$endpoint/_alias/${stream}-write" >/dev/null; then
         curl --silent --fail --cacert "$ca" --user "$auth" \
