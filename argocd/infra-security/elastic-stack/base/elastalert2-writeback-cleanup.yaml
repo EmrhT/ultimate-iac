@@ -11,8 +11,10 @@ spec:
   failedJobsHistoryLimit: 1
   jobTemplate:
     spec:
+      activeDeadlineSeconds: 900
       backoffLimit: 2
-      ttlSecondsAfterFinished: 3600
+      # Keep the latest result long enough to inspect after the homelab starts.
+      ttlSecondsAfterFinished: 86400
       template:
         spec:
           serviceAccountName: elastalert2
@@ -30,13 +32,30 @@ spec:
               command:
                 - /bin/sh
                 - -ec
-                - >-
-                  curl --silent --show-error --fail
-                  --cacert /certs/ca.crt
-                  --user "elastic:${ELASTIC_PASSWORD}"
-                  --request POST
-                  'https://platform-es-http.elastic-stack.svc:9200/elastalert2*/_delete_by_query?allow_no_indices=true&ignore_unavailable=true&conflicts=proceed&refresh=false'
-                  --header 'Content-Type: application/json'
+                - |-
+                  # A missed schedule is started when the homelab comes back up,
+                  # often before Elasticsearch is ready. Wait for yellow health
+                  # rather than failing the cleanup during cluster startup.
+                  attempt=0
+                  until curl --silent --show-error --fail \
+                    --cacert /certs/ca.crt \
+                    --user "elastic:${ELASTIC_PASSWORD}" \
+                    'https://platform-es-http.elastic-stack.svc:9200/_cluster/health?wait_for_status=yellow&timeout=5s' \
+                    >/dev/null; do
+                    attempt=$((attempt + 1))
+                    if [ "$attempt" -ge 60 ]; then
+                      echo "Elasticsearch did not become ready within 10 minutes" >&2
+                      exit 1
+                    fi
+                    sleep 10
+                  done
+
+                  curl --silent --show-error --fail \
+                  --cacert /certs/ca.crt \
+                  --user "elastic:${ELASTIC_PASSWORD}" \
+                  --request POST \
+                  'https://platform-es-http.elastic-stack.svc:9200/elastalert2*/_delete_by_query?allow_no_indices=true&ignore_unavailable=true&conflicts=proceed&refresh=false' \
+                  --header 'Content-Type: application/json' \
                   --data '{"query":{"range":{"@timestamp":{"lt":"now-3d"}}}}'
               env:
                 - name: ELASTIC_PASSWORD
