@@ -31,7 +31,7 @@
         <mxCell id="a5" parent="audit-group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DBEAFE;strokeColor=#2563EB;fontColor=#172554;align=left;spacing=8;fontSize=14;" value="&lt;b&gt;Kubernetes high-risk RBAC grant&lt;/b&gt; &lt;font color=&quot;#B91C1C&quot;&gt;CRITICAL&lt;/font&gt;&lt;br&gt;&lt;font&gt;An RBAC change grants wildcard, sensitive, bind/escalate, impersonate, or equivalent high-risk permissions. It catches privilege escalation even when the person making the change is otherwise an approved automation identity.&lt;/font&gt;" vertex="1">
           <mxGeometry height="125" width="380" x="20" y="595" as="geometry" />
         </mxCell>
-        <mxCell id="falco-group" parent="1" style="swimlane;html=1;rounded=1;startSize=30;fillColor=#FFF7F7;strokeColor=#DC2626;fontStyle=1;fontColor=#7F1D1D;fontSize=16;" value="Falco — protected workload runtime behaviour (9)" vertex="1">
+        <mxCell id="falco-group" parent="1" style="swimlane;html=1;rounded=1;startSize=30;fillColor=#FFF7F7;strokeColor=#DC2626;fontStyle=1;fontColor=#7F1D1D;fontSize=16;" value="Falco / Talon — protected workload runtime behaviour and response (10)" vertex="1">
           <mxGeometry height="850" width="620" x="470" y="120" as="geometry" />
         </mxCell>
         <mxCell id="f1" parent="falco-group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEE2E2;strokeColor=#DC2626;fontColor=#7F1D1D;align=left;spacing=8;fontSize=14;" value="&lt;b&gt;Reverse Shell&lt;/b&gt; &lt;font color=&quot;#B91C1C&quot;&gt;CRITICAL&lt;/font&gt;&lt;br&gt;&lt;font&gt;A process redirected stdin, stdout, and stderr through a network socket. This is the characteristic I/O pattern of an attacker obtaining an interactive remote shell.&lt;/font&gt;" vertex="1">
@@ -60,6 +60,9 @@
         </mxCell>
         <mxCell id="f9" parent="falco-group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEE2E2;strokeColor=#DC2626;fontColor=#7F1D1D;align=left;spacing=8;fontSize=14;" value="&lt;b&gt;Fileless execution via memfd_create&lt;/b&gt; &lt;font color=&quot;#B91C1C&quot;&gt;CRITICAL&lt;/font&gt;&lt;br&gt;&lt;font&gt;A process executed code from an anonymous in-memory file rather than a normal filesystem path. Malware uses this to avoid leaving a conventional executable on disk.&lt;/font&gt;" vertex="1">
           <mxGeometry height="129" width="280" x="20" y="652" as="geometry" />
+        </mxCell>
+        <mxCell id="f10" parent="falco-group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEE2E2;strokeColor=#DC2626;fontColor=#7F1D1D;align=left;spacing=8;fontSize=14;" value="&lt;b&gt;Falco Talon quarantined a workload&lt;/b&gt; &lt;font color=&quot;#B91C1C&quot;&gt;CRITICAL&lt;/font&gt;&lt;br&gt;&lt;font&gt;Talon successfully applied the transient quarantine label after a selected Critical Falco event. The clusterwide Cilium policy then isolates workload traffic while preserving trusted host-originated probes.&lt;/font&gt;" vertex="1">
+          <mxGeometry height="129" width="280" x="320" y="652" as="geometry" />
         </mxCell>
         <mxCell id="kyverno-group" parent="1" style="swimlane;html=1;rounded=1;startSize=30;fillColor=#FAF5FF;strokeColor=#7C3AED;fontStyle=1;fontColor=#4C1D95;fontSize=16;" value="Kyverno — workload admission / configuration (6)" vertex="1">
           <mxGeometry height="520" width="660" x="1110" y="120" as="geometry" />
