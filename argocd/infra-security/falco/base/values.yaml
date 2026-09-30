@@ -15,6 +15,14 @@ falco:
   # Evaluate all matching rules so the generic built-in reverse-shell rule
   # cannot hide the Podinfo-specific Critical rule loaded after it.
   rule_matching: all
+  # Carry the workload's independent response-enrollment decision in every
+  # syscall-source alert. Talon can then scope both custom and built-in reviewed
+  # rules without relying on namespaces or querying mutable workload state.
+  append_output:
+    - match:
+        source: syscall
+      extra_fields:
+        - talon.quarantine: '%k8s.pod.label[security.no-name.win/falco-talon-quarantine]'
   http_output:
     enabled: false
 tty: false

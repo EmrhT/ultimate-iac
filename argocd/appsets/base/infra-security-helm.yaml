@@ -135,6 +135,14 @@ spec:
       destination:
         server: https://kubernetes.default.svc
         namespace: "{{ .namespace }}"
+      # Talon changes only this live-Pod label during an incident. Keep the
+      # response state outside Helm values and prevent Argo from reporting or
+      # reverting that deliberate runtime mutation.
+      ignoreDifferences:
+        - group: ""
+          kind: Pod
+          jqPathExpressions:
+            - '.metadata.labels["security.no-name.win/quarantined"]'
       syncPolicy:
         automated:
           prune: true
@@ -147,6 +155,7 @@ spec:
             maxDuration: 5m
         syncOptions:
           - CreateNamespace=true
+          - RespectIgnoreDifferences=true
           - ServerSideApply=true
           - SkipDryRunOnMissingResource=true
   # Kyverno CRDs and Keycloak's Gateway API HTTPRoute contain API-server

@@ -84,6 +84,12 @@ wait_for_quarantine_label() {
 echo "Target: $namespace/$pod"
 echo "Discovered endpoint: $target_url"
 echo "Using the existing allowlisted security-zap Pod: $client_pod"
+
+if [[ "$(kubectl -n "$namespace" get pod "$pod" -o jsonpath='{.metadata.labels.security\.no-name\.win/falco-talon-quarantine}')" != "true" ]]; then
+  echo "ERROR: $namespace/$pod is not explicitly enrolled for Talon quarantine." >&2
+  exit 1
+fi
+
 echo "Baseline: the allowlisted DAST identity reaches the target workload."
 wait_for_reachability reachable
 

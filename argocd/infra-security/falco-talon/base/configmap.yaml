@@ -26,32 +26,26 @@ data:
       - webhook
   rules.yaml: |
     - action: Quarantine Pod
-      description: Add the transient label consumed by the Git-managed Cilium policy.
+      description: Add the runtime response label consumed by the Git-managed Cilium policy.
       actionner: kubernetes:label
       parameters:
         labels:
           security.no-name.win/quarantined: "true"
 
-    # Only the four externally exposed Podinfo namespaces are in this first
-    # response phase. The clusterwide quarantine policy consumes the transient
-    # label and can be reused as additional workloads are enrolled.
-    - rule: Quarantine Podinfo after critical runtime detection in lab-a-dev
+    # Automatic response is an explicit workload decision. Falco copies the
+    # enrollment Pod label into talon.quarantine for custom and built-in events;
+    # namespace membership alone never authorizes containment.
+    - rule: Quarantine enrolled application after reviewed Falco alarm
       match:
-        rules: [Reverse Shell, Container Escape Behavior]
-        output_fields: [k8s.ns.name=lab-a-dev]
-      actions: [{action: Quarantine Pod}]
-    - rule: Quarantine Podinfo after critical runtime detection in lab-a-prod
-      match:
-        rules: [Reverse Shell, Container Escape Behavior]
-        output_fields: [k8s.ns.name=lab-a-prod]
-      actions: [{action: Quarantine Pod}]
-    - rule: Quarantine Podinfo after critical runtime detection in lab-b-dev
-      match:
-        rules: [Reverse Shell, Container Escape Behavior]
-        output_fields: [k8s.ns.name=lab-b-dev]
-      actions: [{action: Quarantine Pod}]
-    - rule: Quarantine Podinfo after critical runtime detection in lab-b-prod
-      match:
-        rules: [Reverse Shell, Container Escape Behavior]
-        output_fields: [k8s.ns.name=lab-b-prod]
+        rules:
+          - Reverse Shell
+          - Web-Originated Process Execution
+          - Unexpected Network Listener
+          - Payload Execution
+          - Container Escape Behavior
+          - Unexpected Root Process
+          - Service Account Credential Access
+          - Detect release_agent File Container Escapes
+          - Fileless execution via memfd_create
+        output_fields: [talon.quarantine=true]
       actions: [{action: Quarantine Pod}]
