@@ -48,3 +48,5 @@ terraform.rc
 
 
 visual/.$*.bkp
+
+*.dtmp
