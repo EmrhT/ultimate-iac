@@ -4,10 +4,33 @@
 set -euo pipefail
 
 namespace="${1:-lab-a-dev}"
-selector='app.kubernetes.io/name=podinfo'
+selector="${2:-app.kubernetes.io/name=podinfo}"
 pod="$(kubectl -n "$namespace" get pods -l "$selector" -o jsonpath='{.items[0].metadata.name}')"
 client_namespace="security-zap"
 client_pod="$(kubectl -n "$client_namespace" get pods -l app.kubernetes.io/name=security-zap -o jsonpath='{.items[0].metadata.name}')"
+
+# Discover the HTTP endpoint from the same workload label instead of embedding
+# an application Service name or port. Ambiguity is an error: silently choosing
+# one of several Services or TCP ports could produce a misleading test result.
+service_endpoint="$(
+  kubectl -n "$namespace" get services -l "$selector" -o json |
+    jq -er '
+      [.items[] | select(.spec.clusterIP != "None")] as $services
+      | if ($services | length) != 1 then
+          error("expected exactly one non-headless matching Service")
+        else
+          $services[0] as $service
+          | [$service.spec.ports[] | select(.protocol == "TCP")] as $ports
+          | if ($ports | length) != 1 then
+              error("expected exactly one TCP Service port")
+            else
+              [$service.metadata.name, ($ports[0].port | tostring)] | @tsv
+            end
+        end
+    '
+)"
+IFS=$'\t' read -r service service_port <<<"$service_endpoint"
+target_url="http://$service.$namespace.svc.cluster.local:$service_port/"
 
 cleanup() {
   if kubectl -n "$namespace" get pod "$pod" >/dev/null 2>&1; then
@@ -19,7 +42,7 @@ trap cleanup EXIT
 can_reach_target() {
   kubectl -n "$client_namespace" exec "$client_pod" -- curl --fail --silent --show-error \
     --connect-timeout 3 --max-time 5 \
-    "http://podinfo.$namespace.svc.cluster.local:9898/" >/dev/null 2>&1
+    "$target_url" >/dev/null 2>&1
 }
 
 wait_for_reachability() {
@@ -39,7 +62,7 @@ wait_for_reachability() {
     sleep 5
   done
 
-  echo "ERROR: expected Podinfo to be $expected within 60 seconds." >&2
+  echo "ERROR: expected $namespace/$service to be $expected within 60 seconds." >&2
   return 1
 }
 
@@ -59,8 +82,9 @@ wait_for_quarantine_label() {
 
 
 echo "Target: $namespace/$pod"
+echo "Discovered endpoint: $target_url"
 echo "Using the existing allowlisted security-zap Pod: $client_pod"
-echo "Baseline: the allowlisted DAST identity reaches Podinfo."
+echo "Baseline: the allowlisted DAST identity reaches the target workload."
 wait_for_reachability reachable
 
 echo "Triggering the real Falco Container Escape Behavior rule with a denied unshare attempt."
