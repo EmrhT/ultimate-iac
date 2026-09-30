@@ -1,0 +1,24 @@
+# This policy is dormant until Falco Talon labels a workload after a
+# high-confidence runtime detection. It is cluster-scoped so every enrolled
+# workload uses the same containment behavior without declaring application
+# ports. The host exception keeps dynamic kubelet probes and trusted node
+# administration available while application and external traffic is denied.
+apiVersion: cilium.io/v2
+kind: CiliumClusterwideNetworkPolicy
+metadata:
+  name: falco-talon-quarantine
+spec:
+  endpointSelector:
+    matchLabels:
+      k8s:security.no-name.win/quarantined: "true"
+  ingress:
+    - fromEntities:
+        - host
+  ingressDeny:
+    - fromEndpoints:
+        - {}
+    - fromEntities:
+        - world
+  egressDeny:
+    - toEntities:
+        - all

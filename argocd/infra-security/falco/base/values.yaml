@@ -160,7 +160,11 @@ customRules:
         and
         (
           (spawned_process and proc.name in (container_escape_tools))
-          or evt.type in (container_escape_syscalls)
+          or
+          (
+            evt.type in (container_escape_syscalls)
+            and not proc.name in (container_escape_tools)
+          )
           or
           (
             evt.type in (clone, clone3)

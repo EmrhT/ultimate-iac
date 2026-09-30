@@ -63,11 +63,18 @@ echo "Using the existing allowlisted security-zap Pod: $client_pod"
 echo "Baseline: the allowlisted DAST identity reaches Podinfo."
 wait_for_reachability reachable
 
-echo "Sending one synthetic Reverse Shell event directly to Talon."
-kubectl -n "$client_namespace" exec "$client_pod" -- curl --fail --silent --show-error \
-  -H 'Content-Type: application/json' \
-  -X POST http://falco-talon.falco.svc:2803/ \
-  --data "{\"output\":\"controlled Talon test\",\"priority\":\"CRITICAL\",\"rule\":\"Reverse Shell\",\"hostname\":\"controlled-test\",\"source\":\"syscall\",\"output_fields\":{\"k8s.ns.name\":\"$namespace\",\"k8s.pod.name\":\"$pod\"},\"tags\":[\"controlled-test\"]}"
+echo "Triggering the real Falco Container Escape Behavior rule with a denied unshare attempt."
+if ! kubectl -n "$namespace" exec "$pod" -- sh -c 'command -v unshare >/dev/null'; then
+  echo "ERROR: the target image does not contain unshare." >&2
+  exit 1
+fi
+
+# execve succeeds, so Falco sees the escape tool execution, but the kernel
+# denies namespace creation because Podinfo has no required capability.
+if kubectl -n "$namespace" exec "$pod" -- unshare --mount /bin/true; then
+  echo "ERROR: the controlled unshare unexpectedly succeeded." >&2
+  exit 1
+fi
 
 echo "Expected label: quarantined=true"
 wait_for_quarantine_label

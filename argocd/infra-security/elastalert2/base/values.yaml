@@ -325,7 +325,7 @@ rules:
     name: Falco Talon quarantined a workload
     type: any
     index: falco-talon-*
-    timestamp_field: time
+    timestamp_field: ingested_at
     # This is the completed response action, not the original Falco detection
     # and not a later Cilium drop. It pages only after Talon successfully
     # applies the transient label consumed by the quarantine policy.
@@ -356,8 +356,8 @@ rules:
         "event_action": "trigger",
         "dedup_key": "falco-talon-quarantine-{{ trace_id }}",
         "payload": {
-          "summary": "Falco Talon quarantined {{ namespace }}/{{ pod }}",
-          "source": "{{ hostname }}",
+          "summary": "Falco Talon quarantined {{ _data['objects']['Namespace'] }}/{{ _data['objects']['Pod'] }}",
+          "source": "falco-talon",
           "severity": "critical",
           "component": "falco-talon",
           "group": "security-runtime",
@@ -365,11 +365,13 @@ rules:
           "custom_details": {
             "talon_rule": "{{ rule }}",
             "action": "{{ action }}",
-            "namespace": "{{ namespace }}",
-            "pod": "{{ pod }}",
+            "namespace": "{{ _data['objects']['Namespace'] }}",
+            "pod": "{{ _data['objects']['Pod'] }}",
             "originating_event": "{{ event }}",
             "trace_id": "{{ trace_id }}"
           }
+        }
+      }
   kyverno_unsafe_image_source: |-
     name: Kyverno unsafe image source violation
     type: any
