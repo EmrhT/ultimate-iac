@@ -135,8 +135,10 @@ customRules:
       priority: CRITICAL
       tags: [container, process, payload, mitre_execution, T1059]
 
+    # The mount command without arguments only lists filesystems, as SonarQube
+    # does at startup. Actual mount and unmount operations remain covered by syscalls.
     - list: container_escape_tools
-      items: [nsenter, unshare, mount, umount, setpriv, capsh, chroot, debugfs, bpftool, modprobe, insmod]
+      items: [nsenter, unshare, setpriv, capsh, chroot, debugfs, bpftool, modprobe, insmod]
 
     - list: container_escape_syscalls
       items: [setns, unshare, mount, umount, umount2, pivot_root, chroot, init_module, finit_module, delete_module, bpf, open_by_handle_at]
