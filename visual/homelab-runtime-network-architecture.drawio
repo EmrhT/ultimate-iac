@@ -1,0 +1,132 @@
+<mxfile host="Electron" agent="Codex">
+  <diagram id="homelab-runtime-network-architecture" name="Internal Network and East-West Traffic">
+    <mxGraphModel dx="1510" dy="804" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=26;fontStyle=1;fontColor=#1F2937;" value="Homelab Kubernetes Internal Network and East–West Traffic" vertex="1">
+          <mxGeometry height="40" width="1170" x="315" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="subtitle" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=14;fontColor=#4B5563;" value="Node and Pod address spaces · Service resolution and IPVS · Cilium same-node/VXLAN forwarding · identity policy · cluster DNS and Hubble" vertex="1">
+          <mxGeometry height="25" width="1300" x="250" y="65" as="geometry" />
+        </mxCell>
+        <mxCell id="foundation-group" parent="1" style="swimlane;html=1;rounded=1;startSize=32;fillColor=#F8FAFC;strokeColor=#64748B;fontStyle=1;fontColor=#334155;fontSize=15;" value="Internal network foundations — component roles and address ownership" vertex="1">
+          <mxGeometry height="190" width="1740" x="30" y="105" as="geometry" />
+        </mxCell>
+        <mxCell id="underlay" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8FAFC;strokeColor=#64748B;fontColor=#334155;fontSize=12;" value="&lt;b&gt;VM underlay / eth0&lt;/b&gt;&lt;br&gt;libvirt virbr0: 192.168.122.0/24&lt;br&gt;control-plane .31 · workers .41/.42/.43&lt;br&gt;cross-node VXLAN packets traverse this network" vertex="1">
+          <mxGeometry height="125" width="300" x="55" y="155" as="geometry" />
+        </mxCell>
+        <mxCell id="addressing" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3C7;strokeColor=#D97706;fontColor=#78350F;fontSize=12;" value="&lt;b&gt;Cluster address spaces&lt;/b&gt;&lt;br&gt;Services: 10.233.0.0/18&lt;br&gt;Pods: 10.233.64.0/18&lt;br&gt;per-node PodCIDR: /24&lt;br&gt;IPAM: Cilium cluster-pool" vertex="1">
+          <mxGeometry height="120" width="270" x="385" y="155" as="geometry" />
+        </mxCell>
+        <mxCell id="cilium-foundation" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ECFDF5;strokeColor=#059669;fontColor=#065F46;fontSize=12;" value="&lt;b&gt;Cilium datapath&lt;/b&gt;&lt;br&gt;Pod interfaces and identities&lt;br&gt;same-node eBPF forwarding&lt;br&gt;cross-node VXLAN encapsulation&lt;br&gt;NetworkPolicy enforcement + Hubble" vertex="1">
+          <mxGeometry height="120" width="285" x="685" y="155" as="geometry" />
+        </mxCell>
+        <mxCell id="service-foundation" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDE9FE;strokeColor=#7C3AED;fontColor=#4C1D95;fontSize=12;" value="&lt;b&gt;kube-proxy / IPVS&lt;/b&gt;&lt;br&gt;programs ClusterIP virtual services&lt;br&gt;selects ready EndpointSlice targets&lt;br&gt;iptables/ipset support marking and SNAT&lt;br&gt;Cilium replacement: false" vertex="1">
+          <mxGeometry height="120" width="300" x="1000" y="155" as="geometry" />
+        </mxCell>
+        <mxCell id="dns-foundation" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DBEAFE;strokeColor=#2563EB;fontColor=#1E3A8A;fontSize=12;" value="&lt;b&gt;Internal naming&lt;/b&gt;&lt;br&gt;NodeLocal DNS: 169.254.25.10 on every node&lt;br&gt;CoreDNS Service: 10.233.0.3&lt;br&gt;cluster.local records follow Service and Endpoint state" vertex="1">
+          <mxGeometry height="120" width="415" x="1330" y="155" as="geometry" />
+        </mxCell>
+        <mxCell id="eastwest-group" parent="1" style="swimlane;html=1;rounded=1;startSize=32;fillColor=#F0FDF4;strokeColor=#16A34A;fontStyle=1;fontColor=#14532D;fontSize=15;" value="East–west packet journey — direct Pod addressing or Service-based addressing" vertex="1">
+          <mxGeometry height="350" width="1740" x="30" y="335" as="geometry" />
+        </mxCell>
+        <mxCell id="direct-path" parent="eastwest-group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ECFDF5;strokeColor=#059669;fontColor=#065F46;fontSize=12;" value="&lt;b&gt;Direct Pod-IP path&lt;/b&gt;&lt;br&gt;&lt;b&gt;Same node:&lt;/b&gt; Cilium eBPF/veth forwarding&lt;br&gt;&lt;b&gt;Different node:&lt;/b&gt; destination PodCIDR selects the node; Cilium encapsulates in VXLAN over eth0" vertex="1">
+          <mxGeometry height="85" width="285" x="505" y="55" as="geometry" />
+        </mxCell>
+        <mxCell id="source-pod" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DBEAFE;strokeColor=#2563EB;fontColor=#1E3A8A;fontSize=12;strokeWidth=2;" value="&lt;b&gt;Source Pod&lt;/b&gt;&lt;br&gt;Pod IP from its node /24&lt;br&gt;identity derives from namespace, ServiceAccount and labels&lt;br&gt;application chooses a Pod IP or Service name/IP" vertex="1">
+          <mxGeometry height="125" width="220" x="55" y="440" as="geometry" />
+        </mxCell>
+        <mxCell id="target-choice" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#FEF3C7;strokeColor=#D97706;fontColor=#78350F;fontSize=12;" value="&lt;b&gt;Destination form&lt;/b&gt;&lt;br&gt;Pod IP or Service?" vertex="1">
+          <mxGeometry height="110" width="175" x="315" y="447" as="geometry" />
+        </mxCell>
+        <mxCell id="service-path" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDE9FE;strokeColor=#7C3AED;fontColor=#4C1D95;fontSize=12;" value="&lt;b&gt;Service ClusterIP path&lt;/b&gt;&lt;br&gt;optional DNS name resolves to ClusterIP&lt;br&gt;kube-proxy IPVS selects&amp;nbsp;&lt;div&gt;a ready EndpointSlice target&lt;br&gt;selected Pod IP then follows the Cilium datapath&lt;/div&gt;" vertex="1">
+          <mxGeometry height="100" width="285" x="535" y="510" as="geometry" />
+        </mxCell>
+        <mxCell id="cilium-forwarding" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#16A34A;fontColor=#14532D;fontSize=12;strokeWidth=2;" value="&lt;b&gt;Cilium endpoint forwarding&lt;/b&gt;&lt;br&gt;routes to local endpoint or remote node tunnel endpoint&lt;br&gt;preserves workload identity context&lt;br&gt;reply traffic follows connection state" vertex="1">
+          <mxGeometry height="145" width="260" x="865" y="430" as="geometry" />
+        </mxCell>
+        <mxCell id="policy" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ECFDF5;strokeColor=#059669;fontColor=#065F46;fontSize=12;strokeWidth=2;" value="&lt;b&gt;Identity-aware policy&lt;/b&gt;&lt;br&gt;source and destination identities evaluated at selected endpoints&lt;br&gt;only selected ingress/egress directions are constrained&lt;br&gt;unselected directions remain default-allow" vertex="1">
+          <mxGeometry height="145" width="255" x="1170" y="430" as="geometry" />
+        </mxCell>
+        <mxCell id="destination-pod" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#16A34A;fontColor=#14532D;fontSize=12;strokeWidth=2;" value="&lt;b&gt;Destination Pod&lt;/b&gt;&lt;br&gt;ready endpoint receives permitted traffic&lt;br&gt;denial becomes a Hubble POLICY_DENIED flow with source, destination, port and node context" vertex="1">
+          <mxGeometry height="125" width="250" x="1470" y="440" as="geometry" />
+        </mxCell>
+        <mxCell id="eastwest-note" parent="1" style="rounded=1;whiteSpace=wrap;html=1;align=left;spacing=8;fillColor=#F8FAFC;strokeColor=#94A3B8;fontColor=#334155;fontSize=12;" value="&lt;b&gt;Important boundary&lt;/b&gt; — IPVS chooses an endpoint only for Service traffic. It does not carry the packet between Pods. Cilium owns Pod reachability and policy for both direct Pod-IP and Service-selected traffic; VXLAN is used only when the selected Pod is on another node." vertex="1">
+          <mxGeometry height="40" width="1665" x="55" y="625" as="geometry" />
+        </mxCell>
+        <mxCell id="dns-group" parent="1" style="swimlane;html=1;rounded=1;startSize=32;fillColor=#EFF6FF;strokeColor=#2563EB;fontStyle=1;fontColor=#1E3A8A;fontSize=15;" value="Cluster DNS and service discovery" vertex="1">
+          <mxGeometry height="160" width="1740" x="30" y="705" as="geometry" />
+        </mxCell>
+        <mxCell id="dns-query" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#60A5FA;fontColor=#1E3A8A;fontSize=12;" value="&lt;b&gt;Pod resolver&lt;/b&gt;&lt;br&gt;search domains + nameserver 169.254.25.10" vertex="1">
+          <mxGeometry height="75" width="235" x="70" y="755" as="geometry" />
+        </mxCell>
+        <mxCell id="nodelocal" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DBEAFE;strokeColor=#2563EB;fontColor=#1E3A8A;fontSize=12;" value="&lt;b&gt;NodeLocal DNSCache&lt;/b&gt;&lt;br&gt;node-local cache and forwarding&lt;br&gt;169.254.25.10" vertex="1">
+          <mxGeometry height="85" width="250" x="355" y="750" as="geometry" />
+        </mxCell>
+        <mxCell id="coredns" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DBEAFE;strokeColor=#2563EB;fontColor=#1E3A8A;fontSize=12;strokeWidth=2;" value="&lt;b&gt;CoreDNS&lt;/b&gt;&lt;br&gt;Service 10.233.0.3&lt;br&gt;authoritative for cluster.local and reverse zones" vertex="1">
+          <mxGeometry height="85" width="270" x="655" y="750" as="geometry" />
+        </mxCell>
+        <mxCell id="cluster-records" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ECFDF5;strokeColor=#059669;fontColor=#065F46;fontSize=12;" value="&lt;b&gt;Kubernetes service discovery&lt;/b&gt;&lt;br&gt;Service/EndpointSlice state → names and ClusterIPs&lt;br&gt;result feeds the Service ClusterIP path above" vertex="1">
+          <mxGeometry height="85" width="345" x="975" y="750" as="geometry" />
+        </mxCell>
+        <mxCell id="upstream-dns" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF7ED;strokeColor=#EA580C;fontColor=#7C2D12;fontSize=12;" value="&lt;b&gt;Non-cluster names&lt;/b&gt;&lt;br&gt;CoreDNS forwards through node resolver&lt;br&gt;node upstreams: 192.168.122.1 and 1.1.1.1" vertex="1">
+          <mxGeometry height="85" width="340" x="1370" y="750" as="geometry" />
+        </mxCell>
+        <mxCell id="operations-group" parent="1" style="swimlane;html=1;rounded=1;startSize=30;fillColor=#F8FAFC;strokeColor=#94A3B8;fontStyle=1;fontColor=#334155;fontSize=15;" value="Operational memory — containment, visibility and first checks" vertex="1">
+          <mxGeometry height="190" width="1740" x="30" y="885" as="geometry" />
+        </mxCell>
+        <mxCell id="containment" parent="1" style="rounded=1;whiteSpace=wrap;html=1;align=left;spacing=9;fillColor=#FEE2E2;strokeColor=#DC2626;fontColor=#7F1D1D;fontSize=12;" value="&lt;b&gt;Containment exception&lt;/b&gt;&lt;br&gt;Falco Talon sets security.no-name.win/quarantined=true. The clusterwide Cilium policy then allows host-originated probes/administration, denies workload and world ingress, and denies all egress. This is intentionally stricter than the normal selected-direction/default-allow posture." vertex="1">
+          <mxGeometry height="115" width="520" x="55" y="930" as="geometry" />
+        </mxCell>
+        <mxCell id="visibility" parent="1" style="rounded=1;whiteSpace=wrap;html=1;align=left;spacing=9;fillColor=#EFF6FF;strokeColor=#2563EB;fontColor=#1E3A8A;fontSize=12;" value="&lt;b&gt;Hubble visibility&lt;/b&gt;&lt;br&gt;Relay/UI provides recent cluster-wide flow context; each node buffers up to 65,535 events. Only DROPPED/ERROR flows are exported to rotating node-local files (15 MiB/node), collected into Elasticsearch. Prometheus drop metrics drive policy-denial PagerDuty alarms." vertex="1">
+          <mxGeometry height="115" width="550" x="620" y="930" as="geometry" />
+        </mxCell>
+        <mxCell id="checks" parent="1" style="rounded=1;whiteSpace=wrap;html=1;align=left;spacing=9;fillColor=#FFF7ED;strokeColor=#EA580C;fontColor=#7C2D12;fontSize=12;" value="&lt;b&gt;First checks for an east–west failure&lt;/b&gt;&lt;br&gt;1. Resolve the name through NodeLocal DNS/CoreDNS.&lt;br&gt;2. For a Service, inspect ClusterIP, EndpointSlices and IPVS state.&lt;br&gt;3. Inspect Cilium endpoint identity, policy and cross-node tunnel health.&lt;br&gt;4. Use Hubble to distinguish DNS, no-endpoint, routing and policy denial.&lt;br&gt;&lt;b&gt;North–south failures:&lt;/b&gt; see north-south-access-architecture.drawio." vertex="1">
+          <mxGeometry height="130" width="545" x="1200" y="920" as="geometry" />
+        </mxCell>
+        <mxCell id="e-source-choice" edge="1" parent="1" source="source-pod" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#2563EB;endArrow=block;endFill=1;fontSize=12;" target="target-choice">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-choice-direct" edge="1" parent="1" source="target-choice" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#059669;endArrow=block;endFill=1;fontSize=12;" target="direct-path" value="Pod IP">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-choice-service" edge="1" parent="1" source="target-choice" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#7C3AED;endArrow=block;endFill=1;fontSize=12;" target="service-path" value="Service">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-direct-cilium" edge="1" parent="1" source="direct-path" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#059669;endArrow=block;endFill=1;fontSize=12;" target="cilium-forwarding">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-service-cilium" edge="1" parent="1" source="service-path" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#7C3AED;endArrow=block;endFill=1;fontSize=12;" target="cilium-forwarding">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-cilium-policy" edge="1" parent="1" source="cilium-forwarding" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#16A34A;endArrow=block;endFill=1;fontSize=12;" target="policy">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-policy-destination" edge="1" parent="1" source="policy" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#16A34A;endArrow=block;endFill=1;fontSize=12;" target="destination-pod">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-dns-query-local" edge="1" parent="1" source="dns-query" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#2563EB;endArrow=block;endFill=1;fontSize=12;" target="nodelocal">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-local-core" edge="1" parent="1" source="nodelocal" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#2563EB;endArrow=block;endFill=1;fontSize=12;" target="coredns" value="cache miss">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-core-cluster" edge="1" parent="1" source="coredns" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#059669;endArrow=block;endFill=1;fontSize=12;" target="cluster-records" value="cluster.local">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-core-upstream" edge="1" parent="1" source="coredns" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#EA580C;endArrow=block;endFill=1;fontSize=12;" target="upstream-dns" value="other zones">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="790" y="850" />
+              <mxPoint x="1540" y="850" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="-EqM1VSNPku3V6EbPssZ-1" edge="1" parent="1" source="direct-path" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="service-path" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
