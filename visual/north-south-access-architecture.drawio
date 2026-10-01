@@ -1,16 +1,16 @@
 <mxfile host="app.diagrams.net" agent="Codex">
-  <diagram id="cloudflare-access-and-tunnel-architecture" name="Cloudflare Access and Tunnel Architecture">
+  <diagram id="north-south-access-architecture" name="North-South Access Architecture">
     <mxGraphModel dx="975" dy="543" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="1050" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="title" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=26;fontStyle=1;fontColor=#1F2937;" value="Homelab Cloudflare Access and Tunnel Architecture" vertex="1">
+        <mxCell id="title" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=26;fontStyle=1;fontColor=#1F2937;" value="Homelab Kubernetes North–South Access Architecture" vertex="1">
           <mxGeometry height="40" width="1040" x="380" y="25" as="geometry" />
         </mxCell>
-        <mxCell id="subtitle" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=14;fontColor=#4B5563;" value="Primary private-DNS access · emulated Cloudflare access · outbound-only tunnel · direct Kubernetes administration" vertex="1">
+        <mxCell id="subtitle" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=14;fontColor=#4B5563;" value="Primary private-LAN UI path · Cloudflare-mediated test and CI path · direct Kubernetes API and node administration" vertex="1">
           <mxGeometry height="25" width="980" x="410" y="70" as="geometry" />
         </mxCell>
-        <mxCell id="ways-group" parent="1" style="swimlane;html=1;rounded=1;startSize=32;fillColor=#F8FAFC;strokeColor=#94A3B8;fontStyle=1;fontColor=#334155;fontSize=15;" value="Access methods — operator reminder" vertex="1">
+        <mxCell id="ways-group" parent="1" style="swimlane;html=1;rounded=1;startSize=32;fillColor=#F8FAFC;strokeColor=#94A3B8;fontStyle=1;fontColor=#334155;fontSize=15;" value="North–south access methods — operator reminder" vertex="1">
           <mxGeometry height="210" width="1740" x="30" y="115" as="geometry" />
         </mxCell>
         <mxCell id="cloudflare-group" parent="1" style="swimlane;html=1;rounded=1;startSize=32;fillColor=#EFF6FF;strokeColor=#2563EB;fontStyle=1;fontColor=#1E3A8A;fontSize=15;" value="Cloudflare-managed trust boundary — configured remotely, not by this Git repository" vertex="1">
@@ -37,10 +37,10 @@
         <mxCell id="automation-access" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDE9FE;strokeColor=#7C3AED;fontColor=#4C1D95;fontSize=14;" value="&lt;b&gt;CI / webhook access&lt;/b&gt;&lt;br&gt;ci-*.no-name.win · argocd-webhook.no-name.win&lt;br&gt;use a Cloudflare service token or narrowly scoped bypass&lt;br&gt;never reuse an interactive human policy implicitly" vertex="1">
           <mxGeometry height="120" width="390" x="480" y="165" as="geometry" />
         </mxCell>
-        <mxCell id="lan-access" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3C7;strokeColor=#D97706;fontColor=#78350F;fontSize=14;" value="&lt;b&gt;Primary homelab UI access&lt;/b&gt;&lt;br&gt;private DNS: &amp;lt;ui&amp;gt;.no-name.win → 192.168.122.120&lt;br&gt;browser connects directly to the Traefik Gateway&lt;br&gt;Cloudflare is bypassed by design; app authentication applies" vertex="1">
+        <mxCell id="lan-access" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3C7;strokeColor=#D97706;fontColor=#78350F;fontSize=14;" value="&lt;b&gt;Primary homelab UI access&lt;/b&gt;&lt;br&gt;private DNS: &amp;lt;ui&amp;gt;.no-name.win → 192.168.122.120&lt;br&gt;browser enters through the MetalLB VIP and Traefik LoadBalancer Service&lt;br&gt;Cloudflare is bypassed; app authentication applies" vertex="1">
           <mxGeometry height="120" width="390" x="905" y="165" as="geometry" />
         </mxCell>
-        <mxCell id="kube-admin" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEE2E2;strokeColor=#DC2626;fontColor=#7F1D1D;fontSize=14;" value="&lt;b&gt;Kubernetes API administration&lt;/b&gt;&lt;br&gt;kubeconfig → kube-vip 192.168.122.30:6443&lt;br&gt;kubectl manages cluster resources through the API&lt;br&gt;independent of Cloudflare, cloudflared and Traefik" vertex="1">
+        <mxCell id="kube-admin" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEE2E2;strokeColor=#DC2626;fontColor=#7F1D1D;fontSize=14;" value="&lt;b&gt;Direct administrative access&lt;/b&gt;&lt;br&gt;kubeconfig → kube-vip 192.168.122.30:6443&lt;br&gt;SSH → individual node 192.168.122.31/.41/.42/.43&lt;br&gt;independent of Cloudflare, cloudflared and Traefik" vertex="1">
           <mxGeometry height="120" width="390" x="1330" y="165" as="geometry" />
         </mxCell>
         <mxCell id="cf-tunnel-edge" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E0F2FE;strokeColor=#0284C7;fontColor=#0C4A6E;fontSize=14;" value="&lt;b&gt;Cloudflare Tunnel edge&lt;/b&gt;&lt;br&gt;selects a healthy connector&lt;br&gt;for the remotely managed tunnel" vertex="1">
@@ -55,7 +55,7 @@
         <mxCell id="origin-config" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3C7;strokeColor=#D97706;fontColor=#78350F;fontSize=13;" value="&lt;b&gt;Origin mapping&lt;/b&gt;&lt;br&gt;address + protocol + TLS behavior&lt;br&gt;defined in remote Tunnel config" vertex="1">
           <mxGeometry height="95" width="135" x="1070" y="420" as="geometry" />
         </mxCell>
-        <mxCell id="traefik" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#16A34A;fontColor=#14532D;fontSize=14;strokeWidth=2;" value="&lt;b&gt;Traefik Gateway&lt;/b&gt;&lt;br&gt;LoadBalancer 192.168.122.120 :80/:443&lt;br&gt;HTTP redirects to HTTPS&lt;br&gt;websecure terminates *.no-name.win TLS" vertex="1">
+        <mxCell id="traefik" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#16A34A;fontColor=#14532D;fontSize=14;strokeWidth=2;" value="&lt;b&gt;Traefik Gateway / Service&lt;/b&gt;&lt;br&gt;MetalLB VIP 192.168.122.120 :80/:443&lt;br&gt;kube-proxy/IPVS selects an endpoint&lt;br&gt;websecure terminates *.no-name.win TLS" vertex="1">
           <mxGeometry height="130" width="195" x="1270" y="400" as="geometry" />
         </mxCell>
         <mxCell id="http-routes" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ECFDF5;strokeColor=#059669;fontColor=#065F46;fontSize=14;" value="&lt;b&gt;Gateway API HTTPRoutes&lt;/b&gt;&lt;br&gt;hostname + path matching&lt;br&gt;cross-namespace parentRefs&lt;br&gt;backend Service and port" vertex="1">
