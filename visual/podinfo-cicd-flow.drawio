@@ -1,0 +1,157 @@
+<mxfile host="Electron" agent="Codex">
+  <diagram id="podinfo-cicd-flow" name="Podinfo CI-CD Flow">
+    <mxGraphModel dx="947" dy="563" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=26;fontStyle=1;fontColor=#1F2937;" value="Podinfo CI/CD and GitOps Promotion Flow" vertex="1">
+          <mxGeometry height="40" width="1040" x="380" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="subtitle" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=14;fontColor=#4B5563;" value="Application PR → immutable image → shared dev deployment and DAST → human decision → production promotion or safe dev rollback" vertex="1">
+          <mxGeometry height="25" width="1220" x="290" y="65" as="geometry" />
+        </mxCell>
+        <mxCell id="trigger-group" parent="1" style="swimlane;html=1;rounded=1;startSize=30;fillColor=#F8FAFC;strokeColor=#94A3B8;fontStyle=1;fontColor=#334155;fontSize=15;" value="Entry points and repository controls" vertex="1">
+          <mxGeometry height="125" width="1740" x="30" y="105" as="geometry" />
+        </mxCell>
+        <mxCell id="delivery-group" parent="1" style="swimlane;html=1;rounded=1;startSize=32;fillColor=#EFF6FF;strokeColor=#2563EB;fontStyle=1;fontColor=#1E3A8A;fontSize=15;" value="Application PR delivery — .github/workflows/delivery.yml" vertex="1">
+          <mxGeometry height="355" width="1740" x="30" y="250" as="geometry" />
+        </mxCell>
+        <mxCell id="promote-dev" parent="delivery-group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ECFDF5;strokeColor=#059669;fontColor=#065F46;fontSize=12;" value="&lt;b&gt;4 · GitOps dev promotion&lt;/b&gt;&lt;br&gt;scoped GitHub App token&lt;br&gt;change only lab-a/dev/kustomization.yaml digest&lt;br&gt;validate rendered Kustomize&lt;br&gt;open/update fixed promote/podinfo-lab-a-dev PR&lt;br&gt;automatically squash-merge" vertex="1">
+          <mxGeometry height="165" width="220" x="783" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="deploy-dev" parent="delivery-group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#16A34A;fontColor=#14532D;fontSize=12;" value="&lt;b&gt;5 · Argo CD deploy + verify&lt;/b&gt;&lt;br&gt;wait until podinfo-lab-a-dev observes exact digest&lt;br&gt;request sync; wait operation, Synced and Healthy&lt;br&gt;recheck reported digest&lt;br&gt;runner has no kubeconfig;&amp;nbsp;&lt;div&gt;only Argo writes Kubernetes&lt;/div&gt;" vertex="1">
+          <mxGeometry height="165" width="195" x="1047" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="e-promote-deploy" edge="1" parent="delivery-group" source="promote-dev" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#16A34A;endArrow=block;endFill=1;fontSize=12;" target="deploy-dev">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="decision-group" parent="1" style="swimlane;html=1;rounded=1;startSize=32;fillColor=#F0FDF4;strokeColor=#16A34A;fontStyle=1;fontColor=#14532D;fontSize=15;" value="Application PR close handler — .github/workflows/application-pr-closed.yml" vertex="1">
+          <mxGeometry height="225" width="1740" x="30" y="625" as="geometry" />
+        </mxCell>
+        <mxCell id="operations-group" parent="1" style="swimlane;html=1;rounded=1;startSize=30;fillColor=#F8FAFC;strokeColor=#64748B;fontStyle=1;fontColor=#334155;fontSize=15;" value="Operational memory — gates, trust and investigation" vertex="1">
+          <mxGeometry height="205" width="1740" x="30" y="870" as="geometry" />
+        </mxCell>
+        <mxCell id="application-pr" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DBEAFE;strokeColor=#2563EB;fontColor=#1E3A8A;fontSize=13;" value="&lt;b&gt;Application PR → master&lt;/b&gt;&lt;br&gt;Runs when opened, updated, or reopened&lt;br&gt;Trusted same-repository branches only" vertex="1">
+          <mxGeometry height="65" width="300" x="55" y="145" as="geometry" />
+        </mxCell>
+        <mxCell id="delivery-control" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDE9FE;strokeColor=#7C3AED;fontColor=#4C1D95;fontSize=13;" value="&lt;b&gt;Shared &lt;code dir=&quot;ltr&quot;&gt;lab-a-dev&lt;/code&gt; race control&lt;br&gt;&lt;/b&gt;One active delivery at a time&lt;br&gt;Running delivery is never cancelled" vertex="1">
+          <mxGeometry height="65" width="300" x="385" y="145" as="geometry" />
+        </mxCell>
+        <mxCell id="aux-workflows" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF7ED;strokeColor=#EA580C;fontColor=#7C2D12;fontSize=12;" value="&lt;b&gt;Separate supporting workflows&lt;/b&gt;&lt;br&gt;test.yml: PR/manual Helm · Kustomize · CUE · Timoni validation&lt;br&gt;cve-scan.yml: PR/manual govulncheck SARIF · e2e.yml: manual Kind Helm/Timoni&lt;br&gt;&lt;i&gt;not dependencies of the PR delivery gate&lt;/i&gt;" vertex="1">
+          <mxGeometry height="81" width="500" x="715" y="137" as="geometry" />
+        </mxCell>
+        <mxCell id="repo-rules" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#16A34A;fontColor=#14532D;fontSize=12;" value="&lt;b&gt;Repository protection&lt;/b&gt;&lt;br&gt;podinfo-emrah/master: PR + required PR delivery gate; workflow never merges it&lt;br&gt;ultimate-iac/main: PR protected; production path needs latest @EmrhT approval and manual merge" vertex="1">
+          <mxGeometry height="81" width="500" x="1245" y="137" as="geometry" />
+        </mxCell>
+        <mxCell id="prebuild" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDE9FE;strokeColor=#7C3AED;fontColor=#4C1D95;fontSize=12;" value="&lt;b&gt;1 · Parallel pre-build checks&lt;/b&gt;&lt;br&gt;&lt;b&gt;Gitleaks:&lt;/b&gt; BASE..SOURCE commits; fully redacted JSON; findings report-only&lt;br&gt;&lt;b&gt;Quality:&lt;/b&gt; Go unit tests + coverage; SonarQube source/SAST and blocking quality gate&lt;br&gt;Build waits for both jobs" vertex="1">
+          <mxGeometry height="165" width="245" x="55" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="build" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DBEAFE;strokeColor=#2563EB;fontColor=#1E3A8A;fontSize=12;" value="&lt;b&gt;2 · Build and publish&lt;/b&gt;&lt;br&gt;linux/amd64 image&lt;br&gt;tag: sha-&amp;lt;full SOURCE_SHA&amp;gt;&lt;br&gt;push to ghcr.io/emrht/podinfo-emrah&lt;br&gt;capture immutable digest&lt;br&gt;BuildKit max provenance + SBOM" vertex="1">
+          <mxGeometry height="165" width="215" x="325" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="trivy" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3C7;strokeColor=#D97706;fontColor=#78350F;fontSize=12;" value="&lt;b&gt;3 · Trivy image scan&lt;/b&gt;&lt;br&gt;scan exact repository@digest through homelab Trivy server&lt;br&gt;completion is required&lt;br&gt;HIGH/CRITICAL findings are report-only while TRIVY_ENFORCE=false&lt;br&gt;JSON · table · SARIF" vertex="1">
+          <mxGeometry height="165" width="210" x="565" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="zap" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FCE7F3;strokeColor=#DB2777;fontColor=#831843;fontSize=12;" value="&lt;b&gt;6 · ZAP DAST in dev&lt;/b&gt;&lt;br&gt;new volatile session&lt;br&gt;in-cluster plan targets internal lab-a-dev Service&lt;br&gt;plan errors or High alerts block&lt;br&gt;XML report + 30-day successful validation artifact" vertex="1">
+          <mxGeometry height="165" width="210" x="1315" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="pr-gate" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEE2E2;strokeColor=#DC2626;fontColor=#7F1D1D;fontSize=12;strokeWidth=2;" value="&lt;b&gt;7 · PR delivery gate&lt;/b&gt;&lt;br&gt;requires quality, build, Trivy, dev promotion, deployment and DAST success&lt;br&gt;&lt;br&gt;&lt;b&gt;Required branch check&lt;/b&gt;" vertex="1">
+          <mxGeometry height="165" width="195" x="1550" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="reports" parent="1" style="rounded=1;whiteSpace=wrap;html=1;align=left;spacing=8;fillColor=#FFF7ED;strokeColor=#EA580C;fontColor=#7C2D12;fontSize=12;" value="&lt;b&gt;Reports and retention&lt;/b&gt; — Gitleaks JSON, SonarQube ZIP, Trivy JSON/table/SARIF and ZAP XML are retained for 14 days and reimported into DefectDojo product &lt;b&gt;podinfo&lt;/b&gt; / engagement &lt;b&gt;CI/CD&lt;/b&gt;. DefectDojo ingestion is enforced. Image metadata and successful dev-validation evidence are retained for 30 days." vertex="1">
+          <mxGeometry height="80" width="760" x="55" y="495" as="geometry" />
+        </mxCell>
+        <mxCell id="runner-trust" parent="1" style="rounded=1;whiteSpace=wrap;html=1;align=left;spacing=8;fillColor=#F8FAFC;strokeColor=#64748B;fontColor=#334155;fontSize=12;" value="&lt;b&gt;Runner trust paths&lt;/b&gt; — SonarQube uses an mTLS client certificate plus scanner/report tokens. Trivy, ZAP, Argo CD and DefectDojo use the Cloudflare service token; each service still requires its own API token. GITHUB_TOKEN writes GHCR. The GitHub App can write only ultimate-iac Contents and Pull Requests." vertex="1">
+          <mxGeometry height="80" width="905" x="840" y="495" as="geometry" />
+        </mxCell>
+        <mxCell id="human-decision" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#FEF3C7;strokeColor=#D97706;fontColor=#78350F;fontSize=12;" value="&lt;b&gt;Repository owner&lt;/b&gt;&lt;br&gt;manually MERGE or CLOSE&lt;br&gt;the application PR" vertex="1">
+          <mxGeometry height="105" width="235" x="55" y="700" as="geometry" />
+        </mxCell>
+        <mxCell id="accepted" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DBEAFE;strokeColor=#2563EB;fontColor=#1E3A8A;fontSize=12;" value="&lt;b&gt;Merged: verify tested digest&lt;/b&gt;&lt;br&gt;resolve sha-SOURCE_SHA and validate matching, unexpired dev-security artifact&lt;br&gt;move mutable accepted tag to that digest; no rebuild" vertex="1">
+          <mxGeometry height="80" width="275" x="335" y="670" as="geometry" />
+        </mxCell>
+        <mxCell id="prod-pr" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ECFDF5;strokeColor=#059669;fontColor=#065F46;fontSize=12;" value="&lt;b&gt;Production GitOps PR&lt;/b&gt;&lt;br&gt;update only lab-a/prod digest&lt;br&gt;fixed branch: promote/podinfo-lab-a-prod&lt;br&gt;latest-accepted-wins" vertex="1">
+          <mxGeometry height="80" width="245" x="635" y="670" as="geometry" />
+        </mxCell>
+        <mxCell id="prod-approval" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3C7;strokeColor=#D97706;fontColor=#78350F;fontSize=12;" value="&lt;b&gt;Human production decision&lt;/b&gt;&lt;br&gt;latest @EmrhT approval required&lt;br&gt;manual GitOps PR merge" vertex="1">
+          <mxGeometry height="80" width="235" x="905" y="670" as="geometry" />
+        </mxCell>
+        <mxCell id="prod-deploy" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#16A34A;fontColor=#14532D;fontSize=12;" value="&lt;b&gt;Argo CD production reconcile&lt;/b&gt;&lt;br&gt;ultimate-iac/main contains exact digest&lt;br&gt;podinfo-lab-a-prod auto-syncs it" vertex="1">
+          <mxGeometry height="80" width="255" x="1165" y="670" as="geometry" />
+        </mxCell>
+        <mxCell id="prod-result" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#16A34A;fontColor=#14532D;fontSize=12;strokeWidth=2;" value="&lt;b&gt;Production&lt;/b&gt;&lt;br&gt;same digest tested in dev&lt;br&gt;deployed without rebuild" vertex="1">
+          <mxGeometry height="80" width="270" x="1445" y="670" as="geometry" />
+        </mxCell>
+        <mxCell id="rejected-check" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEE2E2;strokeColor=#DC2626;fontColor=#7F1D1D;fontSize=12;" value="&lt;b&gt;Closed without merge: compare dev&lt;/b&gt;&lt;br&gt;resolve rejected sha-SOURCE_SHA digest&lt;br&gt;rollback only if dev still references it" vertex="1">
+          <mxGeometry height="70" width="335" x="335" y="770" as="geometry" />
+        </mxCell>
+        <mxCell id="rollback" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF7ED;strokeColor=#EA580C;fontColor=#7C2D12;fontSize=12;" value="&lt;b&gt;Safe dev rollback&lt;/b&gt;&lt;br&gt;target accepted digest; fall back to current prod digest&lt;br&gt;open and auto-merge dev GitOps rollback PR" vertex="1">
+          <mxGeometry height="70" width="345" x="700" y="770" as="geometry" />
+        </mxCell>
+        <mxCell id="rollback-result" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8FAFC;strokeColor=#64748B;fontColor=#334155;fontSize=12;" value="&lt;b&gt;Race-safe result&lt;/b&gt;&lt;br&gt;if dev has a newer feature digest, leave it untouched&lt;br&gt;otherwise Argo observes the merged rollback through GitOps" vertex="1">
+          <mxGeometry height="70" width="397.5" x="1075" y="770" as="geometry" />
+        </mxCell>
+        <mxCell id="gate-memory" parent="1" style="rounded=1;whiteSpace=wrap;html=1;align=left;spacing=9;fillColor=#ECFDF5;strokeColor=#059669;fontColor=#065F46;fontSize=12;" value="&lt;b&gt;What actually blocks delivery&lt;/b&gt;&lt;br&gt;&lt;b&gt;Blocking:&lt;/b&gt; unit tests, Sonar quality gate, build/push, scanner completion, DefectDojo ingestion, GitOps dev promotion, exact-digest Argo health, ZAP plan errors/High alerts and final PR gate.&lt;br&gt;&lt;b&gt;Report-only findings:&lt;/b&gt; Gitleaks detections and Trivy vulnerability counts." vertex="1">
+          <mxGeometry height="130" width="535" x="55" y="915" as="geometry" />
+        </mxCell>
+        <mxCell id="trust-gap" parent="1" style="rounded=1;whiteSpace=wrap;html=1;align=left;spacing=9;fillColor=#FFF7ED;strokeColor=#EA580C;fontColor=#7C2D12;fontSize=12;" value="&lt;strong&gt;Image integrity covered; producer identity incomplete&lt;/strong&gt;&lt;br&gt;Deployments are pinned by digest. CI publishes BuildKit provenance and an SBOM, but does not yet keylessly sign the image and provenance. Therefore, Kyverno cannot cryptographically prove that a deployed digest came from the approved GitHub Actions workflow." vertex="1">
+          <mxGeometry height="130" width="550" x="620" y="915" as="geometry" />
+        </mxCell>
+        <mxCell id="investigation" parent="1" style="rounded=1;whiteSpace=wrap;html=1;align=left;spacing=9;fillColor=#EFF6FF;strokeColor=#2563EB;fontColor=#1E3A8A;fontSize=12;" value="&lt;b&gt;Implementation references and first troubleshooting path&lt;br&gt;&lt;/b&gt;.github/CI-CD.md · workflows/delivery.yml · workflows/application-pr-closed.yml · scripts/{argocd-sync,update-podinfo-digest,merge-gitops-pr,zap-scan,defectdojo-reimport}.sh&lt;br&gt;Check: GitHub job summary/artifacts → DefectDojo CI/CD tests → GHCR digest → ultimate-iac promotion PR → Argo app revision, images, Sync and Health." vertex="1">
+          <mxGeometry height="130" width="545" x="1200" y="915" as="geometry" />
+        </mxCell>
+        <mxCell id="e-pr-prebuild" edge="1" parent="1" source="application-pr" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#2563EB;endArrow=block;endFill=1;fontSize=12;" target="prebuild">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-prebuild-build" edge="1" parent="1" source="prebuild" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#2563EB;endArrow=block;endFill=1;fontSize=12;" target="build">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-build-trivy" edge="1" parent="1" source="build" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#2563EB;endArrow=block;endFill=1;fontSize=12;" target="trivy">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-trivy-promote" edge="1" parent="1" source="trivy" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#2563EB;endArrow=block;endFill=1;fontSize=12;" target="promote-dev">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-deploy-zap" edge="1" parent="1" source="deploy-dev" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#16A34A;endArrow=block;endFill=1;fontSize=12;" target="zap">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-zap-gate" edge="1" parent="1" source="zap" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#DC2626;endArrow=block;endFill=1;fontSize=12;" target="pr-gate">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-gate-decision" edge="1" parent="1" source="pr-gate" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#D97706;endArrow=block;endFill=1;fontSize=12;" target="human-decision">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1760" y="382.5" />
+              <mxPoint x="1760" y="615" />
+              <mxPoint x="173" y="615" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e-decision-accepted" edge="1" parent="1" source="human-decision" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#16A34A;endArrow=block;endFill=1;fontSize=12;" target="accepted" value="MERGED">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-accepted-prodpr" edge="1" parent="1" source="accepted" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#16A34A;endArrow=block;endFill=1;fontSize=12;" target="prod-pr">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-prodpr-approval" edge="1" parent="1" source="prod-pr" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#16A34A;endArrow=block;endFill=1;fontSize=12;" target="prod-approval">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-approval-deploy" edge="1" parent="1" source="prod-approval" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#16A34A;endArrow=block;endFill=1;fontSize=12;" target="prod-deploy">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-prod-deployed" edge="1" parent="1" source="prod-deploy" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#16A34A;endArrow=block;endFill=1;fontSize=12;" target="prod-result">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-decision-rejected" edge="1" parent="1" source="human-decision" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#DC2626;endArrow=block;endFill=1;fontSize=12;" target="rejected-check" value="CLOSED">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-rejected-rollback" edge="1" parent="1" source="rejected-check" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#EA580C;endArrow=block;endFill=1;fontSize=12;" target="rollback">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-rollback-result" edge="1" parent="1" source="rollback" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#EA580C;endArrow=block;endFill=1;fontSize=12;" target="rollback-result">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
