@@ -8,35 +8,33 @@ spec:
   goTemplateOptions:
     - missingkey=error
   generators:
-    - matrix:
-        generators:
-          - list:
-              elements:
-                - cluster: lab-a
-                  server: https://kubernetes.default.svc
-                - cluster: lab-b
-                  server: https://kubernetes.default.svc
-          - list:
-              elements:
-                - environment: dev
-                - environment: prod
+    # Every deployable leaf follows:
+    # argocd/applications/<application>/clusters/<cluster>/<environment>
+    # Adding or removing one of these directories therefore adds or removes
+    # exactly one generated Argo CD Application without changing this file.
+    - git:
+        repoURL: https://github.com/EmrhT/ultimate-iac.git
+        revision: main
+        directories:
+          - path: argocd/applications/*/clusters/*/*
   template:
     metadata:
-      name: "podinfo-{{ .cluster }}-{{ .environment }}"
+      name: '{{ index .path.segments 2 }}-{{ index .path.segments 4 }}-{{ index .path.segments 5 }}'
       namespace: argocd
       labels:
         platform.example/group: applications
-        platform.example/cluster: "{{ .cluster }}"
-        platform.example/environment: "{{ .environment }}"
+        platform.example/application: '{{ index .path.segments 2 }}'
+        platform.example/cluster: '{{ index .path.segments 4 }}'
+        platform.example/environment: '{{ index .path.segments 5 }}'
     spec:
       project: applications
       source:
         repoURL: https://github.com/EmrhT/ultimate-iac.git
         targetRevision: main
-        path: "argocd/applications/podinfo/clusters/{{ .cluster }}/{{ .environment }}"
+        path: '{{ .path.path }}'
       destination:
-        server: "{{ .server }}"
-        namespace: "{{ .cluster }}-{{ .environment }}"
+        server: https://kubernetes.default.svc
+        namespace: '{{ index .path.segments 4 }}-{{ index .path.segments 5 }}'
       # Falco Talon applies this one label only after a critical runtime event.
       # The quarantine CiliumNetworkPolicy is already Git-managed; Argo must not
       # remove the incident-response label while the investigation is active.
@@ -57,8 +55,8 @@ spec:
             maxDuration: 3m
         managedNamespaceMetadata:
           labels:
-            platform.example/cluster: "{{ .cluster }}"
-            platform.example/environment: "{{ .environment }}"
+            platform.example/cluster: '{{ index .path.segments 4 }}'
+            platform.example/environment: '{{ index .path.segments 5 }}'
             pod-security.kubernetes.io/enforce: restricted
             pod-security.kubernetes.io/audit: restricted
             pod-security.kubernetes.io/warn: restricted

@@ -97,7 +97,7 @@
         <mxCell id="kustomize-appset" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDE9FE;strokeColor=#7C3AED;fontColor=#4C1D95;fontSize=14;" value="&lt;b&gt;infra-security-kustomize&lt;/b&gt;&lt;br&gt;list generator · Git overlays" vertex="1">
           <mxGeometry height="70" width="300" x="840" y="775" as="geometry" />
         </mxCell>
-        <mxCell id="custom-appset" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDE9FE;strokeColor=#7C3AED;fontColor=#4C1D95;fontSize=14;" value="&lt;b&gt;custom-applications&lt;/b&gt;&lt;br&gt;matrix: 2 logical clusters × 2 environments" vertex="1">
+        <mxCell id="custom-appset" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDE9FE;strokeColor=#7C3AED;fontColor=#4C1D95;fontSize=14;" value="&lt;b&gt;custom-applications&lt;/b&gt;&lt;br&gt;Git directories: applications/*/clusters/*/*" vertex="1">
           <mxGeometry height="70" width="300" x="840" y="875" as="geometry" />
         </mxCell>
         <mxCell id="helm-apps" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DBEAFE;strokeColor=#2563EB;fontColor=#1E3A8A;fontSize=14;" value="&lt;b&gt;16 generated Applications&lt;/b&gt;&lt;br&gt;operators, platform charts and security tools&lt;br&gt;chart + Git base/environment values" vertex="1">

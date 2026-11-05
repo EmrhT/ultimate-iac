@@ -28,10 +28,13 @@ Their workloads are isolated into `lab-a-dev`, `lab-a-prod`, `lab-b-dev`, and
 the physical cluster; installing MetalLB, Longhorn, Falco, ECK, or their CRDs
 twice under different namespaces would still cause cluster-wide collisions.
 
-When real clusters are available, keep the matrix and replace each logical
-cluster's identical `server` value in `appsets/base/applications.yaml` with a
-registered Argo CD destination. Infrastructure should then have one generated
-set per real destination cluster.
+The custom-workload ApplicationSet discovers deployable directories matching
+`applications/<application>/clusters/<cluster>/<environment>`. The current
+logical clusters all use the in-cluster Kubernetes API. When real destination
+clusters are introduced, combine this directory discovery with registered
+Argo CD cluster metadata so each path resolves to the appropriate API server.
+Infrastructure should then have one generated set per real destination
+cluster.
 
 ## Directory layout
 
@@ -159,13 +162,30 @@ though Elasticsearch source is also offered under AGPLv3. If the requirement
 means OSI-approved artifacts only, replace Vault with OpenBao and Elastic with
 OpenSearch/Wazuh Indexer before deployment.
 
-## Adding an environment or logical cluster
+## Adding an application, environment, or logical cluster
 
-To add an environment, create one reusable overlay under
-`applications/podinfo/environments/`, add a thin cluster/environment
-Kustomization under each cluster, and add the environment to the matrix list
-in `appsets/base/applications.yaml`.
+The `custom-applications` ApplicationSet uses a Git directory generator. Every
+committed leaf matching this convention becomes one Argo CD Application:
 
-To add another simulated cluster, create its thin cluster overlays and add one
-cluster element to the same matrix. With a real cluster, register it in Argo CD
-and set that element's `server` to the registered Kubernetes API address.
+```text
+applications/<application>/clusters/<cluster>/<environment>/
+    -> <application>-<cluster>-<environment>
+```
+
+To add an application, create its reusable base and environment overlays, then
+add a thin Kustomization at each cluster/environment leaf where it should run.
+For example, committing
+`applications/example/clusters/lab-a/dev/kustomization.yaml` generates
+`example-lab-a-dev` and deploys it into namespace `lab-a-dev`.
+
+To add an environment or another simulated cluster, add the corresponding
+leaf Kustomizations for the applications that should run there. The
+ApplicationSet itself does not need editing. Empty directories are not
+discoverable by Git, so every leaf must contain a committed file. Removing a
+leaf removes its generated Application and can delete its managed resources;
+review such deletions before syncing them.
+
+All current leaves target `https://kubernetes.default.svc`, and applications
+with the same cluster/environment segments share that environment's namespace.
+Supporting real destination clusters requires registered Argo CD cluster
+metadata in addition to the directory generator.
