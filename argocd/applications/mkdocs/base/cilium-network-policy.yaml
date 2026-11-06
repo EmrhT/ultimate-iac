@@ -1,0 +1,19 @@
+# Deliberately permissive bootstrap policy. Authentication and site separation
+# are initially enforced by the HTTPRoutes and the three OAuth2 Proxy instances.
+# Replace this with explicit Traefik -> proxy -> Nginx rules after observing the
+# real traffic paths; Falco Talon's cluster-wide quarantine deny still wins.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: mkdocs-bootstrap-allow-all
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/part-of: mkdocs
+  ingress:
+    - fromEntities:
+        - all
+  egress:
+    - toEntities:
+        - all
+

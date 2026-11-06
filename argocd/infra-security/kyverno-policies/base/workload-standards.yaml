@@ -186,6 +186,7 @@ spec:
           'docker.io/library/python',
           'docker.io/library/sonarqube',
           'docker.io/library/traefik',
+          'quay.io/oauth2-proxy/oauth2-proxy',
           'public.ecr.aws/docker/library/redis',
           'busybox',
           'postgres',
