@@ -51,7 +51,7 @@ cookie-secret
 Generate a different cookie secret for every site. One suitable input is:
 
 ```bash
-openssl rand -base64 32 | tr '+/' '-_'
+openssl rand -base64 24 | tr -d '\n'
 ```
 
 Write the secrets without placing their values in Git or shell history. The
