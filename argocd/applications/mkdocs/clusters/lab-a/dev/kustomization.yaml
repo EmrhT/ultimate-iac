@@ -1,0 +1,73 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../../environments/dev
+images:
+  - name: ghcr.io/emrht/mkdocs-content-general
+    newName: ghcr.io/emrht/mkdocs-content-general
+    digest: sha256:5d67294998004921f2e38ea5ef66ada692cd43e3929a4867dfce7c68ad23b684
+  - name: ghcr.io/emrht/mkdocs-content-infra
+    newName: ghcr.io/emrht/mkdocs-content-infra
+    digest: sha256:bd5d24b2f39fe4ffa6cc8830c975d65536b039729f1ebe81d645f3d65fe2368e
+  - name: ghcr.io/emrht/mkdocs-content-security
+    newName: ghcr.io/emrht/mkdocs-content-security
+    digest: sha256:e7c6ff611c2bdb5d204d2b1baf562c73ddf7db0cf12d9ac98dd348cf5ae999d0
+labels:
+  - pairs:
+      platform.example/cluster: lab-a
+    includeTemplates: true
+patches:
+  - target:
+      group: gateway.networking.k8s.io
+      version: v1
+      kind: HTTPRoute
+      name: mkdocs-general
+    patch: |-
+      - op: replace
+        path: /spec/hostnames/0
+        value: docs-lab-a-dev.no-name.win
+  - target:
+      group: gateway.networking.k8s.io
+      version: v1
+      kind: HTTPRoute
+      name: mkdocs-infra
+    patch: |-
+      - op: replace
+        path: /spec/hostnames/0
+        value: infra-docs-lab-a-dev.no-name.win
+  - target:
+      group: gateway.networking.k8s.io
+      version: v1
+      kind: HTTPRoute
+      name: mkdocs-security
+    patch: |-
+      - op: replace
+        path: /spec/hostnames/0
+        value: security-docs-lab-a-dev.no-name.win
+  - target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: mkdocs-general-oauth2-proxy
+    patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/args/-
+        value: --redirect-url=https://docs-lab-a-dev.no-name.win/oauth2/callback
+  - target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: mkdocs-infra-oauth2-proxy
+    patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/args/-
+        value: --redirect-url=https://infra-docs-lab-a-dev.no-name.win/oauth2/callback
+  - target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: mkdocs-security-oauth2-proxy
+    patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/args/-
+        value: --redirect-url=https://security-docs-lab-a-dev.no-name.win/oauth2/callback
