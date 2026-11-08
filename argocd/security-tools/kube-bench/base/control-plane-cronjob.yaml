@@ -48,6 +48,8 @@ spec:
             seccompProfile:
               type: RuntimeDefault
           initContainers:
+            # Produce the complete report before the uploader container starts.
+            # /reports is an ephemeral volume shared only within this Job Pod.
             - name: scanner
               image: docker.io/aquasec/kube-bench:v0.16.0@sha256:d2e6f685f16cf71228630305d7d69b1fe0c6cbf42a3275cdfc8a55f5f925bbee
               imagePullPolicy: IfNotPresent
@@ -111,6 +113,8 @@ spec:
                   mountPath: /etc/group
                   readOnly: true
           containers:
+            # Kubernetes starts this only after the scanner initContainer exits
+            # successfully, matching the Nuclei scan-then-upload lifecycle.
             - name: defectdojo-uploader
               image: docker.io/curlimages/curl:8.21.0@sha256:7c12af72ceb38b7432ab85e1a265cff6ae58e06f95539d539b654f2cfa64bb13
               imagePullPolicy: IfNotPresent

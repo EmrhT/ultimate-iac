@@ -1,0 +1,89 @@
+fullnameOverride: security-trivy-operator
+
+# Discover all currently deployed workload types cluster-wide. Reports expire
+# after 24 hours, causing the Operator to rescan unchanged running images with
+# the Trivy database maintained by the existing in-cluster server.
+targetNamespaces: ""
+excludeNamespaces: ""
+targetWorkloads: pod,replicaset,replicationcontroller,statefulset,daemonset,cronjob,job
+
+operator:
+  replicas: 1
+  scanJobsConcurrentLimit: 1
+  scanJobTimeout: 15m
+  scanJobTTL: 10m
+  scannerReportTTL: 24h
+  vulnerabilityScannerEnabled: true
+  vulnerabilityScannerScanOnlyCurrentRevisions: true
+  sbomGenerationEnabled: false
+  configAuditScannerEnabled: false
+  rbacAssessmentScannerEnabled: false
+  infraAssessmentScannerEnabled: false
+  clusterComplianceEnabled: false
+  exposedSecretScannerEnabled: false
+  builtInTrivyServer: false
+  accessGlobalSecretsAndServiceAccount: true
+  metricsFindingsEnabled: true
+  # Exposes one metric per CVE with vuln_score so Prometheus can apply the
+  # numeric >=9.0 threshold without a report-parsing script.
+  metricsVulnIdEnabled: true
+
+image:
+  registry: docker.io
+  repository: aquasec/trivy-operator
+  tag: 0.36.1@sha256:8d1c9f2500bf88efc91d523588d91454e3d1effda595d0ae5c0cd2a0a2a37972
+
+trivyOperator:
+  scanJobsInSameNamespace: false
+  scanJobAutomountServiceAccountToken: false
+
+trivy:
+  image:
+    registry: docker.io
+    repository: aquasec/trivy
+    tag: 0.76.1@sha256:2e6c00d711ab4ae41d8a30c2c1fd3bd3b62704c177bb120f95012e939edfb3df
+  mode: ClientServer
+  serverURL: http://security-trivy.security-trivy.svc.cluster.local:4954
+  clientServerSkipUpdate: true
+  severity: HIGH,CRITICAL
+  additionalVulnerabilityReportFields: Description,Links,CVSS,Target,Class,PackagePath,PackageType
+  slow: true
+  timeout: 15m0s
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+      ephemeralStorage: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+      ephemeralStorage: 1Gi
+
+serviceMonitor:
+  enabled: true
+  labels:
+    release: kube-prometheus-stack
+
+podSecurityContext:
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  privileged: false
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop: ["ALL"]
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    cpu: 250m
+    memory: 256Mi
+
+# The vulnerability-only deployment does not need dormant compliance spec CRs.
+compliance:
+  specs: []

@@ -20,6 +20,7 @@ spec:
     - https://helm.elastic.co
     - https://SonarSource.github.io/helm-chart-sonarqube
     - https://aquasecurity.github.io/helm-charts
+    - https://telekom-mms.github.io/trivy-dojo-report-operator/
     - https://raw.githubusercontent.com/DefectDojo/django-DefectDojo/helm-charts
     - https://kyverno.github.io/kyverno/
     - https://jertel.github.io/elastalert2/

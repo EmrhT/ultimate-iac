@@ -8,10 +8,21 @@ Two daily schedules cover the complete homelab cluster:
   Required hostname anti-affinity and worker-only node affinity place one scan
   on each of the three workers.
 
-Each pod uploads its JSON report to a stable per-node DefectDojo test under
-product `homelab-cluster` and engagement `Cluster security posture`. Reports
-are transient; DefectDojo is the persistent store. CIS failures are findings,
-not Kubernetes Job failures. Scanner execution or upload failures do fail the
+Each Job follows a deterministic scan-then-upload lifecycle, matching Nuclei:
+
+1. The kube-bench `scanner` init container writes the completed JSON report to
+   `/reports/kube-bench.json` on a size-limited shared `emptyDir`.
+2. Kubernetes starts `defectdojo-uploader` only after that scanner exits
+   successfully.
+3. The uploader imports the report into a stable per-node DefectDojo test under
+   product `homelab-cluster` and engagement `Cluster security posture`.
+4. The report volume disappears when the Job Pod is deleted; DefectDojo is the
+   persistent store.
+
+The uploader is not a concurrently running sidecar and does not need a
+separate CronJob. A separate Pod could not consume this Job's `emptyDir`
+without adding a PVC or external object store. CIS failures are findings, not
+Kubernetes Job failures. Scanner execution or upload failures do fail the
 individual Job.
 
 The scanner follows kube-bench's upstream Kubernetes Job model: it shares the

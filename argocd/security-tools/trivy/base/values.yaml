@@ -3,7 +3,7 @@ fullnameOverride: security-trivy
 image:
   registry: docker.io
   repository: aquasec/trivy
-  tag: 0.73.0@sha256:7cced7cae583819fc7806d4cbc0dbbc7cad18b99f7d3e235192e6da8c091045c
+  tag: 0.76.1@sha256:2e6c00d711ab4ae41d8a30c2c1fd3bd3b62704c177bb120f95012e939edfb3df
 
 replicaCount: 1
 

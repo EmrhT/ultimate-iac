@@ -18,3 +18,21 @@ spec:
           annotations:
             summary: Trivy cache has less than 15% free space
             description: The cache is disposable; recreate the Trivy claim to reclaim it.
+    - name: security-trivy.runtime-vulnerabilities
+      rules:
+        - alert: TrivyRunningImageCVSS9
+          expr: |
+            trivy_vulnerability_id{
+              vuln_score=~"^(9([.][0-9]+)?|10([.]0+)?)$"
+            } == 1
+          for: 30m
+          labels:
+            severity: critical
+            detector: trivy-operator
+            # Observation-only for the first controlled scan. Adding
+            # team: security enables the existing PagerDuty route.
+            paging: disabled
+          annotations:
+            summary: 'Running image contains {{ $labels.vuln_id }} with CVSS {{ $labels.vuln_score }}'
+            description: 'Namespace {{ $labels.namespace }}, {{ $labels.resource_kind }}/{{ $labels.resource_name }}, image {{ $labels.image_repository }}@{{ $labels.image_digest }}.'
+            runbook_url: https://github.com/EmrhT/ultimate-iac/blob/main/argocd/security-tools/README.md#trivy-operator-running-image-vulnerability-flow

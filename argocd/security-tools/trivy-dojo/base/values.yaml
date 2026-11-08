@@ -1,0 +1,45 @@
+fullnameOverride: security-trivy-dojo
+
+# Vault Secrets Operator creates the exact Secret name expected by this chart.
+defectDojoApiCredentials:
+  createSecret: false
+
+excludedNamespaces: []
+
+operator:
+  replicas: 1
+  trivyDojoReportOperator:
+    image:
+      repository: ghcr.io/telekom-mms/docker-trivy-dojo-operator
+      tag: 0.11.1@sha256:743cbbce5eaf392b6c04699ff36b626bdfdbed98f489e3b69d2a35d7b666ce8f
+    resources:
+      requests:
+        cpu: 25m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
+    env:
+      defectDojoActive: "true"
+      defectDojoAutoCreateContext: "true"
+      # Keep disabled until the deployed DefectDojo version includes stable
+      # service naming for Trivy Operator reports; otherwise a ReplicaSet name
+      # change can incorrectly close findings from the previous revision.
+      defectDojoCloseOldFindings: "false"
+      defectDojoCloseOldFindingsProductScope: "false"
+      defectDojoDeduplicationOnEngagement: "true"
+      defectDojoDoNotReactivate: "false"
+      defectDojoMinimumSeverity: High
+      defectDojoProductName: Homelab Kubernetes
+      defectDojoProductDescription: Vulnerabilities reported from workloads running in the homelab Kubernetes cluster
+      defectDojoProductTypeName: Infrastructure
+      defectDojoEngagementName: Runtime vulnerability management
+      defectDojoEnvName: Development
+      defectDojoTestTitle: Trivy Operator running images
+      defectDojoServiceName: runtime-images
+      defectDojoTags: trivy-operator,runtime,kubernetes
+      defectDojoVerified: "true"
+      reports: vulnerabilityreports
+      logLevel: INFO
+    transformation:
+      enabled: false

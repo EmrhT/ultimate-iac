@@ -98,8 +98,20 @@ spec:
             namespace: security-trivy
             chartRepo: https://aquasecurity.github.io/helm-charts
             chart: trivy
-            chartVersion: 0.25.0
+            chartVersion: 0.28.1
             wave: "15"
+          - name: security-trivy-operator
+            namespace: security-trivy
+            chartRepo: https://aquasecurity.github.io/helm-charts
+            chart: trivy-operator
+            chartVersion: 0.38.1
+            wave: "16"
+          - name: security-trivy-dojo
+            namespace: security-trivy
+            chartRepo: https://telekom-mms.github.io/trivy-dojo-report-operator/
+            chart: trivy-dojo-report-operator
+            chartVersion: 0.11.1
+            wave: "17"
           - name: security-defectdojo
             namespace: security-defectdojo
             chartRepo: https://raw.githubusercontent.com/DefectDojo/django-DefectDojo/helm-charts

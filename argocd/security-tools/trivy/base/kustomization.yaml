@@ -3,8 +3,7 @@ kind: Kustomization
 namespace: security-trivy
 resources:
   - namespace.yaml
-  - service-account.yaml
-  - scanner-cronjob.yaml
+  - vault-secrets.yaml
   - httproute-ci.yaml
   - resourcequota.yaml
   - prometheusrule.yaml

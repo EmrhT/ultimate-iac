@@ -14,6 +14,8 @@ spec:
       - source_namespace
       - destination_namespace
       - destination_workload
+      - vuln_id
+      - image_digest
     groupWait: 10s
     groupInterval: 5m
     repeatInterval: 4h
@@ -49,3 +51,9 @@ spec:
               value: '{{ .CommonLabels.pod }}'
             - key: source_ip
               value: '{{ .CommonLabels.source_ip }}'
+            - key: vulnerability_id
+              value: '{{ .CommonLabels.vuln_id }}'
+            - key: cvss_score
+              value: '{{ .CommonLabels.vuln_score }}'
+            - key: image
+              value: '{{ .CommonLabels.image_repository }}@{{ .CommonLabels.image_digest }}'
