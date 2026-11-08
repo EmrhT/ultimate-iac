@@ -9,9 +9,9 @@ targetWorkloads: pod,replicaset,replicationcontroller,statefulset,daemonset,cron
 
 operator:
   replicas: 1
-  scanJobsConcurrentLimit: 1
+  scanJobsConcurrentLimit: 3
   scanJobTimeout: 15m
-  scanJobTTL: 10m
+  scanJobTTL: 1m
   scannerReportTTL: 24h
   vulnerabilityScannerEnabled: true
   vulnerabilityScannerScanOnlyCurrentRevisions: true
