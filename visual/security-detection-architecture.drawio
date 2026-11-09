@@ -15,6 +15,9 @@
         <mxCell id="cilium" parent="sources-group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#16A34A;fontColor=#14532D;fontSize=14;" value="&lt;b&gt;Cilium / Hubble&lt;/b&gt;&lt;br&gt;&lt;font&gt;Network policy enforcement,&lt;br&gt;flow verdicts and metadata&lt;/font&gt;" vertex="1">
           <mxGeometry height="90" width="230" x="35" y="105" as="geometry" />
         </mxCell>
+        <mxCell id="trivy-runtime" parent="sources-group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3C7;strokeColor=#D97706;fontColor=#78350F;fontSize=14;" value="&lt;b&gt;Trivy Operator + Server&lt;/b&gt;&lt;br&gt;&lt;font&gt;Discovers live workload images&lt;br&gt;3 scan Jobs · 24 h rescan&lt;br&gt;Reports · metrics&lt;/font&gt;" vertex="1">
+          <mxGeometry height="90" width="230" x="35" y="600" as="geometry" />
+        </mxCell>
         <mxCell id="edge-kyverno-otel" edge="1" parent="sources-group" source="kyverno" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#7C3AED;endArrow=block;endFill=1;fontSize=14;">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
@@ -111,13 +114,13 @@
         <mxCell id="delivery-group" parent="1" style="swimlane;html=1;rounded=1;startSize=30;fillColor=#F8FAFC;strokeColor=#94A3B8;fontStyle=1;fontColor=#334155;fontSize=14;" value="Incident Delivery" vertex="1">
           <mxGeometry height="590" width="285" x="1255" y="120" as="geometry" />
         </mxCell>
-        <mxCell id="pagerduty" parent="delivery-group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FCE7F3;strokeColor=#DB2777;fontColor=#831843;fontSize=14;" value="&lt;b&gt;PagerDuty&lt;/b&gt;&lt;br&gt;&lt;font&gt;Security incidents&lt;br&gt;and escalation&lt;/font&gt;" vertex="1">
+        <mxCell id="pagerduty" parent="delivery-group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FCE7F3;strokeColor=#DB2777;fontColor=#831843;fontSize=14;" value="&lt;b&gt;PagerDuty&lt;/b&gt;&lt;br&gt;&lt;font&gt;Runtime, network and&lt;br&gt;CVSS 9.0+ incidents&lt;/font&gt;" vertex="1">
           <mxGeometry height="100" width="185" x="65" y="260" as="geometry" />
         </mxCell>
         <mxCell id="alertmanager" parent="delivery-group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3C7;strokeColor=#D97706;fontColor=#78350F;fontSize=14;" value="&lt;b&gt;Alertmanager&lt;/b&gt;&lt;br&gt;&lt;font&gt;Prometheus alert routing&lt;/font&gt;" vertex="1">
           <mxGeometry height="80" width="185" x="65" y="105" as="geometry" />
         </mxCell>
-        <mxCell id="edge-am-pd" edge="1" parent="delivery-group" source="alertmanager" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#DB2777;endArrow=block;endFill=1;fontSize=14;" target="pagerduty" value="Cilium policy alerts">
+        <mxCell id="edge-am-pd" edge="1" parent="delivery-group" source="alertmanager" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#DB2777;endArrow=block;endFill=1;fontSize=14;" target="pagerduty" value="Cilium + CVSS 9.0+ alerts">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="title" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=25;fontStyle=1;fontColor=#1F2937;" value="Homelab Kubernetes Security Detection Architecture" vertex="1">
@@ -137,8 +140,11 @@
         <mxCell id="storage-group" parent="1" style="swimlane;html=1;rounded=1;startSize=30;fillColor=#F8FAFC;strokeColor=#94A3B8;fontStyle=1;fontColor=#334155;fontSize=14;" value="Evidence Retention and Alerting" vertex="1">
           <mxGeometry height="590" width="320" x="890" y="120" as="geometry" />
         </mxCell>
-        <mxCell id="prometheus" parent="storage-group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3C7;strokeColor=#D97706;fontColor=#78350F;fontSize=14;" value="&lt;b&gt;Prometheus&lt;/b&gt;&lt;br&gt;&lt;font&gt;Cilium policy-denied rules&lt;br&gt;including cold-start coverage&lt;/font&gt;" vertex="1">
+        <mxCell id="prometheus" parent="storage-group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3C7;strokeColor=#D97706;fontColor=#78350F;fontSize=14;" value="&lt;b&gt;Prometheus&lt;/b&gt;&lt;br&gt;&lt;font&gt;Cilium policy-denied rules&lt;br&gt;Trivy CVSS 9.0+ · 30 min hold&lt;/font&gt;" vertex="1">
           <mxGeometry height="90" width="210" x="80" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="defectdojo-runtime" parent="storage-group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF7ED;strokeColor=#EA580C;fontColor=#7C2D12;fontSize=14;" value="&lt;b&gt;DefectDojo&lt;/b&gt;&lt;br&gt;&lt;font&gt;Running-image vulnerability history&lt;/font&gt;" vertex="1">
+          <mxGeometry height="55" width="210" x="50" y="35" as="geometry" />
         </mxCell>
         <mxCell id="elastalert" parent="storage-group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3C7;strokeColor=#D97706;fontColor=#78350F;fontSize=14;" value="&lt;b&gt;ElastAlert2&lt;/b&gt;&lt;br&gt;&lt;font&gt;Source-specific event rules&lt;br&gt;and PagerDuty payloads&lt;/font&gt;" vertex="1">
           <mxGeometry height="80" width="210" x="90" y="270" as="geometry" />
@@ -157,6 +163,26 @@
         <mxCell id="edge-prom-am" edge="1" parent="1" source="prometheus" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#D97706;endArrow=block;endFill=1;fontSize=14;" target="alertmanager">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
+        <mxCell id="edge-trivy-prom" edge="1" parent="1" source="trivy-runtime" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#D97706;endArrow=block;endFill=1;fontSize=14;" target="prometheus">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="370" y="765" />
+              <mxPoint x="370" y="675" />
+              <mxPoint x="875" y="675" />
+              <mxPoint x="875" y="265" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge-trivy-dojo" edge="1" parent="1" source="trivy-runtime" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#EA580C;endArrow=block;endFill=1;fontSize=14;" target="defectdojo-runtime">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="370" y="765" />
+              <mxPoint x="370" y="700" />
+              <mxPoint x="875" y="700" />
+              <mxPoint x="875" y="175" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
         <mxCell id="edge-elastalert-pd" edge="1" parent="1" source="elastalert" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#DB2777;endArrow=block;endFill=1;fontSize=14;" target="pagerduty" value="incident events">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
@@ -172,7 +198,7 @@
             <mxPoint x="950" y="520" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="subtitle" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=14;fontColor=#4B5563;" value="Four independent detection sources, alert paths, and retained evidence" vertex="1">
+        <mxCell id="subtitle" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=14;fontColor=#4B5563;" value="Five independent detection sources, alert paths, and retained evidence" vertex="1">
           <mxGeometry height="25" width="450" x="530" y="85" as="geometry" />
         </mxCell>
       </root>

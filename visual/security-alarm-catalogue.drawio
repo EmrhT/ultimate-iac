@@ -94,6 +94,12 @@
         <mxCell id="c2" parent="cilium-group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#16A34A;fontColor=#14532D;align=left;spacing=8;fontSize=14;" value="&lt;b&gt;HubbleMetricsMissingOnReadyNode&lt;/b&gt; &lt;font color=&quot;#D97706&quot;&gt;WARNING&lt;/font&gt;&lt;br&gt;&lt;font&gt;A Kubernetes-ready node has no scrapeable Hubble metrics for three minutes. Workloads may still run, but policy-denial visibility for that node is incomplete until Hubble metrics recover.&lt;/font&gt;" vertex="1">
           <mxGeometry height="71" width="637" x="11.5" y="133" as="geometry" />
         </mxCell>
+        <mxCell id="trivy-group" parent="1" style="swimlane;html=1;rounded=1;startSize=30;fillColor=#FFF7ED;strokeColor=#D97706;fontStyle=1;fontColor=#78350F;fontSize=16;" value="Trivy Operator — running-image vulnerability management (1)" vertex="1">
+          <mxGeometry height="100" width="1743" x="30" y="985" as="geometry" />
+        </mxCell>
+        <mxCell id="t1" parent="trivy-group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3C7;strokeColor=#D97706;fontColor=#78350F;align=left;spacing=8;fontSize=14;" value="&lt;b&gt;TrivyRunningImageCVSS9&lt;/b&gt; &lt;font color=&quot;#B91C1C&quot;&gt;CRITICAL&lt;/font&gt;&lt;br&gt;&lt;font&gt;A currently deployed image contains a vulnerability with numeric CVSS 9.0 or higher for 30 minutes. Prometheus groups each incident by CVE and immutable image digest; PagerDuty resolves it when the vulnerable report disappears after remediation.&lt;/font&gt;" vertex="1">
+          <mxGeometry height="55" width="1713" x="15" y="38" as="geometry" />
+        </mxCell>
       </root>
     </mxGraphModel>
   </diagram>
