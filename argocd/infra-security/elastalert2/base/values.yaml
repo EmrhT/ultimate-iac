@@ -60,7 +60,7 @@ metrics:
 
 image:
   repository: docker.io/jertel/elastalert2
-  tag: 2.31.0@sha256:3cbf63f9b7dc09d416e6985b948d9d9095e7d793e7bebe0eb9d207682e8548ac
+  tag: 2.32.0@sha256:863e1ed13c0cf4b589e89bea3e93f72297f1604f146e9a4df58d58c118da1240
 
 rules:
   kubernetes_non_admin_interactive_pod_access: |-

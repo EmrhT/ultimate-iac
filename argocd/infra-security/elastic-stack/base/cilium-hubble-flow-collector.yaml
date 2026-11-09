@@ -109,7 +109,7 @@ spec:
         # Prevent Elasticsearch from auto-creating cilium-hubble-write as a
         # concrete index before the bootstrapper establishes it as an alias.
         - name: wait-for-index-alias
-          image: docker.io/curlimages/curl@sha256:7c12af72ceb38b7432ab85e1a265cff6ae58e06f95539d539b654f2cfa64bb13
+          image: docker.io/curlimages/curl:8.23.0@sha256:3fb7e13e5d179a845c97d78204f3f1064d1907037f26a3ebf91710571151fd93
           command:
             - /bin/sh
             - -ec

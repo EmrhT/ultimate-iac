@@ -24,6 +24,8 @@ kube_vip_controlplane_enabled: true
 kube_vip_services_enabled: false
 kube_vip_address: 192.168.122.30
 kube_vip_interface: eth0
+kube_vip_version: 1.2.4
+kube_vip_image_tag: v1.2.4@sha256:dde4c0669d9058c74c69c0bc2f0122e26900e1e4b913c03577cb6e4e28083079
 loadbalancer_apiserver:
   address: 192.168.122.30
   port: 6443

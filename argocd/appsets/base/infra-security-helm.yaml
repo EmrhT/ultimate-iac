@@ -32,7 +32,7 @@ spec:
             namespace: metrics-server
             chartRepo: https://kubernetes-sigs.github.io/metrics-server
             chart: metrics-server
-            chartVersion: 3.13.1
+            chartVersion: 3.14.0
             wave: "-15"
           - name: kube-prometheus-stack
             namespace: monitoring
@@ -74,7 +74,7 @@ spec:
             namespace: falco
             chartRepo: https://falcosecurity.github.io/charts
             chart: falco
-            chartVersion: 9.1.0
+            chartVersion: 9.2.2
             wave: "0"
           - name: eck-operator
             namespace: elastic-system
@@ -86,7 +86,7 @@ spec:
             namespace: elastic-stack
             chartRepo: https://jertel.github.io/elastalert2/
             chart: elastalert2
-            chartVersion: 2.31.0
+            chartVersion: 2.32.0
             wave: "16"
           - name: security-sonarqube
             namespace: security-sonarqube

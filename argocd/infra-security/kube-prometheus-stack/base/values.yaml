@@ -10,7 +10,8 @@ grafana:
     security.no-name.win/falco-unexpected-root: "false"
     security.no-name.win/falco-service-account-access: "false"
   image:
-    sha: 5dad0df181cb644a14e13617b913b261a54f7d4fd4510721dba420929f35bea2
+    tag: 13.3.0
+    sha: 488984b716c0862639f91a698adbe2862677a5a07bad42da5f03f3030883b205
   initChownData:
     image:
       sha: dc2d74b28e4cf8984fa52af1f39bc7c3d9c73760b41a74d629f5d11b1ab28616
