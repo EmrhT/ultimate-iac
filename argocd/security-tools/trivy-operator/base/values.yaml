@@ -10,7 +10,7 @@ targetWorkloads: pod,replicaset,replicationcontroller,statefulset,daemonset,cron
 operator:
   replicas: 1
   scanJobsConcurrentLimit: 3
-  scanJobTimeout: 15m
+  scanJobTimeout: 25m
   scanJobTTL: 1m
   scannerReportTTL: 24h
   vulnerabilityScannerEnabled: true
@@ -66,7 +66,7 @@ trivy:
   severity: HIGH,CRITICAL
   additionalVulnerabilityReportFields: Description,Links,CVSS,Target,Class,PackagePath,PackageType
   slow: true
-  timeout: 15m0s
+  timeout: 25m0s
   resources:
     requests:
       cpu: 100m
@@ -96,11 +96,11 @@ securityContext:
 
 resources:
   requests:
-    cpu: 50m
-    memory: 128Mi
-  limits:
     cpu: 250m
-    memory: 256Mi
+    memory: 512Mi
+  limits:
+    cpu: "1"
+    memory: 1Gi
 
 # The vulnerability-only deployment does not need dormant compliance spec CRs.
 compliance:

@@ -4,6 +4,8 @@ host: dojo.no-name.win
 siteUrl: https://dojo.no-name.win
 alternativeHosts:
   - ci-dojo.no-name.win
+  # In-cluster report uploaders connect directly to the Django Service.
+  - security-defectdojo-django.security-defectdojo.svc.cluster.local
 
 imagePullPolicy: IfNotPresent
 revisionHistoryLimit: 2
