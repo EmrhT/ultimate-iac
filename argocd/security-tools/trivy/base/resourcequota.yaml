@@ -4,11 +4,15 @@ metadata:
   name: security-trivy
 spec:
   hard:
-    requests.cpu: "1"
-    requests.memory: 2Gi
-    limits.cpu: "3"
-    limits.memory: 3Gi
+    # Three concurrent multi-container scans can declare up to 6 CPU/6 GiB,
+    # in addition to the Trivy server and both operators. Scanner requests
+    # remain small, so these limits permit concurrency without reserving the
+    # full burst capacity on the workers.
+    requests.cpu: "2"
+    requests.memory: 3Gi
+    limits.cpu: "8"
+    limits.memory: 8Gi
     requests.storage: 2Gi
     persistentvolumeclaims: "1"
-    count/jobs.batch: "5"
+    count/jobs.batch: "8"
     count/cronjobs.batch: "2"
