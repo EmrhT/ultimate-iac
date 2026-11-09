@@ -3,8 +3,8 @@ kind: Elasticsearch
 metadata:
   name: platform
 spec:
-  version: 9.4.2
-  image: docker.elastic.co/elasticsearch/elasticsearch@sha256:be5f49784ff5ec8a5b5d7ba17f944d9d6b10c067f596ee93e6b6cb82d2dd874c
+  version: 9.4.9
+  image: docker.elastic.co/elasticsearch/elasticsearch@sha256:0a95b0fb35f3084f5336ec18f9de4469d564fe863c87218916a90ff85cf1f170
   nodeSets:
     - name: default
       count: 1

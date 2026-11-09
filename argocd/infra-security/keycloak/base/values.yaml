@@ -13,8 +13,8 @@ podLabels:
 
 image:
   repository: quay.io/keycloak/keycloak
-  tag: "26.7.2"
-  digest: sha256:9d1f1b2b7261ff53c66cb1092dfcdc34a5fb77e81f9e6a6e75b8b6a795de8067
+  tag: "26.8.2"
+  digest: sha256:c126f032d43b941ed7c5ccca7d6571596d8eab84d748afd7c86989e48ef07b8f
   pullPolicy: IfNotPresent
 
 args:

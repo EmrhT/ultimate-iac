@@ -26,14 +26,14 @@ images:
     image:
       registry: docker.io
       repository: defectdojo/defectdojo-django
-      tag: 3.2.201
-      digest: sha256:fef875bf59b37ca42ef756334517e441d67b3b82314ab3297446fe55d3ea9c35
+      tag: 3.5.100
+      digest: sha256:86f69fd745622d61073d1544ca89806c8bff60cdaa333406ce7c7939d3015920
   nginx:
     image:
       registry: docker.io
       repository: defectdojo/defectdojo-nginx
-      tag: 3.2.201
-      digest: sha256:e4d3790a6c975dc9f675b6f027fcfe3d9238f54fe1aec1142f0c680e93b14aec
+      tag: 3.5.100
+      digest: sha256:24dd1902a06cdaa40d49df7b68300c803b3525cc17538f573548cf4f59703187
 
 # Credentials are supplied by Vault Secrets Operator. The chart must never
 # generate random Secrets, which would create both drift and broken upgrades.

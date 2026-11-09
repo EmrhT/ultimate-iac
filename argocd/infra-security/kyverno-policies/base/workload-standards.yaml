@@ -204,7 +204,7 @@ spec:
           'registry.k8s.io/cpa/cluster-proportional-autoscaler:v1.8.8',
           'registry.k8s.io/dns/k8s-dns-node-cache:1.25.0',
           'ghcr.io/kube-vip/kube-vip:v1.2.4',
-          'ghcr.io/postfinance/kubelet-csr-approver:v1.1.0'
+          'ghcr.io/postfinance/kubelet-csr-approver:v1.2.11'
         ]
     - name: longhornSystemDigestExceptions
       expression: >-

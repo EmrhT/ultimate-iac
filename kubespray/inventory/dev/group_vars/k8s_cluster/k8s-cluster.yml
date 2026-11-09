@@ -6,6 +6,7 @@ etcd_deployment_type: host
 
 kube_network_plugin: cilium
 kube_owner: root
+cilium_version: 1.19.10
 
 # Keep kube-proxy for a conservative Cilium deployment. Service LoadBalancer
 # addresses will be managed by GitOps, so Cilium L2 announcements stay disabled.
@@ -179,3 +180,7 @@ audit_policy_custom_rules: |
 # cluster-signed serving certificates instead of weakening Metrics Server with
 # --kubelet-insecure-tls.
 kubelet_rotate_server_certificates: true
+kubelet_csr_approver_chart_version: 1.2.11
+kubelet_csr_approver_values:
+  image:
+    tag: v1.2.11@sha256:dfeddbbc2bcb1da7575c7c3c59dddf66210d4ec6c5bdcbfccdd666bc0c037bc2

@@ -3,17 +3,17 @@ prometheus:
     enabled: false
 controller:
   image:
-    tag: v0.16.1@sha256:f51ab515de9ccd20dc3dccb093e48df8adddac019326c456f449e55ba91b6420
+    tag: v0.16.2@sha256:f31c45f9412e21da684e24f11ddfe5b26f6a996df72e9417b8e93bc80dfc2c27
   logLevel: info
 speaker:
   image:
-    tag: v0.16.1@sha256:16561e96531e1852d5c229ad7fae6e994dcfa983ff7f4de6b6208b34a4e2ddbc
+    tag: v0.16.2@sha256:9bcf1a453fd531f1f418c9dda38fc283899823d7238332a3bf7eba2a53f97a62
   logLevel: info
 
 frr-k8s:
   frrk8s:
     image:
-      tag: v0.0.25@sha256:1cb06fb2d5538c9f9b20d3adf00da8d1e6cb0166bc15df8add0d9efe578641a4
+      tag: v0.0.27@sha256:fe50e1da877653c95bc4cee661930f41e6e80627a71ab5e6268d09112aaf2ef5
     frr:
       image:
-        tag: 10.4.3@sha256:8745af1f9bbbc26ab11d99ccdf35e07aa3427a199749bef0cd6bb5132bb130df
+        tag: 10.6.2@sha256:9ab49c01800cdbce7aee3f11787094a062c6448168dc07fb1346364a9fab88f0

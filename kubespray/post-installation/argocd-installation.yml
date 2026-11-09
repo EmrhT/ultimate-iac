@@ -21,11 +21,11 @@
       quay.io/argoproj/argocd@sha256:316995390ef89c07222315d33487559409158ec43c91f4a648ddb94507fdf84c
     post_install_argocd_dex_source_image: ghcr.io/dexidp/dex:v2.45.0
     post_install_argocd_dex_pinned_image: >-
-      ghcr.io/dexidp/dex@sha256:b8469881d3cb3a73001506f0d3aaefecb9c45d2311c1e0f405d8ac538316c59d
+      ghcr.io/dexidp/dex@sha256:ca5daa7da6be22465702e0d93ef74e064231460681093ac253e1479960c829b3
     post_install_argocd_redis_source_image: >-
       public.ecr.aws/docker/library/redis:8.2.3-alpine
     post_install_argocd_redis_pinned_image: >-
-      public.ecr.aws/docker/library/redis@sha256:08ad0b1d280850169a790dba1393ff7a90aef951fc19632cf4d3ce4f78e679ba
+      public.ecr.aws/docker/library/redis@sha256:a18fce2f705d9782ccf6968f8dd94fa04566ff97e10a8d322ad72645243e4c0c
     post_install_argocd_field_manager: argocd-installation
     post_install_argocd_falco_labels:
       argocd-repo-server:

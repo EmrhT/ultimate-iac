@@ -30,7 +30,7 @@ spec:
               type: RuntimeDefault
           initContainers:
             - name: source
-              image: docker.io/alpine/git:2.49.1@sha256:53a6239398162098fed2f49a46512f9cbba9e3f31b9f2cea4fa90129ee069a99
+              image: docker.io/alpine/git:2.52.0@sha256:8ca9c34b11904f2406088b72aafefdda49bff86f1a10a21d746c7e7d32b769e3
               imagePullPolicy: IfNotPresent
               securityContext:
                 allowPrivilegeEscalation: false

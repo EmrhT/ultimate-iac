@@ -223,7 +223,7 @@ ansible-playbook \
   -e post_install_inventory_dir=/inventory
 ```
 
-Argo CD is installed from the official `v3.4.2` manifest with its SHA-256
+Argo CD is installed from the official `v3.4.13` manifest with its SHA-256
 checksum pinned in the playbook. After that checksum is verified, the playbook
 replaces the Argo CD, Dex, and Redis image tags with their independently pinned
 image digests before diffing or applying the manifest. Future post-install

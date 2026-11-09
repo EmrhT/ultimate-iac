@@ -77,7 +77,7 @@ spec:
               capability in ['BPF', 'PERFMON', 'SYS_PTRACE', 'SYS_RESOURCE']) ||
             (object.metadata.namespace == 'kube-system' &&
               object.spec.?serviceAccountName.orValue('default') == 'cilium' &&
-              c.image == 'quay.io/cilium/cilium:v1.19.3@sha256:2e61680593cddca8b6c055f6d4c849d87a26a1c91c7e3b8b56c7fb76ab7b7b10' &&
+              c.image == 'quay.io/cilium/cilium:v1.19.10@sha256:e86fb55fa703ada191fbd4489513daa19674952c8c3c4985dc3c77ce51ac4f27' &&
               ((c.name in ['apply-sysctl-overwrites', 'mount-cgroup'] &&
                   capability in ['SYS_ADMIN', 'SYS_CHROOT', 'SYS_PTRACE']) ||
                 (c.name == 'cilium-agent' &&
@@ -91,7 +91,7 @@ spec:
             (object.metadata.namespace == 'kube-system' &&
               object.spec.?serviceAccountName.orValue('default') == 'cilium-envoy' &&
               c.name == 'cilium-envoy' &&
-              c.image == 'quay.io/cilium/cilium-envoy:v1.34.10-1762597008-ff7ae7d623be00078865cff1b0672cc5d9bfc6d5@sha256:ba0ab8adac082d50d525fd2c5ba096c8facea3a471561b7c61c7a5b9c2e0de0d' &&
+              c.image == 'quay.io/cilium/cilium-envoy:v1.38.8-1792733059-cd15cd6895980581ffad343a9a47c44b507387f8@sha256:dfdee624883c419b253ecdecf9fb6a001c05900dda19914e241db053c94bd987' &&
               capability in ['NET_ADMIN', 'SYS_ADMIN']) ||
             (object.metadata.namespace == 'kube-system' &&
               object.spec.?serviceAccountName.orValue('default') == 'default' &&
@@ -111,16 +111,16 @@ spec:
             (object.metadata.namespace == 'metallb-system' &&
               object.spec.?serviceAccountName.orValue('default') == 'metallb-frr-k8s-controller' &&
               ((c.name == 'controller' &&
-                  c.image == 'quay.io/metallb/frr-k8s:v0.0.25@sha256:1cb06fb2d5538c9f9b20d3adf00da8d1e6cb0166bc15df8add0d9efe578641a4' &&
+                  c.image == 'quay.io/metallb/frr-k8s:v0.0.27@sha256:fe50e1da877653c95bc4cee661930f41e6e80627a71ab5e6268d09112aaf2ef5' &&
                   capability == 'NET_RAW') ||
                 (c.name == 'frr' &&
-                  c.image == 'quay.io/frrouting/frr:10.4.3@sha256:8745af1f9bbbc26ab11d99ccdf35e07aa3427a199749bef0cd6bb5132bb130df' &&
+                  c.image == 'quay.io/frrouting/frr:10.6.2@sha256:9ab49c01800cdbce7aee3f11787094a062c6448168dc07fb1346364a9fab88f0' &&
                   capability in ['NET_ADMIN', 'NET_BIND_SERVICE', 'NET_RAW',
                     'SYS_ADMIN']))) ||
             (object.metadata.namespace == 'metallb-system' &&
               object.spec.?serviceAccountName.orValue('default') == 'metallb-speaker' &&
               c.name == 'speaker' &&
-              c.image == 'quay.io/metallb/speaker:v0.16.1@sha256:16561e96531e1852d5c229ad7fae6e994dcfa983ff7f4de6b6208b34a4e2ddbc' &&
+              c.image == 'quay.io/metallb/speaker:v0.16.2@sha256:9bcf1a453fd531f1f418c9dda38fc283899823d7238332a3bf7eba2a53f97a62' &&
               capability == 'NET_RAW') ||
             (object.metadata.namespace == 'monitoring' &&
               object.spec.?serviceAccountName.orValue('default') == 'kube-prometheus-stack-grafana' &&

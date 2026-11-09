@@ -20,7 +20,7 @@ spec:
             namespace: metallb-system
             chartRepo: https://metallb.github.io/metallb
             chart: metallb
-            chartVersion: 0.16.1
+            chartVersion: 0.16.2
             wave: "-25"
           - name: longhorn
             namespace: longhorn-system
@@ -116,7 +116,7 @@ spec:
             namespace: security-defectdojo
             chartRepo: https://raw.githubusercontent.com/DefectDojo/django-DefectDojo/helm-charts
             chart: defectdojo
-            chartVersion: 1.9.47
+            chartVersion: 1.9.66
             wave: "15"
   template:
     metadata:
