@@ -6,9 +6,11 @@ spec:
   hard:
     requests.cpu: "2"
     requests.memory: 3Gi
-    limits.cpu: "5"
-    limits.memory: 5Gi
+    # Allow the initializer hook and replacement Django Pod to coexist with
+    # the old replicas during a rolling upgrade.
+    limits.cpu: "7"
+    limits.memory: 7Gi
     requests.storage: 2Gi
     persistentvolumeclaims: "1"
-    count/pods: "8"
+    count/pods: "10"
     count/jobs.batch: "2"

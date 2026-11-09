@@ -4,14 +4,14 @@ metadata:
   name: security-trivy
 spec:
   hard:
-    # Three concurrent multi-container scans can declare up to 6 CPU/6 GiB,
-    # in addition to the Trivy server and both operators. Scanner requests
-    # remain small, so these limits permit concurrency without reserving the
-    # full burst capacity on the workers.
+    # A scan of the nine-container MetalLB FRR DaemonSet can declare
+    # 4.5 CPU/4.5 GiB in addition to the Trivy server, operators and other
+    # active scan Jobs. Scanner requests remain small, so these limits permit
+    # the declared burst without reserving that capacity on the workers.
     requests.cpu: "2"
     requests.memory: 3Gi
-    limits.cpu: "8"
-    limits.memory: 8Gi
+    limits.cpu: "10"
+    limits.memory: 10Gi
     requests.storage: 2Gi
     persistentvolumeclaims: "1"
     count/jobs.batch: "8"
