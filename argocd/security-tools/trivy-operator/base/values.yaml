@@ -64,7 +64,11 @@ trivy:
   serverURL: http://security-trivy.security-trivy.svc.cluster.local:4954
   clientServerSkipUpdate: true
   severity: HIGH,CRITICAL
-  additionalVulnerabilityReportFields: Description,Links,CVSS,Target,Class,PackagePath,PackageType
+  # Keep fields required for numeric CVSS paging, remediation and DefectDojo.
+  # Descriptions and reference-link arrays are deliberately omitted because
+  # repeating them for every finding can push VulnerabilityReport CRs beyond
+  # etcd's request-size limit.
+  additionalVulnerabilityReportFields: CVSS,Target,Class,PackagePath,PackageType
   slow: true
   timeout: 25m0s
   resources:
