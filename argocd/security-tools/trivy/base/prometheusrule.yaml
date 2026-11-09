@@ -29,9 +29,9 @@ spec:
           labels:
             severity: critical
             detector: trivy-operator
-            # Observation-only for the first controlled scan. Adding
-            # team: security enables the existing PagerDuty route.
-            paging: disabled
+            # Route confirmed CVSS 9.0+ findings through the existing
+            # security AlertmanagerConfig to PagerDuty.
+            team: security
           annotations:
             summary: 'Running image contains {{ $labels.vuln_id }} with CVSS {{ $labels.vuln_score }}'
             description: 'Namespace {{ $labels.namespace }}, {{ $labels.resource_kind }}/{{ $labels.resource_name }}, image {{ $labels.image_repository }}@{{ $labels.image_digest }}.'
