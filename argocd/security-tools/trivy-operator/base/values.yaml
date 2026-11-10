@@ -70,6 +70,9 @@ trivy:
     registry: docker.io
     repository: aquasec/trivy
     tag: 0.76.2@sha256:6fa071ef8daa2e58b90cbf1710bedca91adbb3bf98693533226f442035b836a6
+  command: image
+  vulnType: os,library
+  offlineScan: false
   mode: ClientServer
   serverURL: http://security-trivy.security-trivy.svc.cluster.local:4954
   clientServerSkipUpdate: true
