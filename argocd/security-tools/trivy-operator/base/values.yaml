@@ -10,7 +10,7 @@ targetWorkloads: pod,replicaset,replicationcontroller,statefulset,daemonset,cron
 operator:
   replicas: 1
   scanJobsConcurrentLimit: 3
-  scanJobTimeout: 25m
+  scanJobTimeout: 40m
   scanJobTTL: 1m
   scannerReportTTL: 24h
   vulnerabilityScannerEnabled: true
@@ -70,7 +70,7 @@ trivy:
   # etcd's request-size limit.
   additionalVulnerabilityReportFields: CVSS,Target,Class,PackagePath,PackageType
   slow: true
-  timeout: 25m0s
+  timeout: 40m0s
   resources:
     requests:
       cpu: 100m
