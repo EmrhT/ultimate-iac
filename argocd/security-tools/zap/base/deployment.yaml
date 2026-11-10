@@ -49,10 +49,11 @@ spec:
               -config api.addrs.addr.name=.*
               -config api.addrs.addr.regex=true
               -config "api.key=${ZAP_API_KEY}"
-              -config autoupdate.checkonstart=false
-              -config autoupdate.downloadnewrelease=false
-              -config autoupdate.installaddonupdates=false
-              -config autoupdate.installscannerrules=false
+              -config start.checkForUpdates=false
+              -config start.downloadNewRelease=false
+              -config start.checkAddonUpdates=false
+              -config start.installAddonUpdates=false
+              -config start.installScannerRules=false
               -config scanner.threadPerHost=1
               -config connection.timeoutInSecs=60
           env:
