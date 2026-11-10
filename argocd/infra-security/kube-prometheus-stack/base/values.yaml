@@ -35,7 +35,7 @@ grafana:
   persistence:
     enabled: true
     storageClassName: longhorn
-    size: 300Mi
+    size: 1Gi
 prometheus:
   prometheusSpec:
     image:

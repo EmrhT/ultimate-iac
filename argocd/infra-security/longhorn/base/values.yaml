@@ -49,6 +49,7 @@ persistence:
 defaultSettings:
   defaultDataPath: /var/lib/longhorn
   defaultReplicaCount: 2
+  replicaAutoBalance: best-effort
   replicaSoftAntiAffinity: false
   storageMinimalAvailablePercentage: 15
   removeSnapshotsDuringFilesystemTrim: true
