@@ -11,7 +11,9 @@ operator:
   replicas: 1
   scanJobsConcurrentLimit: 3
   scanJobTimeout: 40m
-  scanJobTTL: 1m
+  # Retain completed and failed scan Jobs briefly so their status and logs are
+  # available for troubleshooting without accumulating them indefinitely.
+  scanJobTTL: 10m
   scannerReportTTL: 24h
   vulnerabilityScannerEnabled: true
   vulnerabilityScannerScanOnlyCurrentRevisions: true
