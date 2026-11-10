@@ -79,7 +79,10 @@ trivy:
     limits:
       cpu: 500m
       memory: 512Mi
-      ephemeralStorage: 1Gi
+      # Large images such as Elasticsearch can exceed 1Gi while Trivy
+      # extracts and analyzes their layers. Keep the request small, but allow
+      # each scanner container enough temporary space to finish.
+      ephemeralStorage: 3Gi
 
 serviceMonitor:
   enabled: true
