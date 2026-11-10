@@ -30,7 +30,7 @@ spec:
               type: RuntimeDefault
           initContainers:
             - name: source
-              image: docker.io/alpine/git:2.52.0@sha256:8ca9c34b11904f2406088b72aafefdda49bff86f1a10a21d746c7e7d32b769e3
+              image: docker.io/alpine/git:2.54.0@sha256:cf7d0aa63721bcb75bf43a875619e47792a2f9a3b1e35cc65e45c254ae5436e4
               imagePullPolicy: IfNotPresent
               securityContext:
                 allowPrivilegeEscalation: false
@@ -54,7 +54,7 @@ spec:
                   mountPath: /workspace
           containers:
             - name: scanner
-              image: docker.io/sonarsource/sonar-scanner-cli:12.1.0.3233_8.0.1@sha256:23ca0f137965d9dff2198074043fd48d386280bc5d0ccac8c8349cea4cf096a9
+              image: docker.io/sonarsource/sonar-scanner-cli:12.4.0.4321_8.4.0@sha256:6e6eca4d552695a98fb7dab84f0c1bd0885ebbfe272654d1552e24bd7f452d51
               imagePullPolicy: IfNotPresent
               securityContext:
                 allowPrivilegeEscalation: false
