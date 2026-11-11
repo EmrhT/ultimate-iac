@@ -98,24 +98,31 @@ The Operator's client image is pinned to the same Trivy release as the server.
 Java database data needed by a client scan remains ephemeral.
 
 Reports contain HIGH and CRITICAL findings and include CVSS fields. The
-`security-trivy-dojo` report operator watches those native reports and imports
-them with DefectDojo's `Trivy Operator Scan` parser. This intentionally sends a
-small superset to DefectDojo: every numeric CVSS 9.0+ finding is present, while
-some HIGH findings below 9.0 remain available for investigation. PagerDuty is
-more selective and uses the Operator's `trivy_vulnerability_id` metric to
-match numeric scores from 9.0 through 10.0.
+`security-trivy-dojo` watches those native reports and imports them with
+DefectDojo's `Trivy Operator Scan` parser. The Asset is `Kubernetes runtime
+image vulnerabilities - homelab cluster`; each Kubernetes namespace becomes
+an Engagement, and each stable workload/container identity becomes a Test. A
+ReplicaSet's rollout hash is removed from that identity. This makes the UI
+navigable and scopes `close_old_findings` to one workload/container service.
+The importer sends a small superset to DefectDojo: every numeric CVSS 9.0+
+finding is present, while some HIGH findings below 9.0 remain available for
+investigation. PagerDuty is more selective and uses the Operator's
+`trivy_vulnerability_id` metric to match numeric scores from 9.0 through 10.0.
 
-DefectDojo `close_old_findings` starts disabled. The deployed DefectDojo parser
-can derive a volatile service name from a ReplicaSet, which could otherwise
-close findings merely because a Deployment rolled out. Enable closure only
-after upgrading and verifying stable service identity with two successive
-revisions.
+DefectDojo `close_old_findings` is enabled with a caller-supplied stable service
+identity made from namespace, workload, and container. Trivy Operator is
+explicitly limited to current Deployment revisions. Before the first grouped
+import, remove reports owned by zero-replica historical ReplicaSets; this
+prevents an old report created before current-revision filtering from becoming
+the last reimport for a stable workload Test.
 
 Before syncing, permit the `security-trivy/vault-auth` ServiceAccount in the
-existing Vault Kubernetes role `vso-admin`. The Vault record
-`kv/security/defectdojo/credentials` must contain `defectdojo-api-token`. VSO
-creates `security-trivy-dojo-defect-dojo-api-credentials`, containing `apiKey`
-and the internal DefectDojo URL expected by the report-operator chart.
+existing Vault Kubernetes role `vso-admin`. Create a dedicated DefectDojo
+Open Source user named `trivy-dojo`, authorize it on the runtime-image Asset,
+and store its API token in `kv/security/defectdojo/credentials` as
+`trivy-dojo-api-token`. VSO creates
+`security-trivy-dojo-defect-dojo-api-credentials`, containing `apiKey` and the
+internal DefectDojo URL expected by the report-operator chart.
 
 Observe initial operation with:
 
@@ -144,8 +151,9 @@ Secrets Operator materializes only that field as the
 
 Nuclei scans `podinfo.lab-a-dev.svc.cluster.local:9898` every six hours for low,
 medium, high, and critical findings. Reports
-are reimported into product `podinfo`, engagement `Recurring security scan`, and
-test `Nuclei recurring lab-a-dev`. Each execution has a timestamped build ID;
+are reimported into Asset `Podinfo application security findings`, engagement
+`Recurring security scan`, and test `Nuclei recurring lab-a-dev`. Each
+execution has a timestamped build ID;
 `close_old_findings=true` lets DefectDojo reconcile fixed and recurring
 findings while preserving scan history. The uploader bootstraps a missing test
 with `import-scan` and uses `reimport-scan` thereafter. Uploads are not retried

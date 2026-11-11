@@ -22,22 +22,29 @@ operator:
     env:
       defectDojoActive: "true"
       defectDojoAutoCreateContext: "true"
-      # Keep disabled until the deployed DefectDojo version includes stable
-      # service naming for Trivy Operator reports; otherwise a ReplicaSet name
-      # change can incorrectly close findings from the previous revision.
-      defectDojoCloseOldFindings: "false"
+      # Each report is isolated by namespace, stable workload/container test,
+      # and stable service identity, so a reimport only closes findings for the
+      # workload/container represented by that report.
+      defectDojoCloseOldFindings: "true"
       defectDojoCloseOldFindingsProductScope: "false"
       defectDojoDeduplicationOnEngagement: "true"
       defectDojoDoNotReactivate: "false"
       defectDojoMinimumSeverity: High
-      defectDojoProductName: Homelab Kubernetes
-      defectDojoProductDescription: Vulnerabilities reported from workloads running in the homelab Kubernetes cluster
+      defectDojoProductName: Kubernetes runtime image vulnerabilities - homelab cluster
+      defectDojoProductDescription: Current HIGH and CRITICAL vulnerabilities in container images running in the homelab Kubernetes cluster
       defectDojoProductTypeName: Homelab Infrastructure
-      defectDojoEngagementName: Runtime vulnerability management
+      defectDojoEngagementName: 'f"Namespace: {meta[''namespace'']}"'
+      defectDojoEvalEngagementName: "true"
       defectDojoEnvName: Development
-      defectDojoTestTitle: Trivy Operator running images
-      defectDojoServiceName: runtime-images
-      defectDojoTags: trivy-operator,runtime,kubernetes
+      # ReplicaSet names contain the rollout hash. Strip only that final
+      # segment so successive revisions map to the same workload Test.
+      defectDojoTestTitle: 'f"Workload: {meta[''labels''][''trivy-operator.resource.name''].rsplit(''-'', 1)[0] if meta[''labels''][''trivy-operator.resource.kind''] == ''ReplicaSet'' else meta[''labels''][''trivy-operator.resource.name'']} / container: {meta[''labels''][''trivy-operator.container.name'']}"'
+      defectDojoEvalTestTitle: "true"
+      defectDojoServiceName: 'f"{meta[''namespace'']}/{meta[''labels''][''trivy-operator.resource.name''].rsplit(''-'', 1)[0] if meta[''labels''][''trivy-operator.resource.kind''] == ''ReplicaSet'' else meta[''labels''][''trivy-operator.resource.name'']}/{meta[''labels''][''trivy-operator.container.name'']}"'
+      defectDojoEvalServiceName: "true"
+      # Empty tags avoid concurrent reimports racing while replacing tags on
+      # a shared DefectDojo Test. Namespace/workload identity is structural.
+      defectDojoTags: ""
       defectDojoVerified: "true"
       reports: vulnerabilityreports
       logLevel: INFO

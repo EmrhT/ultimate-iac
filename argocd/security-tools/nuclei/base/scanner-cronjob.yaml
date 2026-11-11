@@ -108,7 +108,7 @@ spec:
                       --form 'scan_type=Nuclei Scan' \
                       --form 'test_title=Nuclei recurring lab-a-dev' \
                       --form 'engagement_name=Recurring security scan' \
-                      --form 'product_name=podinfo' \
+                      --form 'product_name=Podinfo application security findings' \
                       --form 'auto_create_context=true' \
                       --form "file=@${report};type=application/x-ndjson" \
                       --form 'minimum_severity=Info' \

@@ -39,7 +39,7 @@ data:
         --form 'scan_type=kube-bench Scan' \
         --form "test_title=kube-bench ${NODE_NAME}" \
         --form 'engagement_name=Cluster security posture' \
-        --form 'product_name=homelab-cluster' \
+        --form 'product_name=Kubernetes CIS benchmark findings - homelab cluster' \
         --form 'auto_create_context=true' \
         --form "file=@${report};type=application/json" \
         --form 'minimum_severity=Info' \

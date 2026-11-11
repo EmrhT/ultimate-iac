@@ -121,8 +121,9 @@ Reports for lab-b and other cluster resources are excluded.
 
 The exporter reads the existing DefectDojo API token from
 `kv/security/defectdojo/credentials`, materialized by Vault Secrets Operator as
-`security-kyverno-defectdojo`. It reimports into product `podinfo`, engagement
-`Runtime security`, and test `Kyverno policy compliance lab-a` with
+`security-kyverno-defectdojo`. It reimports into Asset `Podinfo application
+security findings`, engagement `Runtime security`, and test
+`Kyverno policy compliance lab-a` with
 `close_old_findings=true`. Temporary JSON is limited to a `16Mi` `emptyDir` and
 is discarded with the Job; historical results live only in DefectDojo.
 

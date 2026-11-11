@@ -38,6 +38,9 @@ image:
 trivyOperator:
   scanJobsInSameNamespace: false
   scanJobAutomountServiceAccountToken: false
+  # Runtime vulnerability management and DefectDojo reconciliation must track
+  # only the ReplicaSet revision that can currently run Pods.
+  vulnerabilityScannerScanOnlyCurrentRevisions: true
   # Accepted-risk image exclusions for workloads whose remediation is blocked
   # by Kubespray/Ansible ownership, a coordinated major upgrade, a pending
   # application rebuild, or the lack of a fixed upstream image. These are exact

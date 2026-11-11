@@ -15,7 +15,8 @@ Each Job follows a deterministic scan-then-upload lifecycle, matching Nuclei:
 2. Kubernetes starts `defectdojo-uploader` only after that scanner exits
    successfully.
 3. The uploader imports the report into a stable per-node DefectDojo test under
-   product `homelab-cluster` and engagement `Cluster security posture`.
+   Asset `Kubernetes CIS benchmark findings - homelab cluster` and engagement
+   `Cluster security posture`.
 4. The report volume disappears when the Job Pod is deleted; DefectDojo is the
    persistent store.
 
