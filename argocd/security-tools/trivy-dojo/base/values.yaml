@@ -32,7 +32,7 @@ operator:
       defectDojoMinimumSeverity: High
       defectDojoProductName: Homelab Kubernetes
       defectDojoProductDescription: Vulnerabilities reported from workloads running in the homelab Kubernetes cluster
-      defectDojoProductTypeName: Infrastructure
+      defectDojoProductTypeName: Homelab Infrastructure
       defectDojoEngagementName: Runtime vulnerability management
       defectDojoEnvName: Development
       defectDojoTestTitle: Trivy Operator running images
