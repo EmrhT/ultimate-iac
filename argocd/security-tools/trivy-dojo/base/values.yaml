@@ -45,7 +45,8 @@ operator:
       # Empty tags avoid concurrent reimports racing while replacing tags on
       # a shared DefectDojo Test. Namespace/workload identity is structural.
       defectDojoTags: ""
-      defectDojoVerified: "true"
+      # Scanner output is not equivalent to human verification in DefectDojo.
+      defectDojoVerified: "false"
       reports: vulnerabilityreports
       logLevel: INFO
     transformation:

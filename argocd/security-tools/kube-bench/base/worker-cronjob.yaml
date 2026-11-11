@@ -11,14 +11,16 @@ spec:
   concurrencyPolicy: Forbid
   startingDeadlineSeconds: 600
   successfulJobsHistoryLimit: 1
-  failedJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
   jobTemplate:
     spec:
       completions: 3
       parallelism: 3
       activeDeadlineSeconds: 1200
       backoffLimit: 0
-      ttlSecondsAfterFinished: 1800
+      # Preserve failed runs long enough for operators to inspect pod events
+      # and logs. The TTL applies to successful and failed Jobs alike.
+      ttlSecondsAfterFinished: 86400
       template:
         metadata:
           labels:

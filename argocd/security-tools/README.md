@@ -151,7 +151,7 @@ Secrets Operator materializes only that field as the
 
 Nuclei scans `podinfo.lab-a-dev.svc.cluster.local:9898` every six hours for low,
 medium, high, and critical findings. Reports
-are reimported into Asset `Podinfo application security findings`, engagement
+are reimported into Asset `Podinfo CI/CD application security findings`, engagement
 `Recurring security scan`, and test `Nuclei recurring lab-a-dev`. Each
 execution has a timestamped build ID;
 `close_old_findings=true` lets DefectDojo reconcile fixed and recurring
