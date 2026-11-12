@@ -111,8 +111,8 @@ spec:
                       --header 'Host: dojo.no-name.win' \
                       --form 'scan_type=Nuclei Scan' \
                       --form 'test_title=Nuclei recurring lab-a-dev' \
-                      --form 'engagement_name=Recurring security scan' \
-                      --form 'product_name=Podinfo CI/CD application security findings' \
+                      --form 'engagement_name=Podinfo' \
+                      --form 'product_name=Application CI/CD security findings - homelab' \
                       --form 'auto_create_context=true' \
                       --form "file=@${report};type=application/x-ndjson" \
                       --form 'minimum_severity=Info' \

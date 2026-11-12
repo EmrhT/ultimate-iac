@@ -101,16 +101,22 @@ spec:
                               continue
                           fields = event.get("output_fields") or {}
                           namespace = fields.get("k8s.ns.name")
+                          workload_pod = fields.get("k8s.pod.name") or ""
                           priority = event.get("priority")
                           rule = event.get("rule")
-                          if namespace not in accepted_namespaces or priority not in severity or not rule:
+                          if (
+                              namespace not in accepted_namespaces
+                              or not workload_pod.startswith("podinfo-")
+                              or priority not in severity
+                              or not rule
+                          ):
                               continue
                           container = fields.get("container.name") or "unknown"
                           process = fields.get("proc.name") or "unknown"
                           key = (rule, namespace, container, process, priority)
                           item = grouped[key]
                           item["count"] += 1
-                          item["pods"].add(fields.get("k8s.pod.name") or pod_name)
+                          item["pods"].add(workload_pod)
                           if event.get("hostname"):
                               item["nodes"].add(str(event["hostname"]))
                           item["tags"].update(str(tag) for tag in event.get("tags", []))
@@ -219,8 +225,8 @@ spec:
                       --header 'Host: dojo.no-name.win' \
                       --form 'scan_type=Generic Findings Import' \
                       --form 'test_title=Falco runtime alerts lab-a' \
-                      --form 'engagement_name=Runtime security' \
-                      --form 'product_name=Podinfo CI/CD application security findings' \
+                      --form 'engagement_name=Podinfo' \
+                      --form 'product_name=Application CI/CD security findings - homelab' \
                       --form 'auto_create_context=true' \
                       --form "file=@${report};type=application/json" \
                       --form 'minimum_severity=Info' \

@@ -113,12 +113,15 @@ spec:
                   reports = list(dev.get("items", [])) + list(prod.get("items", []))
                   reports.extend(
                       report for report in cluster.get("items", [])
-                      if report.get("scope", {}).get("kind") == "Namespace"
-                      and report.get("scope", {}).get("name") in {"lab-a-dev", "lab-a-prod"}
+                      if report.get("scope", {}).get("namespace") in {"lab-a-dev", "lab-a-prod"}
                   )
 
                   selected = []
                   for report in reports:
+                      scope = report.get("scope", {})
+                      resource_name = scope.get("name", "")
+                      if resource_name != "podinfo" and not resource_name.startswith("podinfo-"):
+                          continue
                       results = [
                           result for result in report.get("results", [])
                           if result.get("result") in {"fail", "warn", "error"}
@@ -200,8 +203,8 @@ spec:
                       --header 'Host: dojo.no-name.win' \
                       --form 'scan_type=OpenReports' \
                       --form 'test_title=Kyverno policy compliance lab-a' \
-                      --form 'engagement_name=Runtime security' \
-                      --form 'product_name=Podinfo CI/CD application security findings' \
+                      --form 'engagement_name=Podinfo' \
+                      --form 'product_name=Application CI/CD security findings - homelab' \
                       --form 'auto_create_context=true' \
                       --form "file=@${report};type=application/json" \
                       --form 'minimum_severity=Info' \

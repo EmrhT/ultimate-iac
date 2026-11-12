@@ -115,14 +115,14 @@ kubectl describe report.openreports.io -n <namespace> <report-name>
 
 Kyverno emits OpenReports for DefectDojo. A lightweight CronJob runs at
 00:30, 06:30, 12:30, and 18:30 Europe/Istanbul time. It exports current
-`fail`, `warn`, and `error` results for resources in `lab-a-dev` and
-`lab-a-prod`, plus policy results attached to those two Namespace objects.
-Reports for lab-b and other cluster resources are excluded.
+`fail`, `warn`, and `error` results for Podinfo resources in `lab-a-dev` and
+`lab-a-prod`. Reports for MkDocs, lab-b, and other cluster resources are
+excluded from the application-specific export.
 
 The exporter reads the existing DefectDojo API token from
 `kv/security/defectdojo/credentials`, materialized by Vault Secrets Operator as
-`security-kyverno-defectdojo`. It reimports into Asset `Podinfo application
-security findings`, engagement `Runtime security`, and test
+`security-kyverno-defectdojo`. It reimports into shared Asset `Application
+CI/CD security findings - homelab`, application engagement `Podinfo`, and test
 `Kyverno policy compliance lab-a` with
 `close_old_findings=true`. Temporary JSON is limited to a `16Mi` `emptyDir` and
 is discarded with the Job; historical results live only in DefectDojo.

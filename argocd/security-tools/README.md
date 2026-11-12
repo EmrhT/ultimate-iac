@@ -150,10 +150,15 @@ Secrets Operator materializes only that field as the
 `security-nuclei-defectdojo` Secret. Do not put the token in Git.
 
 Nuclei scans `podinfo.lab-a-dev.svc.cluster.local:9898` every six hours for low,
-medium, high, and critical findings. Reports
-are reimported into Asset `Podinfo CI/CD application security findings`, engagement
-`Recurring security scan`, and test `Nuclei recurring lab-a-dev`. Each
-execution has a timestamped build ID;
+medium, high, and critical findings. Reports are reimported into the shared
+Asset `Application CI/CD security findings - homelab`, application engagement
+`Podinfo`, and test `Nuclei recurring lab-a-dev`. The Podinfo CI scanners and
+the Falco and Kyverno exporters must use the same Asset and engagement; each
+scanner remains a separate Test below that engagement. Add future applications
+as separate engagements rather than creating application-specific Assets. Each
+application-scoped exporter must filter its input to that application; the
+current Falco and Kyverno exporters include only Podinfo workload resources.
+Each execution has a timestamped build ID;
 `close_old_findings=true` lets DefectDojo reconcile fixed and recurring
 findings while preserving scan history. The uploader bootstraps a missing test
 with `import-scan` and uses `reimport-scan` thereafter. Uploads are not retried
