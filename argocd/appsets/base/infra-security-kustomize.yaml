@@ -136,6 +136,12 @@ spec:
             revision: main
             path: argocd/security-tools/kube-bench/overlays/dev
             wave: "15"
+          - name: security-trivy-repository
+            namespace: security-trivy
+            sourceRepo: https://github.com/EmrhT/ultimate-iac.git
+            revision: main
+            path: argocd/security-tools/trivy-repository/overlays/dev
+            wave: "17"
           - name: security-zap
             namespace: security-zap
             sourceRepo: https://github.com/EmrhT/ultimate-iac.git
