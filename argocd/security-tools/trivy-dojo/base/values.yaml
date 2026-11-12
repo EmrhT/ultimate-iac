@@ -50,4 +50,32 @@ operator:
       reports: vulnerabilityreports
       logLevel: INFO
     transformation:
-      enabled: false
+      # Trivy can retain UNKNOWN as the vendor severity even when a numeric
+      # CVSS score is available. Normalize only score-backed UNKNOWN findings
+      # so DefectDojo's minimum severity of High includes them. Existing HIGH
+      # and CRITICAL findings pass through unchanged and nothing is filtered.
+      enabled: true
+      interpreter: bash
+      scanType: Trivy Operator Scan
+      scriptFilename: normalize-unknown-severity.sh
+      scriptConfigMap:
+        create: true
+        data:
+          normalize-unknown-severity.sh: |
+            #!/bin/bash
+            set -euo pipefail
+            exec jq -f /scripts/normalize-unknown-severity.jq
+          normalize-unknown-severity.jq: |
+            .report.vulnerabilities |= map(
+              if .severity == "UNKNOWN" and (try (.score | tonumber) catch 0) >= 9 then
+                .severity = "CRITICAL"
+              elif .severity == "UNKNOWN" and (try (.score | tonumber) catch 0) >= 7 then
+                .severity = "HIGH"
+              else
+                .
+              end
+            )
+            | .report.vulnerabilities as $findings
+            | .report.summary.criticalCount = ([$findings[] | select(.severity == "CRITICAL")] | length)
+            | .report.summary.highCount = ([$findings[] | select(.severity == "HIGH")] | length)
+            | .report.summary.unknownCount = ([$findings[] | select(.severity == "UNKNOWN")] | length)

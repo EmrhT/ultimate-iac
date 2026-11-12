@@ -97,16 +97,21 @@ Longhorn cache and is configured to update it from Aqua's database registry.
 The Operator's client image is pinned to the same Trivy release as the server.
 Java database data needed by a client scan remains ephemeral.
 
-Reports contain HIGH and CRITICAL findings and include CVSS fields. The
-`security-trivy-dojo` watches those native reports and imports them with
-DefectDojo's `Trivy Operator Scan` parser. The Asset is `Kubernetes runtime
+Reports contain HIGH, CRITICAL, and vendor-UNKNOWN findings and include CVSS
+fields. Before import, `security-trivy-dojo` normalizes only score-backed
+UNKNOWN findings: scores from 7.0 through 8.9 become HIGH and scores from 9.0
+through 10.0 become CRITICAL. UNKNOWN findings below 7.0 or without a numeric
+score remain UNKNOWN and are excluded by DefectDojo's `High` minimum severity.
+Native HIGH and CRITICAL findings are never filtered or changed. The operator
+continues to import the transformed report with DefectDojo's `Trivy Operator
+Scan` parser. The Asset is `Kubernetes runtime
 image vulnerabilities - homelab cluster`; each Kubernetes namespace becomes
 an Engagement, and each stable workload/container identity becomes a Test. A
 ReplicaSet's rollout hash is removed from that identity. This makes the UI
 navigable and scopes `close_old_findings` to one workload/container service.
-The importer sends a small superset to DefectDojo: every numeric CVSS 9.0+
-finding is present, while some HIGH findings below 9.0 remain available for
-investigation. PagerDuty is more selective and uses the Operator's
+The importer sends every HIGH and CRITICAL finding to DefectDojo, including
+the normalized score-backed UNKNOWN findings. PagerDuty is independently more
+selective and uses the Operator's
 `trivy_vulnerability_id` metric to match numeric scores from 9.0 through 10.0.
 
 DefectDojo `close_old_findings` is enabled with a caller-supplied stable service
