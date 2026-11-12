@@ -81,6 +81,12 @@ spec:
                   mountPath: /reports
                 - name: tmp
                   mountPath: /tmp
+                # kube-bench invokes kubectl to detect the API server version.
+                # Keep pod-wide token automount disabled and expose this
+                # short-lived credential only to the scanner initContainer.
+                - name: kube-api-access
+                  mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+                  readOnly: true
                 - name: var-lib-cni
                   mountPath: /var/lib/cni
                   readOnly: true
@@ -158,6 +164,23 @@ spec:
             - name: tmp
               emptyDir:
                 sizeLimit: 16Mi
+            - name: kube-api-access
+              projected:
+                defaultMode: 0444
+                sources:
+                  - serviceAccountToken:
+                      path: token
+                      expirationSeconds: 3600
+                  - configMap:
+                      name: kube-root-ca.crt
+                      items:
+                        - key: ca.crt
+                          path: ca.crt
+                  - downwardAPI:
+                      items:
+                        - path: namespace
+                          fieldRef:
+                            fieldPath: metadata.namespace
             - name: uploader
               configMap:
                 name: security-kube-bench-uploader
