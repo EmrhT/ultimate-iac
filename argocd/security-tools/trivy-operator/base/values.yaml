@@ -38,6 +38,9 @@ image:
 trivyOperator:
   scanJobsInSameNamespace: false
   scanJobAutomountServiceAccountToken: false
+  # Skip explicitly labelled, short-lived utility workloads. Their images are
+  # implementation details of a scanner run, not persistent cluster services.
+  skipResourceByLabels: security.no-name.win/trivy-scan-excluded
   # Runtime vulnerability management and DefectDojo reconciliation must track
   # only the ReplicaSet revision that can currently run Pods.
   vulnerabilityScannerScanOnlyCurrentRevisions: true

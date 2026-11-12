@@ -3,8 +3,8 @@
 Two daily schedules cover the complete homelab cluster:
 
 - `security-kube-bench-control-plane` runs the `master` target on the
-  control-plane/etcd node at 03:00 Europe/Istanbul.
-- `security-kube-bench-workers` creates three parallel completions at 03:10.
+  control-plane/etcd node at 22:00 Europe/Istanbul.
+- `security-kube-bench-workers` creates three parallel completions at 22:10.
   Required hostname anti-affinity and worker-only node affinity place one scan
   on each of the three workers.
 
@@ -28,7 +28,14 @@ individual Job.
 
 The scanner follows kube-bench's upstream Kubernetes Job model: it shares the
 host PID namespace and mounts only the host paths needed for CIS inspection,
-all read-only. It receives no Kubernetes API token and has no RBAC.
+all read-only. Pod-wide token automount remains disabled. A projected,
+short-lived service-account token is mounted only into the scanner so kubectl
+can read the API `/version` endpoint for benchmark selection; the uploader
+does not receive this credential.
+
+Both CronJobs carry the `security.no-name.win/trivy-scan-excluded` label. The
+Trivy Operator skips resources with this label so these short-lived scanner
+and uploader containers do not appear as runtime workloads in DefectDojo.
 
 Before the first sync, allow namespace `security-kube-bench` in the Vault
 Kubernetes auth role used by `vso-admin`, preserving the existing namespace

@@ -2,6 +2,8 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: security-kube-bench-control-plane
+  labels:
+    security.no-name.win/trivy-scan-excluded: "true"
   annotations:
     argocd.argoproj.io/ignore-healthcheck: "true"
 spec:
@@ -23,6 +25,7 @@ spec:
         metadata:
           labels:
             app.kubernetes.io/name: security-kube-bench-control-plane
+            security.no-name.win/trivy-scan-excluded: "true"
         spec:
           serviceAccountName: security-kube-bench-control-plane
           automountServiceAccountToken: false
