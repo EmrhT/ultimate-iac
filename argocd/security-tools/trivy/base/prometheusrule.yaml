@@ -23,7 +23,10 @@ spec:
         - alert: TrivyRunningImageCVSS9
           expr: |
             trivy_vulnerability_id{
-              vuln_score=~"^(9([.][0-9]+)?|10([.]0+)?)$"
+              vuln_score=~"^(9([.][0-9]+)?|10([.]0+)?)$",
+              # Podinfo remains visible in VulnerabilityReports and DefectDojo,
+              # but its accepted runtime-image risk must not page on-call.
+              image_repository!="ghcr.io/emrht/podinfo-emrah"
             } == 1
           for: 30m
           labels:

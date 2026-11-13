@@ -127,11 +127,8 @@ spec:
                   value: podinfo-emrah
                 - name: REPOSITORY_URL
                   value: https://github.com/EmrhT/podinfo-emrah.git
-                - name: PAGERDUTY_ROUTING_KEY
-                  valueFrom:
-                    secretKeyRef:
-                      name: security-trivy-repository-pagerduty
-                      key: routing-key
+                - name: PAGERDUTY_ENABLED
+                  value: "false"
               securityContext:
                 allowPrivilegeEscalation: false
                 readOnlyRootFilesystem: true

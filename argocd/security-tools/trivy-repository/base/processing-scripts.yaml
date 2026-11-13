@@ -13,7 +13,7 @@ data:
 
     test -s "${raw}"
     : "${REPOSITORY_NAME:?REPOSITORY_NAME is required}"
-    : "${PAGERDUTY_ROUTING_KEY:?PAGERDUTY_ROUTING_KEY is required}"
+    PAGERDUTY_ENABLED="${PAGERDUTY_ENABLED:-true}"
 
     export SCAN_DATE="$(date -u +%F)"
 
@@ -36,6 +36,17 @@ data:
         )
       | .Severity
     ) = "HIGH"' "${raw}" > "${normalized}"
+
+    # DefectDojo import is independent of paging. Repositories such as Podinfo
+    # can retain their complete scan history without opening incidents.
+    if [ "${PAGERDUTY_ENABLED}" != "true" ]; then
+      : > "${events}"
+      chmod 0600 "${normalized}" "${events}"
+      echo "PagerDuty event generation is disabled for ${REPOSITORY_NAME}"
+      exit 0
+    fi
+
+    : "${PAGERDUTY_ROUTING_KEY:?PAGERDUTY_ROUTING_KEY is required when PagerDuty is enabled}"
 
     # Emit complete PagerDuty Events API payloads. The date in dedup_key makes
     # an unresolved CVSS >=9 finding produce one new incident on each daily

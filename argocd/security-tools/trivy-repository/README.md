@@ -24,16 +24,19 @@ All MEDIUM, HIGH, and CRITICAL findings are reimported into the stable
 are normalized to HIGH or CRITICAL before import. `close_old_findings=true`
 closes findings that disappear from the next successful scan.
 
-Every finding whose maximum available CVSS v2/v3/v4 score is at least 9.0 is
-sent directly to PagerDuty. Its deduplication key is:
+PagerDuty generation is configured per repository. It is disabled for Podinfo,
+so Podinfo findings are imported into DefectDojo without paging from either the
+repository scanner or Trivy Operator. It remains enabled for Star Dust: every
+finding whose maximum available CVSS v2/v3/v4 score is at least 9.0 is sent
+directly to PagerDuty. Its deduplication key is:
 
 ```text
 trivy-repository:<repository>:<vulnerability>:<package>:<scan-date>
 ```
 
-Retries on the same day deduplicate; an unresolved finding creates a distinct
-incident after the next daily scan. DefectDojo remains the complete historical
-record while PagerDuty receives only the urgent numeric threshold.
+For paging-enabled repositories, retries on the same day deduplicate and an
+unresolved finding creates a distinct incident after the next daily scan.
+DefectDojo remains the complete historical record for every repository.
 
 Both CronJobs are labelled `security.no-name.win/trivy-scan-excluded=true` so
 Trivy Operator does not treat the scanner containers as running workloads.
