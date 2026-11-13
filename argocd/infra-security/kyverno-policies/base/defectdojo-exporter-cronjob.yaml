@@ -67,8 +67,7 @@ spec:
                       "${api}${path}"
                   }
 
-                  collect /apis/openreports.io/v1alpha1/namespaces/lab-a-dev/reports /reports/dev.json
-                  collect /apis/openreports.io/v1alpha1/namespaces/lab-a-prod/reports /reports/prod.json
+                  collect /apis/openreports.io/v1alpha1/namespaces/lab-a-dev-podinfo/reports /reports/dev.json
                   collect /apis/openreports.io/v1alpha1/clusterreports /reports/cluster.json
                   rm -f "${curl_config}"
               securityContext:
@@ -107,13 +106,12 @@ spec:
                           return json.load(stream)
 
                   dev = load("dev.json")
-                  prod = load("prod.json")
                   cluster = load("cluster.json")
 
-                  reports = list(dev.get("items", [])) + list(prod.get("items", []))
+                  reports = list(dev.get("items", []))
                   reports.extend(
                       report for report in cluster.get("items", [])
-                      if report.get("scope", {}).get("namespace") in {"lab-a-dev", "lab-a-prod"}
+                      if report.get("scope", {}).get("namespace") == "lab-a-dev-podinfo"
                   )
 
                   selected = []

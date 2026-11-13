@@ -12,6 +12,8 @@ spec:
     # argocd/applications/<application>/clusters/<cluster>/<environment>
     # Adding or removing one of these directories therefore adds or removes
     # exactly one generated Argo CD Application without changing this file.
+    # Each Application gets its own <cluster>-<environment>-<application>
+    # namespace, even when another application targets the same environment.
     - git:
         repoURL: https://github.com/EmrhT/ultimate-iac.git
         revision: main
@@ -34,7 +36,7 @@ spec:
         path: '{{ .path.path }}'
       destination:
         server: https://kubernetes.default.svc
-        namespace: '{{ index .path.segments 4 }}-{{ index .path.segments 5 }}'
+        namespace: '{{ index .path.segments 4 }}-{{ index .path.segments 5 }}-{{ index .path.segments 2 }}'
       # Falco Talon applies this one label only after a critical runtime event.
       # The quarantine CiliumNetworkPolicy is already Git-managed; Argo must not
       # remove the incident-response label while the investigation is active.
@@ -57,6 +59,7 @@ spec:
           labels:
             platform.example/cluster: '{{ index .path.segments 4 }}'
             platform.example/environment: '{{ index .path.segments 5 }}'
+            platform.example/application: '{{ index .path.segments 2 }}'
             pod-security.kubernetes.io/enforce: restricted
             pod-security.kubernetes.io/audit: restricted
             pod-security.kubernetes.io/warn: restricted

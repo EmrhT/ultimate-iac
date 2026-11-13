@@ -34,7 +34,7 @@
         <mxCell id="application-pr" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DBEAFE;strokeColor=#2563EB;fontColor=#1E3A8A;fontSize=13;" value="&lt;b&gt;Application PR → master&lt;/b&gt;&lt;br&gt;Runs when opened, updated, or reopened&lt;br&gt;Trusted same-repository branches only" vertex="1">
           <mxGeometry height="65" width="300" x="55" y="145" as="geometry" />
         </mxCell>
-        <mxCell id="delivery-control" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDE9FE;strokeColor=#7C3AED;fontColor=#4C1D95;fontSize=13;" value="&lt;b&gt;Shared &lt;code dir=&quot;ltr&quot;&gt;lab-a-dev&lt;/code&gt; race control&lt;br&gt;&lt;/b&gt;One active delivery at a time&lt;br&gt;Running delivery is never cancelled" vertex="1">
+        <mxCell id="delivery-control" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDE9FE;strokeColor=#7C3AED;fontColor=#4C1D95;fontSize=13;" value="&lt;b&gt;Podinfo &lt;code dir=&quot;ltr&quot;&gt;lab-a-dev-podinfo&lt;/code&gt; race control&lt;br&gt;&lt;/b&gt;One active delivery at a time&lt;br&gt;Running delivery is never cancelled" vertex="1">
           <mxGeometry height="65" width="300" x="385" y="145" as="geometry" />
         </mxCell>
         <mxCell id="aux-workflows" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF7ED;strokeColor=#EA580C;fontColor=#7C2D12;fontSize=12;" value="&lt;b&gt;Separate supporting workflows&lt;/b&gt;&lt;br&gt;test.yml: PR/manual Helm · Kustomize · CUE · Timoni validation&lt;br&gt;cve-scan.yml: PR/manual govulncheck SARIF · e2e.yml: manual Kind Helm/Timoni&lt;br&gt;&lt;i&gt;not dependencies of the PR delivery gate&lt;/i&gt;" vertex="1">
@@ -52,7 +52,7 @@
         <mxCell id="trivy" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3C7;strokeColor=#D97706;fontColor=#78350F;fontSize=12;" value="&lt;b&gt;3 · Trivy image scan&lt;/b&gt;&lt;br&gt;scan exact repository@digest through homelab Trivy server&lt;br&gt;completion is required&lt;br&gt;HIGH/CRITICAL findings are report-only while TRIVY_ENFORCE=false&lt;br&gt;JSON · table · SARIF" vertex="1">
           <mxGeometry height="165" width="210" x="565" y="300" as="geometry" />
         </mxCell>
-        <mxCell id="zap" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FCE7F3;strokeColor=#DB2777;fontColor=#831843;fontSize=12;" value="&lt;b&gt;6 · ZAP DAST in dev&lt;/b&gt;&lt;br&gt;new volatile session&lt;br&gt;in-cluster plan targets internal lab-a-dev Service&lt;br&gt;plan errors or High alerts block&lt;br&gt;XML report + 30-day successful validation artifact" vertex="1">
+        <mxCell id="zap" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FCE7F3;strokeColor=#DB2777;fontColor=#831843;fontSize=12;" value="&lt;b&gt;6 · ZAP DAST in dev&lt;/b&gt;&lt;br&gt;new volatile session&lt;br&gt;in-cluster plan targets lab-a-dev-podinfo Service&lt;br&gt;plan errors or High alerts block&lt;br&gt;XML report + 30-day successful validation artifact" vertex="1">
           <mxGeometry height="165" width="210" x="1315" y="300" as="geometry" />
         </mxCell>
         <mxCell id="pr-gate" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEE2E2;strokeColor=#DC2626;fontColor=#7F1D1D;fontSize=12;strokeWidth=2;" value="&lt;b&gt;7 · PR delivery gate&lt;/b&gt;&lt;br&gt;requires quality, build, Trivy, dev promotion, deployment and DAST success&lt;br&gt;&lt;br&gt;&lt;b&gt;Required branch check&lt;/b&gt;" vertex="1">

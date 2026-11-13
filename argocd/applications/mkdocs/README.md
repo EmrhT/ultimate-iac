@@ -3,7 +3,7 @@
 This application deploys three independently authenticated static MkDocs sites
 to `lab-a/dev`. The existing `custom-applications` ApplicationSet discovers the
 single deployment leaf at `clusters/lab-a/dev` and creates
-`mkdocs-lab-a-dev` in namespace `lab-a-dev`.
+`mkdocs-lab-a-dev` in namespace `lab-a-dev-mkdocs`.
 
 | Site | Hostname | Keycloak client | Required group | Vault path |
 | --- | --- | --- | --- | --- |
@@ -78,7 +78,7 @@ authentication identity:
 ```bash
 vault write auth/kubernetes/role/vso-mkdocs-general-dev \
   bound_service_account_names=mkdocs-general-vault-auth \
-  bound_service_account_namespaces=lab-a-dev \
+  bound_service_account_namespaces=lab-a-dev-mkdocs \
   audience=vault \
   policies=vso-mkdocs-general-dev \
   ttl=1h

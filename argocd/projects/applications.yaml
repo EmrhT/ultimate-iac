@@ -4,7 +4,7 @@ metadata:
   name: applications
   namespace: argocd
 spec:
-  description: Custom workloads deployed to logical cluster/environment namespaces
+  description: Custom workloads deployed to application-specific logical cluster/environment namespaces
   sourceRepos:
     - https://github.com/EmrhT/ultimate-iac.git
   destinations:

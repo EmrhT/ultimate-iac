@@ -8,9 +8,9 @@ data:
       contexts:
         - name: podinfo-lab-a-dev
           urls:
-            - http://podinfo.lab-a-dev.svc.cluster.local:9898
+            - http://podinfo.lab-a-dev-podinfo.svc.cluster.local:9898
           includePaths:
-            - http://podinfo\.lab-a-dev\.svc\.cluster\.local:9898/.*
+            - http://podinfo\.lab-a-dev-podinfo\.svc\.cluster\.local:9898/.*
       parameters:
         failOnError: true
         failOnWarning: false
@@ -27,7 +27,7 @@ data:
       - type: spider
         parameters:
           context: podinfo-lab-a-dev
-          url: http://podinfo.lab-a-dev.svc.cluster.local:9898
+          url: http://podinfo.lab-a-dev-podinfo.svc.cluster.local:9898
           maxDuration: 3
           maxDepth: 3
           maxChildren: 20
@@ -46,7 +46,7 @@ data:
       - type: activeScan
         parameters:
           context: podinfo-lab-a-dev
-          url: http://podinfo.lab-a-dev.svc.cluster.local:9898
+          url: http://podinfo.lab-a-dev-podinfo.svc.cluster.local:9898
           maxRuleDurationInMins: 2
           maxScanDurationInMins: 15
           maxAlertsPerRule: 10

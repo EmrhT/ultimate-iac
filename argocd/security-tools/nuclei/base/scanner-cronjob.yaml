@@ -45,7 +45,7 @@ spec:
                   drop: ["ALL"]
               args:
                 - -u
-                - http://podinfo.lab-a-dev.svc.cluster.local:9898
+                - http://podinfo.lab-a-dev-podinfo.svc.cluster.local:9898
                 - -severity
                 - low,medium,high,critical
                 - -jsonl

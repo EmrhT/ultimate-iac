@@ -92,6 +92,12 @@ custom inventory or report parser. Reports have a 24-hour TTL, so unchanged
 workloads are periodically rescanned against refreshed vulnerability data.
 Scan concurrency is limited to three for the homelab.
 
+Infrastructure and cluster-service namespaces remain in scope. Application
+workloads use `lab-a/dev` as the canonical scan deployment: Trivy scans
+`lab-a-dev-podinfo` and `lab-a-dev-mkdocs`, while the equivalent Podinfo copies
+in production and other logical clusters are excluded to avoid duplicate
+findings for the same promoted image.
+
 The Trivy server owns the main vulnerability database in its disposable
 Longhorn cache and is configured to update it from Aqua's database registry.
 The Operator's client image is pinned to the same Trivy release as the server.
@@ -113,9 +119,10 @@ The importer sends every HIGH and CRITICAL finding to DefectDojo, including
 the normalized score-backed UNKNOWN findings. PagerDuty is independently more
 selective and uses the Operator's
 `trivy_vulnerability_id` metric to match numeric scores from 9.0 through 10.0.
-Podinfo runtime findings are deliberately excluded from this Prometheus paging
-expression, but not from scanning or DefectDojo ingestion. This keeps its
-accepted runtime-image risk visible without opening PagerDuty incidents.
+Podinfo runtime findings from the canonical `lab-a-dev-podinfo` scan are
+deliberately excluded from this Prometheus paging expression, but not from
+DefectDojo ingestion. This keeps its accepted runtime-image risk visible
+without opening PagerDuty incidents.
 
 DefectDojo `close_old_findings` is enabled with a caller-supplied stable service
 identity made from namespace, workload, and container. Trivy Operator is
@@ -155,7 +162,7 @@ Create a dedicated DefectDojo API token and add it to the existing Vault record
 Secrets Operator materializes only that field as the
 `security-nuclei-defectdojo` Secret. Do not put the token in Git.
 
-Nuclei scans `podinfo.lab-a-dev.svc.cluster.local:9898` every six hours for low,
+Nuclei scans `podinfo.lab-a-dev-podinfo.svc.cluster.local:9898` every six hours for low,
 medium, high, and critical findings. Reports are reimported into the shared
 Asset `Application CI/CD security findings - homelab`, application engagement
 `Podinfo`, and test `Nuclei recurring lab-a-dev`. The Podinfo CI scanners and

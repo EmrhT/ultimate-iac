@@ -4,7 +4,11 @@ fullnameOverride: security-trivy-dojo
 defectDojoApiCredentials:
   createSecret: false
 
-excludedNamespaces: []
+excludedNamespaces:
+  - lab-a-dev
+  - lab-a-prod
+  - lab-a-prod-*
+  - lab-b-*
 
 operator:
   replicas: 1

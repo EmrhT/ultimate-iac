@@ -16,6 +16,7 @@ platform-bootstrap ApplicationSet
     ├── infra-security-helm ApplicationSet
     ├── infra-security-kustomize ApplicationSet
     └── custom-applications ApplicationSet
+        ├── mkdocs-lab-a-dev
         ├── podinfo-lab-a-dev
         ├── podinfo-lab-a-prod
         ├── podinfo-lab-b-dev
@@ -23,10 +24,11 @@ platform-bootstrap ApplicationSet
 ```
 
 `lab-a` and `lab-b` are logical clusters simulated on the same Kubernetes API.
-Their workloads are isolated into `lab-a-dev`, `lab-a-prod`, `lab-b-dev`, and
-`lab-b-prod` namespaces. Cluster-scoped operators are installed once on
-the physical cluster; installing MetalLB, Longhorn, Falco, ECK, or their CRDs
-twice under different namespaces would still cause cluster-wide collisions.
+Every application is isolated in a namespace named
+`<cluster>-<environment>-<application>`, such as `lab-a-dev-mkdocs` or
+`lab-b-prod-podinfo`. Cluster-scoped operators are installed once on the
+physical cluster; installing MetalLB, Longhorn, Falco, ECK, or their CRDs twice
+under different namespaces would still cause cluster-wide collisions.
 
 The custom-workload ApplicationSet discovers deployable directories matching
 `applications/<application>/clusters/<cluster>/<environment>`. The current
@@ -169,14 +171,21 @@ committed leaf matching this convention becomes one Argo CD Application:
 
 ```text
 applications/<application>/clusters/<cluster>/<environment>/
-    -> <application>-<cluster>-<environment>
+    -> Application: <application>-<cluster>-<environment>
+    -> Namespace:   <cluster>-<environment>-<application>
 ```
 
 To add an application, create its reusable base and environment overlays, then
 add a thin Kustomization at each cluster/environment leaf where it should run.
 For example, committing
 `applications/example/clusters/lab-a/dev/kustomization.yaml` generates
-`example-lab-a-dev` and deploys it into namespace `lab-a-dev`.
+`example-lab-a-dev` and deploys it into namespace `lab-a-dev-example`.
+
+Any external namespace-bound integration must authorize that generated
+namespace before the leaf is synchronized. In particular, update the
+corresponding Vault Kubernetes authentication role and add any required
+namespace-scoped human RoleBinding. Do not replace an existing Vault role's
+namespace list when adding the new namespace; preserve its other consumers.
 
 To add an environment or another simulated cluster, add the corresponding
 leaf Kustomizations for the applications that should run there. The
@@ -185,7 +194,7 @@ discoverable by Git, so every leaf must contain a committed file. Removing a
 leaf removes its generated Application and can delete its managed resources;
 review such deletions before syncing them.
 
-All current leaves target `https://kubernetes.default.svc`, and applications
-with the same cluster/environment segments share that environment's namespace.
-Supporting real destination clusters requires registered Argo CD cluster
-metadata in addition to the directory generator.
+All current leaves target `https://kubernetes.default.svc`. Applications with
+the same cluster/environment segments use separate application-specific
+namespaces. Supporting real destination clusters requires registered Argo CD
+cluster metadata in addition to the directory generator.

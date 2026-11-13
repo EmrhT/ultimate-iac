@@ -69,7 +69,7 @@ spec:
                   if not pod_names:
                       raise SystemExit("No Falco pods were found")
 
-                  accepted_namespaces = {"lab-a-dev", "lab-a-prod"}
+                  accepted_namespaces = {"lab-a-dev-podinfo"}
                   severity = {
                       "Emergency": "Critical",
                       "Alert": "Critical",

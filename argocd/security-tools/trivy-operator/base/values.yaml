@@ -4,7 +4,10 @@ fullnameOverride: security-trivy-operator
 # after 24 hours, causing the Operator to rescan unchanged running images with
 # the Trivy database maintained by the existing in-cluster server.
 targetNamespaces: ""
-excludeNamespaces: ""
+# Keep infrastructure and cluster services covered, but scan only the canonical
+# lab-a/dev copies of application workloads. The other logical deployments use
+# the same promoted images and would otherwise duplicate the same findings.
+excludeNamespaces: "lab-a-dev,lab-a-prod,lab-a-prod-*,lab-b-*"
 targetWorkloads: pod,replicaset,replicationcontroller,statefulset,daemonset,cronjob,job
 
 operator:

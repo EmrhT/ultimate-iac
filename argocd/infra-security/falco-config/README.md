@@ -1,8 +1,8 @@
 # Falco findings in DefectDojo
 
 This component collects the previous six hours of Falco JSON logs every six hours,
-keeps Podinfo runtime events at `Notice` or higher for `lab-a-dev` and
-`lab-a-prod`, aggregates duplicates, and reimports them into shared Asset
+keeps Podinfo runtime events at `Notice` or higher for the canonical scan
+deployment in `lab-a-dev-podinfo`, aggregates duplicates, and reimports them into shared Asset
 `Application CI/CD security findings - homelab`, application engagement
 `Podinfo`, and recurring Test `Falco runtime alerts lab-a`. `Notice` maps to DefectDojo `Low`;
 `Informational` and `Debug` remain excluded.

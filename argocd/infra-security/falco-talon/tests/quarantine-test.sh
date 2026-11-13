@@ -3,7 +3,7 @@
 # Run only after Argo has synced infra-falco-talon and the Podinfo ApplicationSet.
 set -euo pipefail
 
-namespace="${1:-lab-a-dev}"
+namespace="${1:-lab-a-dev-podinfo}"
 selector="${2:-app.kubernetes.io/name=podinfo}"
 pod="$(kubectl -n "$namespace" get pods -l "$selector" -o jsonpath='{.items[0].metadata.name}')"
 client_namespace="security-zap"
