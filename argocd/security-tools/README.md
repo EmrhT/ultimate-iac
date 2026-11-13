@@ -119,10 +119,12 @@ The importer sends every HIGH and CRITICAL finding to DefectDojo, including
 the normalized score-backed UNKNOWN findings. PagerDuty is independently more
 selective and uses the Operator's
 `trivy_vulnerability_id` metric to match numeric scores from 9.0 through 10.0.
-Podinfo runtime findings from the canonical `lab-a-dev-podinfo` scan are
-deliberately excluded from this Prometheus paging expression, but not from
-DefectDojo ingestion. This keeps its accepted runtime-image risk visible
-without opening PagerDuty incidents.
+Podinfo and all three MkDocs runtime images from the canonical `lab-a/dev`
+deployments are deliberately excluded from this Prometheus paging expression,
+but not from Trivy scanning or DefectDojo ingestion. This keeps their accepted
+runtime-image risk visible without opening PagerDuty incidents. Shared runtime
+components such as OAuth2 Proxy remain pageable because suppression matches
+only the four application image repositories.
 
 DefectDojo `close_old_findings` is enabled with a caller-supplied stable service
 identity made from namespace, workload, and container. Trivy Operator is
@@ -152,8 +154,9 @@ Confirm the reports appear in DefectDojo and that Prometheus exposes
 `trivy_vulnerability_id` with `vuln_id`, `vuln_score`, `image_digest`, and
 workload labels. `TrivyRunningImageCVSS9` pages through the security
 Alertmanager route for numeric CVSS 9.0 through 10.0 findings, except images in
-the explicitly suppressed Podinfo repository. The route opens and resolves one
-PagerDuty group per vulnerability ID and image digest.
+the explicitly suppressed Podinfo and MkDocs application repositories. The
+route opens and resolves one PagerDuty group per vulnerability ID and image
+digest.
 
 ## Nuclei report ingestion
 
