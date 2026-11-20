@@ -74,9 +74,9 @@ All versions are explicit; Argo CD never follows `latest`:
 | Gateway API CRDs | `v1.5.1` | Standard-channel Gateway API resources |
 | cert-manager | `1.21.0` | Certificate lifecycle and Gateway integration |
 | MetalLB chart | `0.16.2` | Bare-metal `LoadBalancer` implementation |
-| Longhorn | `1.11.2` | Replicated persistent storage on `/var/lib/longhorn` |
+| Longhorn | `1.12.2` | Replicated persistent storage on `/var/lib/longhorn` |
 | Metrics Server chart | `3.13.1` | Resource Metrics API for `kubectl top` and autoscaling |
-| kube-prometheus-stack | `86.3.2` | Prometheus, Alertmanager, Grafana, and exporters |
+| kube-prometheus-stack | `92.10.0` | Prometheus, Alertmanager, Grafana, and exporters |
 | Traefik chart | `41.0.1` | Gateway API controller at `192.168.122.120` |
 | HashiCorp Vault chart | `0.32.0` | Secret service and injector |
 | Falco chart | `9.1.0` | Runtime detection with the modern eBPF driver |

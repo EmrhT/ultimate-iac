@@ -40,7 +40,7 @@ spec:
         object.spec.?serviceAccountName.orValue('default') == 'cilium-hubble-flow-collector' &&
         variables.containers.exists(c,
           c.name == 'otel-collector' &&
-          c.image == 'docker.io/otel/opentelemetry-collector-contrib@sha256:799dc6cf12c96192af37b5bdba804da8c10b3bc563b43cb90c3f3c58d9572ad6')
+          c.image == 'docker.io/otel/opentelemetry-collector-contrib:0.165.0@sha256:bda8c1d727effc2f937d2a3470ea3f9ee189b8dd96d2385a2475b0b6f16ec3f8')
   validations:
     - expression: >-
         variables.containers.all(c,
@@ -106,7 +106,7 @@ spec:
             (object.metadata.namespace == 'longhorn-system' &&
               object.spec.?serviceAccountName.orValue('default') == 'longhorn-service-account' &&
               c.name == 'longhorn-csi-plugin' &&
-              c.image == 'docker.io/longhornio/longhorn-manager:v1.11.2@sha256:0f80ca11ac4eb7522f4e6e801a7afc9909ea8d3041575f3d029964c46590f096' &&
+              c.image == 'docker.io/longhornio/longhorn-manager:v1.12.2@sha256:60371377cdafd14def4b12d634707c5f79240b5363b5666c5cd2dbd699e2ce6a' &&
               capability == 'SYS_ADMIN') ||
             (object.metadata.namespace == 'metallb-system' &&
               object.spec.?serviceAccountName.orValue('default') == 'metallb-frr-k8s-controller' &&
@@ -125,7 +125,7 @@ spec:
             (object.metadata.namespace == 'monitoring' &&
               object.spec.?serviceAccountName.orValue('default') == 'kube-prometheus-stack-grafana' &&
               c.name == 'init-chown-data' &&
-              c.image == 'docker.io/library/busybox:1.38.0@sha256:dc2d74b28e4cf8984fa52af1f39bc7c3d9c73760b41a74d629f5d11b1ab28616' &&
+              c.image == 'docker.io/library/busybox:1.38.0@sha256:f97baa533a26513c453a362be331a43eb60214302f449c16571b23cea141dce4' &&
               capability in ['CHOWN', 'DAC_OVERRIDE'])))
       message: >-
         Containers may add only NET_BIND_SERVICE or the capability set

@@ -14,10 +14,12 @@ grafana:
     sha: 488984b716c0862639f91a698adbe2862677a5a07bad42da5f03f3030883b205
   initChownData:
     image:
-      sha: dc2d74b28e4cf8984fa52af1f39bc7c3d9c73760b41a74d629f5d11b1ab28616
+      tag: "1.38.0"
+      sha: f97baa533a26513c453a362be331a43eb60214302f449c16571b23cea141dce4
   sidecar:
     image:
-      sha: 694950d736c8b532eba4006527ccbdac98fefc9f30b3346ba2de50b6cad91c94
+      tag: 2.14.1
+      sha: 40e7bf29b2bc81f5fc7f5c1bada7d7adf971d62fa4f017e235699329af5b2f57
   admin:
     existingSecret: grafana-admin-credentials
     userKey: admin-user
@@ -39,7 +41,8 @@ grafana:
 prometheus:
   prometheusSpec:
     image:
-      sha: f39df5334dee301b885f77e0ff1159f5d8a43bf9db518f885544594799a1e3c2
+      tag: v3.16.0-distroless
+      sha: b3e1df0b7003c8222c9f79e679b2ec9c8f993803d36839d7f139eef5cc64119b
     retention: 12h
     # This limits persisted blocks only. WAL, head chunks, and temporary
     # compaction files are additional, so keep substantial PVC headroom.
@@ -67,7 +70,8 @@ prometheus:
 alertmanager:
   alertmanagerSpec:
     image:
-      sha: af26fbe4dd1886ac0efd7bd55cd9027da262e105b137a376522b7c14c3626e4a
+      tag: v0.34.1
+      sha: 84967b9b7ba45e38a9278d3e594305f43d4993c310df3905b51138b816c365f3
     retention: 12h
     # Select only centrally managed AlertmanagerConfig resources from the
     # monitoring namespace. The route itself limits delivery to team=security.
@@ -84,26 +88,32 @@ alertmanager:
 
 prometheus-node-exporter:
   image:
-    digest: sha256:6112664fd761bb964d8a2d3d0119d6c8402618a89edbb3a43c8f7b4090fb53c9
+    tag: v1.12.1
+    digest: sha256:bbfbd533202cfef891c70383ddf6f0c32acece66400ad8091a18bed7aad5db6f
   daemonsetAnnotations:
     argocd.argoproj.io/ignore-healthcheck: "true"
 
 kube-state-metrics:
   image:
-    sha: sha256:85108987d044b18a098126732f98602df408888c0f7d456241f5abefb9744bc1
+    tag: v2.20.0
+    sha: sha256:01171220c7c059afc85034ffe687bfe7249e41c0cc46fbe9a5128503ceee3016
 
 prometheusOperator:
   image:
-    sha: 9e53e13139218aca79ee000172de73355e9174ef2904585bfad9497fc71aae2d
+    tag: v0.94.1
+    sha: ee7157809d227e2f9c112b329a9732bca4eb65d4df157ce83111f4debe4646fd
   prometheusConfigReloader:
     image:
-      sha: 7d9e4eea5f1139e602508871f422b0116c60e87c662f3dcd234d5ab60cd0d8c1
+      tag: v0.94.1
+      sha: ac2f46e50daebc6163d2ba17adbbbc7fe8f51a0000e7961e821dcb9331b3702f
   thanosImage:
-    sha: c2f322e5ea9727bce5153730da133820235844bd5ba72da7e9428c3739a73cab
+    tag: v0.42.4
+    sha: ce7e48cbbaec82cb3b4eb1c348f90de92976edcd4148dc9a0f1394cc43e09422
   admissionWebhooks:
     patch:
       image:
-        sha: 2c3848e012dde192bbc16463e65c42b2a3199a599a983d2e12496365c2dece60
+        tag: 1.11.0
+        sha: 471e50747c483f111056c35a77176b52bbd3dcf58c55bcbd8cb79c0e8a92a23d
 
 kubeApiServer:
   serviceMonitor:

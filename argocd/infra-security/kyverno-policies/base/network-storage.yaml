@@ -42,14 +42,14 @@ spec:
         variables.serviceAccount == 'security-events-otel-collector' &&
         variables.containers.exists(c,
           c.name == 'otel-collector' &&
-          c.image == 'docker.io/otel/opentelemetry-collector-contrib@sha256:799dc6cf12c96192af37b5bdba804da8c10b3bc563b43cb90c3f3c58d9572ad6')
+          c.image == 'docker.io/otel/opentelemetry-collector-contrib:0.165.0@sha256:bda8c1d727effc2f937d2a3470ea3f9ee189b8dd96d2385a2475b0b6f16ec3f8')
     - name: isCiliumHubbleFlowCollector
       expression: >-
         object.metadata.namespace == 'elastic-stack' &&
         variables.serviceAccount == 'cilium-hubble-flow-collector' &&
         variables.containers.exists(c,
           c.name == 'otel-collector' &&
-          c.image == 'docker.io/otel/opentelemetry-collector-contrib@sha256:799dc6cf12c96192af37b5bdba804da8c10b3bc563b43cb90c3f3c58d9572ad6')
+          c.image == 'docker.io/otel/opentelemetry-collector-contrib:0.165.0@sha256:bda8c1d727effc2f937d2a3470ea3f9ee189b8dd96d2385a2475b0b6f16ec3f8')
     - name: isFalco
       expression: >-
         object.metadata.namespace == 'falco' &&
@@ -126,17 +126,17 @@ spec:
         variables.serviceAccount == 'longhorn-service-account' &&
         variables.containers.exists(c,
           c.image in [
-            'docker.io/longhornio/csi-attacher:v4.11.0-20260428@sha256:fe417c28a6b86f8e7e5d49fc223e22e9ab457f894d2c4a321932d136dc2c2530',
-            'docker.io/longhornio/csi-provisioner:v5.3.0-20260428@sha256:9e519a21a77c060104716e1f98222bb46ab617778a3bfcd861c87119a8256764',
-            'docker.io/longhornio/csi-resizer:v2.1.0-20260428@sha256:41cb674d1154e798aa2c20f53f72ee2a5597f1369bcad5878d1708aee47f6663',
-            'docker.io/longhornio/csi-snapshotter:v8.5.0-20260428@sha256:1975fac3890f4e08b98792881cb597502112ce0eeeaaef383e52458c96db94c5'])
+            'docker.io/longhornio/csi-attacher:v4.13.0-20261028@sha256:ea664f8c24e3186a24d7fd65a2e7405dd7c88fa2c1c5bba5e20d191bad3e5719',
+            'docker.io/longhornio/csi-provisioner:v5.3.0-20261028@sha256:7e4f3749b5796a2f8d8590c3913e2e652f1c532df1042abd28c22fa1a915a039',
+            'docker.io/longhornio/csi-resizer:v2.3.0-20261028@sha256:5bcab65750bb6d703c08a8e34531bb211448e285720943859329d439a7f219ce',
+            'docker.io/longhornio/csi-snapshotter:v8.7.0-20261028@sha256:d8c71ac811f65acebabec5c61fc1ce7ad8365868d6a18411e715ca4e3d370f6d'])
     - name: isLonghornCsiPlugin
       expression: >-
         object.metadata.namespace == 'longhorn-system' &&
         variables.serviceAccount == 'longhorn-service-account' &&
         variables.containers.exists(c,
           c.name == 'longhorn-csi-plugin' &&
-          c.image == 'docker.io/longhornio/longhorn-manager:v1.11.2@sha256:0f80ca11ac4eb7522f4e6e801a7afc9909ea8d3041575f3d029964c46590f096')
+          c.image == 'docker.io/longhornio/longhorn-manager:v1.12.2@sha256:60371377cdafd14def4b12d634707c5f79240b5363b5666c5cd2dbd699e2ce6a')
     - name: isLonghornEngineImage
       expression: >-
         object.metadata.namespace == 'longhorn-system' &&
@@ -144,22 +144,22 @@ spec:
         variables.containers.exists(c,
           c.name.startsWith('engine-image-') &&
           c.image in [
-            'docker.io/longhornio/longhorn-engine:v1.11.2',
-            'docker.io/longhornio/longhorn-engine:v1.11.2@sha256:7482e0437fbf475e1e32696fab22f47bf99b1ef8d067ffce9e34028347722628'])
+            'docker.io/longhornio/longhorn-engine:v1.12.2',
+            'docker.io/longhornio/longhorn-engine:v1.12.2@sha256:64dd477d3f48879a78a5e0911d98b40a433f52e985d7fb6a1396cab9e5290422'])
     - name: isLonghornInstanceManager
       expression: >-
         object.metadata.namespace == 'longhorn-system' &&
         variables.serviceAccount == 'longhorn-service-account' &&
         variables.containers.exists(c,
           c.name == 'instance-manager' &&
-          c.image == 'docker.io/longhornio/longhorn-instance-manager:v1.11.2@sha256:16dac125ef30bd3a375bc8ff7d10636ea0302d22d208c0cfb1be37ebb93ca30b')
+          c.image == 'docker.io/longhornio/longhorn-instance-manager:v1.12.2@sha256:3ca065d7fd50bb163d1e9d0133dd7d72688e188f95b8c5c991e66dc746fde6bf')
     - name: isLonghornManager
       expression: >-
         object.metadata.namespace == 'longhorn-system' &&
         variables.serviceAccount == 'longhorn-service-account' &&
         variables.containers.exists(c,
           c.name == 'longhorn-manager' &&
-          c.image == 'docker.io/longhornio/longhorn-manager:v1.11.2@sha256:0f80ca11ac4eb7522f4e6e801a7afc9909ea8d3041575f3d029964c46590f096')
+          c.image == 'docker.io/longhornio/longhorn-manager:v1.12.2@sha256:60371377cdafd14def4b12d634707c5f79240b5363b5666c5cd2dbd699e2ce6a')
     - name: isLonghornRecurringJob
       expression: >-
         object.metadata.namespace == 'longhorn-system' &&
@@ -168,7 +168,7 @@ spec:
           c.name in ['filesystem-trim', 'prometheus-daily-snapshot',
             'prometheus-daily-snapshot-delete', 'prometheus-daily-trim',
             'security-tools-daily-trim', 'vault-daily-snapshot'] &&
-          c.image == 'docker.io/longhornio/longhorn-manager:v1.11.2@sha256:0f80ca11ac4eb7522f4e6e801a7afc9909ea8d3041575f3d029964c46590f096')
+          c.image == 'docker.io/longhornio/longhorn-manager:v1.12.2@sha256:60371377cdafd14def4b12d634707c5f79240b5363b5666c5cd2dbd699e2ce6a')
     - name: isMetalLBFrr
       expression: >-
         object.metadata.namespace == 'metallb-system' &&
@@ -199,7 +199,7 @@ spec:
         variables.serviceAccount == 'kube-prometheus-stack-prometheus-node-exporter' &&
         variables.containers.exists(c,
           c.name == 'node-exporter' &&
-          c.image == 'quay.io/prometheus/node-exporter:v1.11.1-distroless@sha256:6112664fd761bb964d8a2d3d0119d6c8402618a89edbb3a43c8f7b4090fb53c9')
+          c.image == 'quay.io/prometheus/node-exporter:v1.12.1-distroless@sha256:bbfbd533202cfef891c70383ddf6f0c32acece66400ad8091a18bed7aad5db6f')
     - name: isKubeBenchControlPlane
       expression: >-
         object.metadata.namespace == 'security-kube-bench' &&

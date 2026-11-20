@@ -151,7 +151,7 @@ spec:
               readOnly: true
       containers:
         - name: otel-collector
-          image: docker.io/otel/opentelemetry-collector-contrib@sha256:799dc6cf12c96192af37b5bdba804da8c10b3bc563b43cb90c3f3c58d9572ad6
+          image: docker.io/otel/opentelemetry-collector-contrib:0.165.0@sha256:bda8c1d727effc2f937d2a3470ea3f9ee189b8dd96d2385a2475b0b6f16ec3f8
           args:
             - --config=/etc/otelcol/config.yaml
           env:

@@ -26,7 +26,7 @@ spec:
             namespace: longhorn-system
             chartRepo: https://charts.longhorn.io
             chart: longhorn
-            chartVersion: 1.11.2
+            chartVersion: 1.12.2
             wave: "-20"
           - name: metrics-server
             namespace: metrics-server
@@ -38,7 +38,7 @@ spec:
             namespace: monitoring
             chartRepo: https://prometheus-community.github.io/helm-charts
             chart: kube-prometheus-stack
-            chartVersion: 86.3.2
+            chartVersion: 92.10.0
             wave: "-10"
           - name: traefik
             namespace: traefik
@@ -68,7 +68,7 @@ spec:
             namespace: kyverno
             chartRepo: https://kyverno.github.io/kyverno/
             chart: kyverno
-            chartVersion: 3.9.0
+            chartVersion: 3.9.2
             wave: "15"
           - name: falco
             namespace: falco

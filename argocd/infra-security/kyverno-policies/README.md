@@ -43,16 +43,16 @@ Any Kubernetes, DNS, kube-vip, or CSR approver upgrade must update and review
 the exact exception list; arbitrary images and unexpected versions remain
 violations.
 
-Existing attached Longhorn volumes retain their original engine and instance
-manager image references until each volume is detached and migrated. Longhorn
-also creates recurring-job Pods from its tag-only manager image reference. In
-this homelab, those disruptive or controller-managed migrations are
-intentionally deferred. Only the exact `v1.11.2` engine, instance-manager, and
-manager references listed in `longhornSystemDigestExceptions` are exempt from
-the digest requirement in `longhorn-system`. Other Longhorn chart workloads
-remain digest-pinned, and the repository allowlist and mutable-`latest` check
-still apply to every Longhorn image. Review these exceptions whenever Longhorn
-is upgraded and remove them when the corresponding operational constraints no
+During a Longhorn upgrade, attached volumes temporarily retain their previous
+engine references. The configured automatic engine-upgrade limit migrates at
+most one volume per node at a time after the manager changes the default engine
+image. Longhorn also creates recurring-job Pods from its tag-only manager image
+reference. Only the exact `v1.12.2` engine, instance-manager, and manager
+references listed in `longhornSystemDigestExceptions` are exempt from the
+digest requirement in `longhorn-system`. Other Longhorn chart workloads remain
+digest-pinned, and the repository allowlist and mutable-`latest` check still
+apply to every Longhorn image. Review these exceptions whenever Longhorn is
+upgraded and remove them when the corresponding operational constraints no
 longer apply.
 
 The upstream SonarQube chart uses the image tag as the
