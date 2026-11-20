@@ -125,9 +125,19 @@ data:
               # patch; any permission, subject, reference, or other metadata
               # mutation remains classified as unapproved.
               - set(attributes["classification"], "rbac_approved") where IsMatch(attributes["classification"], "^rbac_") and attributes["username"] == "system:serviceaccount:kube-system:generic-garbage-collector" and body["verb"] == "patch" and Len(body["requestObject"]) == 1 and Len(body["requestObject"]["metadata"]) == 2 and body["requestObject"]["metadata"]["resourceVersion"] != nil and body["requestObject"]["metadata"]["finalizers"] == nil
+              # The namespace controller removes namespaced RBAC resources as
+              # part of namespace finalization. Approve only its native
+              # deletecollection request shape; ordinary deletes and every
+              # other service-account RBAC mutation remain alertable.
+              - set(attributes["classification"], "rbac_approved") where IsMatch(attributes["classification"], "^rbac_") and attributes["username"] == "system:serviceaccount:kube-system:namespace-controller" and body["verb"] == "deletecollection" and IsMatch(body["objectRef"]["resource"], "^(roles|rolebindings)$") and body["objectRef"]["namespace"] != nil and body["requestObject"]["kind"] == "DeleteOptions" and body["requestObject"]["propagationPolicy"] == "Background"
               - set(attributes["rbac_risk"], "cluster_admin_binding") where IsMatch(body["objectRef"]["resource"], "^(rolebindings|clusterrolebindings)$") and body["stage"] == "ResponseComplete" and body["responseStatus"]["code"] < 400 and IsMatch(String(body["requestObject"]), "cluster-admin")
               - set(attributes["rbac_risk"], "wildcard_or_sensitive_permission") where IsMatch(body["objectRef"]["resource"], "^(roles|clusterroles)$") and body["stage"] == "ResponseComplete" and body["responseStatus"]["code"] < 400 and IsMatch(String(body["requestObject"]["rules"]), "verbs[^]]*[^[:alnum:]_]([*]|impersonate|bind|escalate)[^[:alnum:]_]")
               - set(attributes["classification"], "rbac_high_risk_grant") where attributes["rbac_risk"] != nil
+              # Argo CD owns one declared cluster-admin binding for the
+              # Keycloak platform-admins group. Suppress paging only when the
+              # complete object identity, roleRef, sole subject and tracking
+              # annotation match that Git-managed contract.
+              - set(attributes["classification"], "rbac_approved") where attributes["classification"] == "rbac_high_risk_grant" and attributes["username"] == "system:serviceaccount:argocd:argocd-application-controller" and IsMatch(body["verb"], "^(create|patch|update)$") and body["objectRef"]["resource"] == "clusterrolebindings" and body["objectRef"]["name"] == "keycloak-platform-admins" and body["requestObject"]["roleRef"]["kind"] == "ClusterRole" and body["requestObject"]["roleRef"]["name"] == "cluster-admin" and Len(body["requestObject"]["subjects"]) == 1 and body["requestObject"]["subjects"][0]["kind"] == "Group" and body["requestObject"]["subjects"][0]["name"] == "keycloak:/platform/admins" and body["requestObject"]["metadata"]["annotations"]["argocd.argoproj.io/tracking-id"] == "infra-keycloak-rbac:rbac.authorization.k8s.io/ClusterRoleBinding:argocd/keycloak-platform-admins"
               - set(body["classification"], attributes["classification"]) where attributes["classification"] != nil
               - set(body["rbac_risk"], attributes["rbac_risk"]) where attributes["rbac_risk"] != nil
 
