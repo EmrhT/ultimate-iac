@@ -376,12 +376,15 @@ rules:
     # Page only for admission-time Pods using an unapproved repository, the
     # mutable latest tag, or an image that is not pinned by digest. The Kyverno
     # policy handles the reviewed namespace-and-version exceptions before an
-    # admission violation reaches this rule.
+    # admission violation reaches this rule. The two named Longhorn v1.11.2
+    # engine images are retired objects which Longhorn may briefly recreate
+    # during node recovery before its expiry controller removes them. Keep
+    # their policy evidence, but do not page for that cleanup path.
     timestamp_field: eventTime
     filter:
       - query:
           query_string:
-            query: 'event.dataset:"kyverno.policy_event" AND reason:"PolicyViolation" AND reportingComponent:"kyverno-admission" AND involvedObject.kind.keyword:"Pod" AND (message:"policy require-safe-image-references/ fail: Images should use a fully qualified repository in an approved publisher namespace or an explicitly approved repository." OR message:"policy require-safe-image-references/ fail: Images should not use the mutable latest tag." OR message:"policy require-safe-image-references/ fail: Images should be pinned by an immutable sha256 digest.")'
+            query: 'event.dataset:"kyverno.policy_event" AND reason:"PolicyViolation" AND reportingComponent:"kyverno-admission" AND involvedObject.kind.keyword:"Pod" AND (message:"policy require-safe-image-references/ fail: Images should use a fully qualified repository in an approved publisher namespace or an explicitly approved repository." OR message:"policy require-safe-image-references/ fail: Images should not use the mutable latest tag." OR message:"policy require-safe-image-references/ fail: Images should be pinned by an immutable sha256 digest.") AND NOT (involvedObject.namespace.keyword:"longhorn-system" AND involvedObject.name.keyword:(engine-image-ei-64399479-* OR engine-image-ei-c9fa6d45-*))'
     realert:
       minutes: 1
     include_rule_params_in_matches:
@@ -550,11 +553,13 @@ rules:
     index: kyverno-*
     # Page only for new Pod admission. The Kyverno policy removes exact
     # infrastructure identities and path sets before violations reach here.
+    # Suppress only the exact expired Longhorn v1.11.2 engine IDs which may be
+    # recreated briefly during node recovery and are then removed by Longhorn.
     timestamp_field: eventTime
     filter:
       - query:
           query_string:
-            query: 'event.dataset:"kyverno.policy_event" AND reason:"PolicyViolation" AND reportingComponent:"kyverno-admission" AND involvedObject.kind.keyword:"Pod" AND (message:"policy audit-host-access/ fail: Pods must not use the host PID namespace without an exact approved identity." OR message:"policy audit-host-access/ fail: Pods must not use the host IPC namespace." OR message:"policy audit-host-access/ fail: Pods must not mount hostPath volumes outside their exact approved identity and path set." OR message:"policy audit-host-access/ fail: Approved read-only hostPath mounts must not become writable.")'
+            query: 'event.dataset:"kyverno.policy_event" AND reason:"PolicyViolation" AND reportingComponent:"kyverno-admission" AND involvedObject.kind.keyword:"Pod" AND (message:"policy audit-host-access/ fail: Pods must not use the host PID namespace without an exact approved identity." OR message:"policy audit-host-access/ fail: Pods must not use the host IPC namespace." OR message:"policy audit-host-access/ fail: Pods must not mount hostPath volumes outside their exact approved identity and path set." OR message:"policy audit-host-access/ fail: Approved read-only hostPath mounts must not become writable.") AND NOT (involvedObject.namespace.keyword:"longhorn-system" AND involvedObject.name.keyword:(engine-image-ei-64399479-* OR engine-image-ei-c9fa6d45-*))'
     realert:
       minutes: 1
     include_rule_params_in_matches:
