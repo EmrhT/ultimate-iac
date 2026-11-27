@@ -14,7 +14,7 @@ spec:
             namespace: cert-manager
             chartRepo: https://charts.jetstack.io
             chart: cert-manager
-            chartVersion: v1.21.0
+            chartVersion: v1.21.3
             wave: "-30"
           - name: metallb
             namespace: metallb-system
@@ -80,7 +80,7 @@ spec:
             namespace: elastic-system
             chartRepo: https://helm.elastic.co
             chart: eck-operator
-            chartVersion: 3.4.0
+            chartVersion: 3.5.0
             wave: "0"
           - name: elastalert2
             namespace: elastic-stack

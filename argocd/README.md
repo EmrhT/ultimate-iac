@@ -72,7 +72,7 @@ All versions are explicit; Argo CD never follows `latest`:
 | Component | Version | Purpose |
 | --- | --- | --- |
 | Gateway API CRDs | `v1.5.1` | Standard-channel Gateway API resources |
-| cert-manager | `1.21.0` | Certificate lifecycle and Gateway integration |
+| cert-manager | `1.21.3` | Certificate lifecycle and Gateway integration |
 | MetalLB chart | `0.16.2` | Bare-metal `LoadBalancer` implementation |
 | Longhorn | `1.12.2` | Replicated persistent storage on `/var/lib/longhorn` |
 | Metrics Server chart | `3.13.1` | Resource Metrics API for `kubectl top` and autoscaling |
@@ -80,8 +80,8 @@ All versions are explicit; Argo CD never follows `latest`:
 | Traefik chart | `41.0.1` | Gateway API controller at `192.168.122.120` |
 | HashiCorp Vault chart | `0.32.0` | Secret service and injector |
 | Falco chart | `9.1.0` | Runtime detection with the modern eBPF driver |
-| ECK operator | `3.4.0` | Elastic Stack lifecycle |
-| Elasticsearch/Kibana | `9.4.9` | Single-node development search and dashboard stack |
+| ECK operator | `3.5.0` | Elastic Stack lifecycle |
+| Elasticsearch/Kibana | `9.5.7` | Single-node development search and dashboard stack |
 | Podinfo | `6.14.1` | Apache-2.0 GitHub-hosted demo workload |
 
 MetalLB owns `192.168.122.120-192.168.122.129`. Traefik requests `.120`.

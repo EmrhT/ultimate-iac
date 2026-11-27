@@ -54,7 +54,7 @@ spec:
                   mountPath: /workspace
           containers:
             - name: scanner
-              image: docker.io/sonarsource/sonar-scanner-cli:12.4.0.4321_8.4.0@sha256:6e6eca4d552695a98fb7dab84f0c1bd0885ebbfe272654d1552e24bd7f452d51
+              image: docker.io/sonarsource/sonar-scanner-cli:12.5.0.4351_8.5.0@sha256:8bb84373f00346f9a579adb7ccb2999f8cd050ab7167fa9ae08a16069de03c84
               imagePullPolicy: IfNotPresent
               securityContext:
                 allowPrivilegeEscalation: false

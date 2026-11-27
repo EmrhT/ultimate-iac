@@ -1,6 +1,6 @@
 installCRDs: true
 image:
-  digest: sha256:768fa7b503666251d4ed3161b4f60e933b84301b9ea21012f3e7160e0661759c
+  digest: sha256:cd5bca529361ce826c6fd96e5d7fb9da0ae4110774681c264406264634f06246
 config:
   validateStorageClass: true
 telemetry:

@@ -3,8 +3,8 @@ kind: Kibana
 metadata:
   name: platform
 spec:
-  version: 9.4.9
-  image: docker.elastic.co/kibana/kibana@sha256:7dfe90696ca9b6efd7af52a50d06dba8ea16784615d76dd2a2fd47ff19c816d0
+  version: 9.5.7
+  image: docker.elastic.co/kibana/kibana@sha256:19a45a3ef66233e8d4bbace6dc8dc13ef7655b7ec40e2bbe91b3f68e81cf0d84
   count: 1
   elasticsearchRef:
     name: platform

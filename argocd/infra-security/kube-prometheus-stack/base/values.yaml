@@ -18,8 +18,8 @@ grafana:
       sha: f97baa533a26513c453a362be331a43eb60214302f449c16571b23cea141dce4
   sidecar:
     image:
-      tag: 2.14.1
-      sha: 40e7bf29b2bc81f5fc7f5c1bada7d7adf971d62fa4f017e235699329af5b2f57
+      tag: 2.14.3
+      sha: 84df4f4f53bedc59e72f594f58047a1f98f8aebc4326533f0c7170b2748e6840
   admin:
     existingSecret: grafana-admin-credentials
     userKey: admin-user
