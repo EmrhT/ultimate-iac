@@ -4,8 +4,6 @@ metadata:
   name: infra-security-kustomize
   namespace: argocd
 spec:
-  syncPolicy:
-    preserveResourcesOnDeletion: true
   goTemplate: true
   goTemplateOptions:
     - missingkey=error
