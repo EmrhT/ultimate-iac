@@ -11,7 +11,7 @@ persistence:
   enabled: true
   storageClass: longhorn-trivy
   accessMode: ReadWriteOnce
-  size: 3Gi
+  size: 4Gi
 
 resources:
   requests:

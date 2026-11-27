@@ -41,6 +41,18 @@ image:
 trivyOperator:
   scanJobsInSameNamespace: false
   scanJobAutomountServiceAccountToken: false
+  # Worker-03 has the least node-filesystem headroom. Large multi-container
+  # scans retain extracted image layers and the Java DB in ephemeral storage
+  # until the Job exits, so keep scanner Jobs off that node.
+  scanJobAffinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: NotIn
+                values:
+                  - platform-dev-worker-03
   # Skip explicitly labelled, short-lived utility workloads. Their images are
   # implementation details of a scanner run, not persistent cluster services.
   skipResourceByLabels: security.no-name.win/trivy-scan-excluded
