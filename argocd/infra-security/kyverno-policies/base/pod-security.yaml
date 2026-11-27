@@ -41,32 +41,46 @@ spec:
         variables.containers.exists(c,
           c.name == 'otel-collector' &&
           c.image == 'docker.io/otel/opentelemetry-collector-contrib:0.165.0@sha256:bda8c1d727effc2f937d2a3470ea3f9ee189b8dd96d2385a2475b0b6f16ec3f8')
+    - name: isLonghornKubeletDiscovery
+      expression: >-
+        object.metadata.namespace == 'longhorn-system' &&
+        object.metadata.name == 'discover-proc-kubelet-cmdline' &&
+        object.spec.?serviceAccountName.orValue('default') == 'longhorn-service-account' &&
+        variables.containers.exists(c,
+          c.name == 'discover-proc-kubelet-cmdline' &&
+          c.image == 'docker.io/longhornio/longhorn-manager:v1.12.2@sha256:60371377cdafd14def4b12d634707c5f79240b5363b5666c5cd2dbd699e2ce6a')
   validations:
     - expression: >-
+        variables.isLonghornKubeletDiscovery ||
         variables.containers.all(c,
           !c.?securityContext.?privileged.orValue(false))
       message: Containers must not run as privileged.
     - expression: >-
         variables.isCiliumHubbleFlowCollector ||
+        variables.isLonghornKubeletDiscovery ||
         (object.spec.?securityContext.?runAsUser.orValue(-1) != 0 &&
         variables.containers.all(c,
           c.?securityContext.?runAsUser.orValue(-1) != 0))
       message: Pods and containers must not explicitly run as UID 0.
     - expression: >-
         variables.isCiliumHubbleFlowCollector ||
+        variables.isLonghornKubeletDiscovery ||
         ((object.spec.?securityContext.?runAsNonRoot.orValue(false) &&
         variables.containers.all(c, c.?securityContext.?runAsNonRoot.orValue(true))) ||
         variables.containers.all(c, c.?securityContext.?runAsNonRoot.orValue(false)))
       message: Pods or every container should explicitly set runAsNonRoot to true.
     - expression: >-
+        variables.isLonghornKubeletDiscovery ||
         variables.containers.all(c,
           c.?securityContext.?allowPrivilegeEscalation.orValue(true) == false)
       message: Every container should set allowPrivilegeEscalation to false.
     - expression: >-
+        variables.isLonghornKubeletDiscovery ||
         variables.containers.all(c,
           'ALL' in c.?securityContext.?capabilities.?drop.orValue([]))
       message: Every container should drop ALL Linux capabilities.
     - expression: >-
+        variables.isLonghornKubeletDiscovery ||
         variables.containers.all(c,
           c.?securityContext.?capabilities.?add.orValue([]).all(capability,
             capability in variables.globallyAllowedAddedCapabilities ||
@@ -131,14 +145,17 @@ spec:
         Containers may add only NET_BIND_SERVICE or the capability set
         approved for their exact infrastructure identity.
     - expression: >-
+        variables.isLonghornKubeletDiscovery ||
         variables.containers.all(c,
           c.?securityContext.?readOnlyRootFilesystem.orValue(false))
       message: Every container should use a read-only root filesystem.
     - expression: >-
+        variables.isLonghornKubeletDiscovery ||
         !object.spec.?securityContext.?seccompProfile.?type.hasValue() ||
         object.spec.securityContext.seccompProfile.type in ['RuntimeDefault', 'Localhost']
       message: A configured Pod seccomp profile must be RuntimeDefault or Localhost.
     - expression: >-
+        variables.isLonghornKubeletDiscovery ||
         variables.containers.all(c,
           c.?securityContext.?seccompProfile.?type.orValue('') in ['RuntimeDefault', 'Localhost'] ||
           (!c.?securityContext.?seccompProfile.?type.hasValue() &&

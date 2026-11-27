@@ -160,6 +160,14 @@ spec:
         variables.containers.exists(c,
           c.name == 'longhorn-manager' &&
           c.image == 'docker.io/longhornio/longhorn-manager:v1.12.2@sha256:60371377cdafd14def4b12d634707c5f79240b5363b5666c5cd2dbd699e2ce6a')
+    - name: isLonghornKubeletDiscovery
+      expression: >-
+        object.metadata.namespace == 'longhorn-system' &&
+        object.metadata.name == 'discover-proc-kubelet-cmdline' &&
+        variables.serviceAccount == 'longhorn-service-account' &&
+        variables.containers.exists(c,
+          c.name == 'discover-proc-kubelet-cmdline' &&
+          c.image == 'docker.io/longhornio/longhorn-manager:v1.12.2@sha256:60371377cdafd14def4b12d634707c5f79240b5363b5666c5cd2dbd699e2ce6a')
     - name: isLonghornRecurringJob
       expression: >-
         object.metadata.namespace == 'longhorn-system' &&
@@ -217,6 +225,7 @@ spec:
   validations:
     - expression: >-
         !object.spec.?hostPID.orValue(false) ||
+        variables.isLonghornKubeletDiscovery ||
         variables.isNodeExporter ||
         variables.isKubeBenchControlPlane ||
         variables.isKubeBenchWorker
@@ -299,6 +308,7 @@ spec:
             v.hostPath.path.startsWith('/var/lib/longhorn/engine-binaries/')) ||
           (variables.isLonghornInstanceManager &&
             v.hostPath.path in ['/', '/var/lib/longhorn/engine-binaries/',
+              '/var/lib/longhorn/metadata/',
               '/var/lib/longhorn/unix-domain-socket/',
               '/var/lib/longhorn/logs']) ||
           (variables.isLonghornManager &&

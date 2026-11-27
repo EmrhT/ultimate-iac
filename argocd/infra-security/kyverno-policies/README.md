@@ -85,6 +85,12 @@ containers remain covered by the separate privileged-container alert because
 privileged mode implicitly grants capabilities without requiring an
 `add` list.
 
+Longhorn's `discover-proc-kubelet-cmdline` Pod is a version-pinned exception
+to the privileged-container controls. Longhorn 1.12.2 creates this short-lived
+Pod with `hostPID` and privileged mode to discover kubelet process arguments.
+The exception requires its exact name, namespace, ServiceAccount, container
+name, and manager image digest; it does not trust other Longhorn Pods.
+
 ## Direct host access
 
 `audit-host-access` evaluates host PID, IPC, and network namespaces,
@@ -99,7 +105,8 @@ sets. Host mounts which are read-only in the approved specification must remain
 read-only. Longhorn exceptions are component-specific rather than
 namespace-wide; kube-bench exceptions apply only to its two scanner
 ServiceAccounts and declared host inspection paths. No workload is permitted
-to use `hostIPC`.
+to use `hostIPC`. The Longhorn instance-manager exception includes its
+version-1.12.2 metadata directory at `/var/lib/longhorn/metadata/`.
 
 Admission-time use of `hostPID`, `hostIPC`, or an unapproved `hostPath`
 is sent to PagerDuty as Critical. Unexpected `hostNetwork` or `hostPort`
