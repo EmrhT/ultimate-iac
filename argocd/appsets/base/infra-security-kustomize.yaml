@@ -43,6 +43,7 @@ spec:
             path: argocd/infra-security/longhorn-config/overlays/dev
             wave: "-19"
           - name: vault-config
+            applicationName: security-vault-config
             namespace: vault
             sourceRepo: https://github.com/EmrhT/ultimate-iac.git
             revision: main
@@ -79,18 +80,21 @@ spec:
             path: argocd/infra-security/keycloak-rbac/overlays/dev
             wave: "16"
           - name: kyverno-policies
+            applicationName: security-kyverno-policies
             namespace: kyverno
             sourceRepo: https://github.com/EmrhT/ultimate-iac.git
             revision: main
             path: argocd/infra-security/kyverno-policies/overlays/dev
             wave: "16"
           - name: falco-config
+            applicationName: security-falco-config
             namespace: falco
             sourceRepo: https://github.com/EmrhT/ultimate-iac.git
             revision: main
             path: argocd/infra-security/falco-config/overlays/dev
             wave: "16"
           - name: falco-talon
+            applicationName: security-falco-talon
             namespace: falco
             sourceRepo: https://github.com/EmrhT/ultimate-iac.git
             revision: main
@@ -152,7 +156,7 @@ spec:
             wave: "15"
   template:
     metadata:
-      name: '{{ if hasPrefix "security-" .name }}{{ .name }}{{ else }}infra-{{ .name }}{{ end }}'
+      name: '{{ if hasKey . "applicationName" }}{{ .applicationName }}{{ else if hasPrefix "security-" .name }}{{ .name }}{{ else }}infra-{{ .name }}{{ end }}'
       namespace: argocd
       annotations:
         argocd.argoproj.io/sync-wave: "{{ .wave }}"

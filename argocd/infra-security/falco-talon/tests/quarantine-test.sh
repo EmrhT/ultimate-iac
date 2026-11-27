@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Controlled test for the Falco Talon -> label -> Cilium quarantine path.
-# Run only after Argo has synced infra-falco-talon and the Podinfo ApplicationSet.
+# Run only after Argo has synced security-falco-talon and the Podinfo ApplicationSet.
 set -euo pipefail
 
 namespace="${1:-lab-a-dev-podinfo}"

@@ -49,12 +49,14 @@ spec:
             chartVersion: 41.0.1
             wave: "0"
           - name: vault
+            applicationName: security-vault
             namespace: vault
             chartRepo: https://helm.releases.hashicorp.com
             chart: vault
             chartVersion: 0.32.0
             wave: "0"
           - name: vault-secrets-operator
+            applicationName: security-vault-secrets-operator
             namespace: vault-secrets-operator
             chartRepo: https://helm.releases.hashicorp.com
             chart: vault-secrets-operator
@@ -67,12 +69,14 @@ spec:
             chartVersion: 7.2.2
             wave: "15"
           - name: kyverno
+            applicationName: security-kyverno
             namespace: kyverno
             chartRepo: https://kyverno.github.io/kyverno/
             chart: kyverno
             chartVersion: 3.9.2
             wave: "15"
           - name: falco
+            applicationName: security-falco
             namespace: falco
             chartRepo: https://falcosecurity.github.io/charts
             chart: falco
@@ -122,7 +126,7 @@ spec:
             wave: "15"
   template:
     metadata:
-      name: '{{ if hasPrefix "security-" .name }}{{ .name }}{{ else }}infra-{{ .name }}{{ end }}'
+      name: '{{ if hasKey . "applicationName" }}{{ .applicationName }}{{ else if hasPrefix "security-" .name }}{{ .name }}{{ else }}infra-{{ .name }}{{ end }}'
       namespace: argocd
       annotations:
         argocd.argoproj.io/sync-wave: "{{ .wave }}"
